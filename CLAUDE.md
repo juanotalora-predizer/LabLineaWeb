@@ -32,6 +32,7 @@ Filtrar datos de un laboratorio a otro es el fallo más grave posible en este pr
 - Todo acceso a datos pasa por la capa que aplica el tenant de la petición. Nunca escribir consultas que omitan ese filtro.
 - El tenant se resuelve en el servidor (subdominio + sesión), nunca desde un parámetro enviado por el cliente.
 - Usuarios, sesiones y tokens pertenecen a un tenant; los de un tenant se rechazan en otro.
+- Dominio `lablinea.cionetworks.com`: laboratorios en `<laboratorio>.lablinea.cionetworks.com`, Admin Hub en `admin.lablinea.cionetworks.com`. Cookies con prefijo `__Host-`, sin atributo `Domain`.
 - Identificadores públicos no secuenciales (UUID) en URLs y API.
 - Toda funcionalidad incluye una prueba de aislamiento: un usuario del tenant A no puede leer, modificar ni inferir datos del tenant B.
 
@@ -41,7 +42,9 @@ Filtrar datos de un laboratorio a otro es el fallo más grave posible en este pr
 - **Caja:** el cierre es irreversible y registra la diferencia entre lo esperado y lo contado.
 - **Muestras** ([funcional/0003](specs/funcional/0003-muestras-impresion.md)): solo se toman de órdenes `PAGADA`. Los tubos se agrupan por tipo de muestra **y** tipo de tubo. El servidor nunca imprime directo a una IP del laboratorio.
 - **Resultados** ([funcional/0004](specs/funcional/0004-resultados-validacion-entrega.md)): solo inserción; las correcciones son versiones nuevas y exigen revalidar. Banderas y notas internas **nunca** llegan al paciente, al PDF ni al correo. Los valores críticos se comunican aunque haya saldo pendiente.
-- **Entrega:** el correo solo avisa y enlaza al portal; nunca adjunta el PDF ni lleva datos clínicos.
+- **Entrega:** el correo solo avisa y enlaza al portal; nunca adjunta el PDF ni lleva datos clínicos. En el PDF y el portal solo puede aparecer la marca `H`/`L` en valores numéricos, si el laboratorio la activó.
+- **Facturación electrónica** ([infraestructura/0009](specs/infraestructura/0009-facturacion-electronica.md)): siempre a través de la interfaz `FacturadorElectronico` del país; nunca llamar a la DIAN ni a un tercero desde las rutas. Certificados digitales solo en el gestor de secretos. Una factura validada no se modifica: se emiten notas.
+- **Analítica** ([infraestructura/0010](specs/infraestructura/0010-analitica-bodega-datos.md), propuesta): el dashboard histórico consulta la bodega, no la base transaccional. La bodega nunca recibe nombres, documentos, contactos ni valores de resultados.
 - **Dinero** en `NUMERIC` con moneda y tasa de cambio; nunca `float`.
 
 ## Integración (ver [infraestructura/0006](specs/infraestructura/0006-integracion-his-equipos.md))
@@ -101,7 +104,12 @@ pip install -r requirements-dev.txt
 uvicorn app.main:app --reload   # servidor local
 pytest                          # pruebas (migra solo la base lablinea_test)
 alembic upgrade head            # migrar la base de desarrollo
+scripts/verificar.sh            # compuerta automática: correrla antes de cada commit
+scripts/servidor_https.sh       # HTTPS local en https://lab-a.lablinea.localhost:8443
+scripts/escaneo_externo.sh      # ZAP pasivo + activo; falla con hallazgos altos o medios
 ```
+
+- Toda petición debe llegar con un `Host` del dominio propio (`TrustedHostMiddleware`): en pruebas, usar `base_url="http://lab-a.lablinea.localhost"`.
 
 - Acceso a datos de un laboratorio **siempre** con `app.core.db.sesion_tenant(tenant_id)`; nunca abrir sesiones sin tenant sobre `lab`.
 - Migraciones escritas a mano en `migrations/versions/` (sin autogenerate), con `upgrade` y `downgrade`. Toda tabla nueva en `lab` incluye `tenant_id`, RLS habilitado y forzado, y política con `USING` y `WITH CHECK`; `tests/test_db.py::test_toda_tabla_de_lab_cumple_rls` lo verifica.
@@ -121,6 +129,12 @@ Si durante el trabajo se decide algo de infraestructura (base de datos, autentic
 1. Crear la spec en `specs/infraestructura/` o `specs/funcional/` a partir de [specs/plantilla.md](specs/plantilla.md), con el siguiente número `NNNN` de esa carpeta.
 2. Agregarla al índice de [specs/README.md](specs/README.md).
 3. Si reemplaza otra, marcar la anterior como `Reemplazada por NNNN`. Nunca borrar specs.
+
+## Al cerrar una etapa del plan (obligatorio)
+
+Ninguna etapa del [plan](specs/plan-desarrollo.md) se da por terminada sin pasar la **compuerta de calidad** de [infraestructura/0011](specs/infraestructura/0011-calidad-pruebas-entorno-local.md): pruebas funcionales y E2E, cobertura ≥ 85%, aislamiento, autorización, auditoría, ruff, bandit, pip-audit, gitleaks, ZAP activo autenticado (cero hallazgos altos o medios), schemathesis, pruebas manuales dirigidas y rendimiento cuando aplique. La evidencia va en `specs/etapas/etapa-NN.md` (plantilla en `specs/etapas/plantilla-cierre.md`). Si algo falla, la etapa sigue abierta; un riesgo solo se acepta con aprobación explícita del usuario.
+
+Todo se construye y prueba **en local** (HTTPS con mkcert en `*.lablinea.localhost`, SMTP de captura, datos sintéticos); la publicación es la etapa 20.
 
 ## Al terminar una tarea
 

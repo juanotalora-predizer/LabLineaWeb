@@ -1,4 +1,5 @@
 from functools import lru_cache
+from typing import Literal
 
 from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -9,6 +10,13 @@ class Settings(BaseSettings):
     """Configuración leída de variables de entorno o del archivo .env."""
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+
+    # En producción no se expone el esquema OpenAPI (reduce la superficie visible).
+    entorno: Literal["desarrollo", "pruebas", "produccion"] = "desarrollo"
+
+    # Dominio bajo el que viven los laboratorios (<lab>.<dominio>) y el Admin Hub (admin.<dominio>).
+    # Cualquier otra cabecera Host se rechaza (spec infraestructura/0005). Producción: lablinea.cionetworks.com
+    dominio_base: str = "lablinea.localhost"
 
     db_host: str = "localhost"
     db_port: int = 5432

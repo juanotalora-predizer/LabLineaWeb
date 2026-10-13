@@ -38,13 +38,17 @@ flowchart LR
             HOST --> T & A
             T & A --> CORE
         end
-        W["Trabajador de tareas<br/>PDF · correos · métricas agregadas"]
+        W["Trabajador de tareas<br/>PDF · correos · DIAN · transformaciones de la bodega"]
         PG[("PostgreSQL 16+<br/>plataforma · global · lab (RLS)")]
         OBJ[("Almacenamiento de objetos<br/>privado, cifrado, por tenant")]
         LB --> HOST
         CORE -- "rol lablinea_app" --> PG
         A -- "rol lablinea_plataforma" --> PG
-        W -- "rol lablinea_metricas<br/>(solo columnas sin PHI)" --> PG
+        DW[("PostgreSQL analítico<br/>bodega · datamarts (RLS)")]
+        PG -- "replicación lógica<br/>(columnas sin datos personales)" --> DW
+        W --> DW
+        T -- "dashboard" --> DW
+        A -- "dashboard (agregados)" --> DW
         CORE --> OBJ
         W --> OBJ
     end
@@ -55,6 +59,8 @@ flowchart LR
     PAC --> LB
     ADM --> LB
     W --> MAIL
+    DIAN["Servicios web DIAN<br/>(facturación electrónica)"]
+    W --> DIAN
 
     subgraph Futuro["Después del MVP"]
         CON["Conector local<br/>(equipos ASTM / HL7 v2)"]
@@ -78,8 +84,9 @@ flowchart LR
   | `lablinea_plataforma` | Admin Hub | Esquema `plataforma`; lectura de `global`; **sin acceso a `lab`** |
   | `lablinea_metricas` | Trabajador de métricas | `BYPASSRLS`, pero `SELECT` solo sobre columnas no clínicas (`tenant_id`, fechas, estados, montos); escribe en `plataforma.metricas_diarias` |
 
-- **Cómo ve el Admin Hub los indicadores de todos los laboratorios** (pacientes activos, volumen de órdenes): no consulta `lab`. Un trabajador calcula agregados por laboratorio y día y los guarda en `plataforma`. Así se cumple que la plataforma no accede a datos clínicos ([infraestructura/0005](infraestructura/0005-arquitectura-saas-multitenant.md)).
-- **Tareas en segundo plano** (PDF, correos, métricas): cola de trabajos sobre PostgreSQL (`SELECT … FOR UPDATE SKIP LOCKED`), con reintentos. Evita agregar Redis. *La librería se fija en una spec antes del Sprint 3.*
+- **Cómo ve el Admin Hub los indicadores de todos los laboratorios:** desde el datamart de plataforma de la bodega analítica, solo con agregados ([infraestructura/0010](infraestructura/0010-analitica-bodega-datos.md), *propuesta*). Nunca consulta `lab`. Si la bodega no se aprueba, se usa la alternativa de la tabla `plataforma.metricas_diarias` (sección 2).
+- **Dominio:** `<laboratorio>.lablinea.cionetworks.com` y `admin.lablinea.cionetworks.com`, con cookies `__Host-` ([infraestructura/0005](infraestructura/0005-arquitectura-saas-multitenant.md)).
+- **Tareas en segundo plano** (PDF, correos, métricas): cola de trabajos sobre PostgreSQL (`SELECT … FOR UPDATE SKIP LOCKED`), con reintentos. Evita agregar Redis. *La librería se fija en una spec en la etapa 3.*
 
 ---
 
@@ -359,7 +366,7 @@ CREATE TRIGGER ordenes_congeladas BEFORE UPDATE ON lab.ordenes
   FOR EACH ROW EXECUTE FUNCTION lab.proteger_orden();
 ```
 
-**Prueba obligatoria** (Sprint 1): recorre `pg_class` y falla si alguna tabla de `lab` no tiene `relrowsecurity` y `relforcerowsecurity` activos o le falta la política `aislamiento_tenant`.
+**Prueba obligatoria** (ya implementada en la etapa 0, `tests/test_db.py`): recorre `pg_class` y falla si alguna tabla de `lab` no tiene `relrowsecurity` y `relforcerowsecurity` activos o le falta la política `aislamiento_tenant`.
 
 ---
 
@@ -414,53 +421,357 @@ LabLineaWeb/
 
 ---
 
-## 4. Hoja de ruta por sprints
+## 4. Plan de desarrollo paso a paso
 
-Sprints de 2 semanas. La duración real depende del tamaño del equipo. Las 4 fases de este plan agrupan las 5 fases del [MVP](funcional/0007-alcance-mvp.md):
+**Modo de trabajo:** todo se construye y prueba en local; la publicación se decide después ([infraestructura/0011](infraestructura/0011-calidad-pruebas-entorno-local.md)). Cada etapa dura aproximadamente un sprint de 2 semanas.
 
-| Fase del plan | Fases del MVP |
-|---|---|
-| 1. Infraestructura, base multi-tenant y autenticación | 1 (base) y 2 (seguridad) |
-| 2. Admin Hub | 1 (laboratorios, licencias, suscripciones) |
-| 3. Tenant App | 3 (POS y caja), 4 (muestras), 5 (resultados) |
-| 4. Dashboards, auditoría de seguridad y despliegue | Cierre del MVP |
+**Regla de cierre:** ninguna etapa se da por terminada sin pasar la **compuerta de calidad** de la spec 0011 (funcional, seguridad interna, seguridad externa y, cuando aplique, rendimiento) y sin su **informe de cierre** en `specs/etapas/`. Abajo se listan, por etapa, los pasos y las pruebas **específicas** que se suman a esa compuerta común.
 
-### Fase 1 — Infraestructura, base multi-tenant y autenticación
-
-| Sprint | Entregable | Criterio de terminado |
+| Bloque | Etapas | Fases del [MVP](funcional/0007-alcance-mvp.md) |
 |---|---|---|
-| **0** | Herramientas: CI en GitHub Actions (pytest con PostgreSQL de servicio, linter), configuración por `.env`, conexión a la base, Alembic | Cada push corre pruebas contra PostgreSQL real |
-| **1** | Esquemas `plataforma`/`global`/`lab`, los 4 roles, RLS estándar, resolución de tenant por subdominio, sesión con `SET LOCAL`; catálogos globales (países, monedas, tipos de documento) | Prueba que recorre el catálogo y prueba de aislamiento A/B pasan |
-| **2** | Autenticación: Argon2id, sesiones en servidor, TOTP, OTP por correo, bloqueo y límites; RBAC con acciones especiales; CSRF y cabeceras de seguridad | Pruebas de cada acción especial y de cabeceras |
-| **3** | Auditoría (triggers + lecturas, particiones), cola de tareas, i18n base, generador de datos sintéticos | Toda escritura en tablas sensibles deja rastro verificable |
+| A. Fundaciones | 0–3 | 1 (base) y 2 (seguridad) |
+| B. Admin Hub | 4–5 | 1 (laboratorios, licencias, suscripciones) |
+| C. Tenant App | 6–14 | 3 (POS, caja, facturación), 4 (muestras), 5 (resultados) |
+| D. Analítica y cierre del MVP | 15–19 | Dashboard completo y cierre |
+| E. Publicación | 20 | Pendiente de decidir hosting |
 
-### Fase 2 — Admin Hub (Proyecto 2)
+---
 
-| Sprint | Entregable | Criterio de terminado |
-|---|---|---|
-| **4** | Usuarios y roles de plataforma; **alta de laboratorio** (crea tenant, subdominio, configuración de país, sede inicial y administrador); planes con activación de módulos | Un laboratorio nuevo opera de inmediato y aislado |
-| **5** | Suscripciones y su ciclo (vencimiento, suspensión, alertas de renovación); facturas con pagos manuales; acceso de soporte autorizado y auditado; métricas diarias agregadas | Suscripción vencida bloquea órdenes nuevas pero no la consulta de resultados |
+### Bloque A — Fundaciones
 
-### Fase 3 — Tenant App (Proyecto 1)
+#### Etapa 0 — Herramientas, base de datos y CI · *código hecho, compuerta pendiente*
 
-| Sprint | Entregable | Specs |
-|---|---|---|
-| **6** | Catálogo: exámenes, parámetros, rangos por sexo y edad, tarifas; **importador de Lablinea** | [funcional/0004](funcional/0004-resultados-validacion-entrega.md), [0007](funcional/0007-alcance-mvp.md) |
-| **7** | Pacientes con autorización de datos (Ley 1581) y derechos del titular | [infraestructura/0004](infraestructura/0004-normativa-colombia-latam.md) |
-| **8** | Órdenes y POS: pre-cierre, convenios con tope y evidencia, paquetes | [funcional/0002](funcional/0002-pos-ordenes-caja.md) |
-| **9** | Caja: apertura, pagos, abonos, arqueo y cierre | [funcional/0002](funcional/0002-pos-ordenes-caja.md) |
-| **10** | Muestras: agrupación de tubos, códigos de barras, cola de toma, ZPL con QZ Tray | [funcional/0003](funcional/0003-muestras-impresion.md) |
-| **11** | Resultados: ingreso, banderas internas, valores críticos, versiones, validación con tarjeta profesional | [funcional/0004](funcional/0004-resultados-validacion-entrega.md) |
-| **12** | Informe PDF (WeasyPrint), firma electrónica, regla de liberación, portal de pacientes y médicos, aviso por correo, gráficas de tendencia, mapeo FHIR | [funcional/0004](funcional/0004-resultados-validacion-entrega.md), [infraestructura/0002](infraestructura/0002-interoperabilidad-hl7-fhir.md) |
+Lo construido: configuración, `sesion_tenant` con `SET LOCAL`, Alembic con la migración 0001, guardián de RLS, CI con PostgreSQL 18 (11 pruebas).
 
-### Fase 4 — Dashboards, auditoría de seguridad y despliegue
+Pasos para cerrarla:
+1. Agregar a `requirements-dev.txt`: `pytest-cov`, `ruff`, `bandit`, `pip-audit`, `hypothesis`; instalar `gitleaks` y `mkcert` con Homebrew.
+2. Crear `scripts/verificar.sh` y sumarlo a la CI.
+3. Generar certificados locales con `mkcert` para `lab-a`, `lab-b` y `admin.lablinea.localhost`; agregar esos nombres a `/etc/hosts` (lo hace el usuario); levantar Uvicorn en HTTPS.
+4. Pasar el código existente por ruff, bandit y pip-audit, y corregir lo que aparezca.
 
-| Sprint | Entregable |
-|---|---|
-| **13** | Dashboard del Admin Hub (laboratorios activos y suspendidos, MRR/ARR, volumen agregado, salud del sistema). Dashboard operativo básico del laboratorio *(pendiente de decisión, ver abajo)* |
-| **14** | Auditoría de seguridad: revisión contra OWASP ASVS, prueba de penetración externa, revisión de aislamiento; despliegue en el hosting elegido con staging, copias de seguridad cifradas y **restauración probada**; piloto con un laboratorio |
+Pruebas específicas:
+- `gitleaks` sobre todo el historial de git (verifica que el `.env` nunca se subió).
+- Configuración: la aplicación no arranca si faltan contraseñas; las contraseñas no aparecen en `repr()` ni en logs.
+- Migración 0001 baja y sube en limpio en la CI.
 
-**Antes del Sprint 4** debe estar decidido el hosting, para tener un entorno de staging desde la fase 2 y no dejar el primer despliegue para el final.
+**Cierra cuando:** `verificar.sh` en verde local y en la CI, servidor HTTPS local operativo e informe `etapa-00.md`.
+
+#### Etapa 1 — Base multi-tenant
+
+Pasos:
+1. Ampliar `crear_bd_local.sql` con los roles `lablinea_plataforma` y `lablinea_metricas`.
+2. Migración con tablas de `global` (países, monedas, tipos de documento) y de `plataforma` (laboratorios, estado).
+3. Middleware de resolución de laboratorio por subdominio; laboratorio desconocido o suspendido → 404.
+4. Configuración por país (tipos de documento, moneda, zona horaria, textos legales).
+5. Dos laboratorios sintéticos (`lab_a`, `lab_b`) para todas las pruebas siguientes.
+
+Pruebas específicas:
+- Cabecera `Host` falsificada, `X-Forwarded-Host` inyectada y subdominios con caracteres extraños → nunca resuelven otro laboratorio.
+- El tenant de la petición no se puede cambiar con parámetros, cookies ni cabeceras.
+- Cada rol de base de datos solo ve sus esquemas (matriz rol × esquema × operación).
+- ZAP pasivo sobre las rutas base: cabeceras de seguridad presentes.
+
+**Cierra cuando:** la compuerta completa está en verde y el informe `etapa-01.md` está escrito.
+
+#### Etapa 2 — Autenticación y autorización
+
+Pasos:
+1. Usuarios, roles, permisos CRUD por módulo y acciones especiales ([infraestructura/0008](infraestructura/0008-autenticacion-autorizacion.md)).
+2. Contraseñas con Argon2id; segundo factor TOTP y código por correo (SMTP local de captura).
+3. Sesiones en servidor con cookie `__Host-`, expiración por inactividad y máxima absoluta.
+4. Protección CSRF, cabeceras de seguridad y CSP.
+5. Bloqueo por intentos fallidos y límites de envío de códigos.
+
+Pruebas específicas:
+- Fuerza bruta de contraseña y de código → bloqueo; los mensajes no revelan si el correo existe.
+- Código OTP vencido, reutilizado o de otro usuario → rechazado.
+- Fijación de sesión: el identificador cambia al iniciar sesión; cerrar sesión la invalida en el servidor.
+- Una sesión de `lab-a` usada en `lab-b` → rechazada.
+- Matriz completa rol × permiso con casos positivos y negativos.
+- Formularios sin token CSRF o con token de otra sesión → rechazados.
+- ZAP **activo y autenticado**.
+
+**Cierra cuando:** la compuerta completa está en verde y el informe `etapa-02.md` está escrito.
+
+#### Etapa 3 — Auditoría, tareas en segundo plano e i18n
+
+Pasos:
+1. Spec de la librería de cola de tareas; implementación con reintentos.
+2. Triggers de auditoría con antes y después; auditoría de lecturas desde la aplicación; particiones mensuales.
+3. Textos externalizados (`es-CO`), zona horaria por país, fechas en UTC.
+4. Generador de datos sintéticos.
+
+Pruebas específicas:
+- El rol de la aplicación no puede modificar ni borrar la auditoría, ni siquiera con SQL directo.
+- La auditoría de `lab-a` no es visible desde `lab-b`.
+- Una tarea que falla se reintenta y no se ejecuta dos veces; la cola no mezcla laboratorios.
+- Búsqueda automática de datos sintéticos de pacientes en los logs capturados durante las pruebas → cero coincidencias.
+
+**Cierra cuando:** la compuerta completa está en verde y el informe `etapa-03.md` está escrito.
+
+---
+
+### Bloque B — Admin Hub
+
+#### Etapa 4 — Alta de laboratorios y planes
+
+Pasos:
+1. Sub-aplicación `admin` por host; usuarios y roles de plataforma.
+2. Alta de laboratorio en una transacción: tenant, subdominio, configuración de país, sede inicial y administrador.
+3. Planes y activación de módulos por plan.
+
+Pruebas específicas:
+- El rol `lablinea_plataforma` no puede leer el esquema `lab` (prueba con SQL directo).
+- Un usuario de plataforma no puede iniciar sesión en el subdominio de un laboratorio, ni al revés.
+- Un alta que falla a mitad no deja nada creado.
+- Módulos no incluidos en el plan → 403 en el laboratorio.
+
+**Cierra cuando:** la compuerta completa está en verde y el informe `etapa-04.md` está escrito.
+
+#### Etapa 5 — Suscripciones, facturación manual y soporte
+
+Pasos:
+1. Ciclo de suscripción: vencimiento, suspensión y alertas de renovación.
+2. Facturas de la plataforma con pagos manuales y cálculo de saldo.
+3. Acceso de soporte: lo autoriza el laboratorio, con tiempo limitado y auditado.
+
+Pruebas específicas:
+- Una suscripción vencida bloquea órdenes nuevas, pero no la consulta de resultados ni la exportación.
+- El acceso de soporte vence solo y queda auditado; sin autorización → 403.
+- Pruebas con `hypothesis` del saldo de facturas con pagos parciales.
+
+**Cierra cuando:** la compuerta completa está en verde y el informe `etapa-05.md` está escrito.
+
+---
+
+### Bloque C — Tenant App
+
+#### Etapa 6 — Catálogo e importador de Lablinea
+
+Pasos:
+1. Exámenes, parámetros, unidades, listas de valores, técnicas, requisitos de muestra, tarifas, códigos CUPS.
+2. Rangos de referencia por sexo y edad en días, con rangos críticos.
+3. Importador de Lablinea con vista previa y marcado de rangos para revisión.
+
+Pruebas específicas:
+- El importador con archivos malformados, enormes o con codificaciones raras no se cae ni carga datos a medias.
+- Archivos que no corresponden (ejecutables renombrados) → rechazados.
+- Las exportaciones a CSV neutralizan fórmulas (inyección CSV).
+- Rangos solapados o con huecos → advertencia.
+
+**Cierra cuando:** la compuerta completa está en verde y el informe `etapa-06.md` está escrito.
+
+#### Etapa 7 — Pacientes y Ley 1581
+
+Pasos:
+1. Registro de pacientes con documento y país.
+2. Autorización de tratamiento de datos versionada; revocación.
+3. Derechos del titular: consultar, actualizar, rectificar y suprimir.
+
+Pruebas específicas:
+- Sin autorización vigente no se pueden crear órdenes ni procesar datos del paciente.
+- UUID de un paciente de `lab-b` usado en `lab-a` → 404 (IDOR).
+- Una supresión elimina o anonimiza según la spec y queda auditada.
+- Búsqueda de pacientes sin inyección SQL ni enumeración.
+
+**Cierra cuando:** la compuerta completa está en verde y el informe `etapa-07.md` está escrito.
+
+#### Etapa 8 — Órdenes y POS
+
+Pasos:
+1. Órdenes con estados `BORRADOR` → `PRE_CERRADA` → `PAGADA` / `ANULADA` y trigger de protección.
+2. Congelamiento de precios al pre-cerrar.
+3. Convenios con tope de descuento, autorización superior y evidencia.
+4. Paquetes con comparativo y desglose.
+
+Pruebas específicas:
+- Máquina de estados probada con `hypothesis`: ninguna secuencia de operaciones modifica una orden pre-cerrada.
+- Modificar precios por SQL directo en una orden pre-cerrada → el trigger lo impide.
+- Dos pre-cierres simultáneos de la misma orden → solo uno gana.
+- Evidencia: tipo y tamaño validados, sin ejecutables, en almacenamiento privado con URL firmada que vence.
+- Locust sobre el POS.
+
+**Cierra cuando:** la compuerta completa está en verde y el informe `etapa-08.md` está escrito.
+
+#### Etapa 9 — Caja
+
+Pasos:
+1. Apertura con base, pagos por forma de pago, abonos.
+2. Arqueo y cierre irreversible.
+
+Pruebas específicas:
+- Un cajero no puede abrir dos cajas; pagos en una caja cerrada → rechazados.
+- Cuadre con `hypothesis` (muchas combinaciones de pagos y abonos).
+- Pagos concurrentes sobre la misma orden no generan sobrepago.
+
+**Cierra cuando:** la compuerta completa está en verde y el informe `etapa-09.md` está escrito.
+
+#### Etapa 10 — Facturación electrónica I (DIAN)
+
+Pasos:
+1. Interfaz `FacturadorElectronico` y su implementación para Colombia.
+2. XML UBL 2.1, CUFE/CUDE, QR y firma con certificado de pruebas.
+3. Envío al **ambiente de habilitación de la DIAN**, con reintentos.
+4. Factura y documento equivalente POS.
+
+Pruebas específicas:
+- Los XML validan contra los esquemas del anexo técnico vigente.
+- El CUFE calculado coincide con los ejemplos oficiales.
+- El certificado nunca se lee desde la base ni queda en logs; en local, archivo fuera del repositorio con permisos 600.
+- Inyección XML (XXE) en cualquier dato que entre al XML → neutralizada.
+- Reenvío idempotente: un documento no se emite dos veces.
+
+**Cierra cuando:** la compuerta completa está en verde y el informe `etapa-10.md` está escrito.
+
+#### Etapa 11 — Facturación electrónica II
+
+Pasos:
+1. Notas crédito y débito.
+2. RIPS para aseguradoras.
+3. Rangos de numeración con alertas; asistente de habilitación.
+4. Facturas de la plataforma a los laboratorios.
+
+Pruebas específicas:
+- Set de pruebas de habilitación de la DIAN superado en el ambiente de pruebas.
+- RIPS válidos según el formato vigente.
+- Numeración agotada o vencida → bloqueo con aviso previo.
+
+**Cierra cuando:** la compuerta completa está en verde y el informe `etapa-11.md` está escrito.
+
+#### Etapa 12 — Muestras e impresión
+
+Pasos:
+1. Agrupación de tubos por tipo de muestra y tubo.
+2. Códigos de barras y estados de la muestra.
+3. Cola de toma por sede con htmx.
+4. ZPL y QZ Tray, con firma de las peticiones de impresión.
+
+Pruebas específicas:
+- Agrupación probada con `hypothesis`: nunca se supera la capacidad, un examen nunca se divide y nunca se mezclan tubos distintos.
+- **Inyección ZPL:** nombres con `^`, `~` y caracteres de control no alteran la etiqueta.
+- Solo órdenes `PAGADA` entran a la cola.
+- E2E de la cola de toma con dos estaciones simultáneas.
+
+**Cierra cuando:** la compuerta completa está en verde y el informe `etapa-12.md` está escrito.
+
+#### Etapa 13 — Resultados y validación
+
+Pasos:
+1. Ingreso de resultados con banderas y notas internas.
+2. Versiones de corrección y revalidación.
+3. Valores críticos con registro de comunicación.
+4. Validación por examen con tarjeta profesional.
+
+Pruebas específicas:
+- Resultados: `UPDATE` y `DELETE` imposibles por SQL directo con el rol de la aplicación.
+- Evaluación de rangos con `hypothesis` en los bordes de edad, sexo y límites.
+- Validar sin tarjeta profesional o sin permiso → rechazado.
+- Un valor crítico se notifica aunque la orden tenga saldo.
+
+**Cierra cuando:** la compuerta completa está en verde y el informe `etapa-13.md` está escrito.
+
+#### Etapa 14 — Informe PDF, portal y entrega
+
+Pasos:
+1. PDF con WeasyPrint, marca H/L opcional, hash SHA-256 y firma electrónica.
+2. Regla de liberación.
+3. Portal de pacientes y médicos con tendencias.
+4. Aviso por correo (SMTP local de captura).
+5. Mapeo a FHIR R4.
+
+Pruebas específicas:
+- **Fuga de datos internos:** el PDF, el portal y el correo se analizan automáticamente y no contienen banderas, notas internas ni colores de alerta.
+- **SSRF en el PDF:** una plantilla o un logo con URL externa → rechazado.
+- HTML inyectado en nombres u observaciones → escapado.
+- El correo capturado no contiene datos clínicos.
+- Portal: UUID de otra orden, de otro paciente o de otro laboratorio → 404.
+- JSON FHIR validado contra R4.
+- E2E completo: orden → pago → toma → resultado → validación → aviso → descarga en el portal.
+
+**Cierra cuando:** la compuerta completa está en verde y el informe `etapa-14.md` está escrito.
+
+---
+
+### Bloque D — Analítica y cierre del MVP
+
+#### Etapa 15 — Bodega analítica
+
+Pasos:
+1. El usuario cambia `wal_level` a `logical` en su PostgreSQL local y crea `lablinea_dw`.
+2. Publicación con lista de columnas sin datos personales; suscripción en la bodega.
+3. Staging, seudónimos de pacientes y modelo estrella ([infraestructura/0010](infraestructura/0010-analitica-bodega-datos.md)).
+
+Pruebas específicas:
+- **Guardián de la bodega:** recorre el catálogo y falla si aparece cualquier columna de nombre, documento, contacto o valor de resultado.
+- El seudónimo no se puede revertir sin la clave del laboratorio.
+- Una supresión del titular se propaga a la bodega.
+- Retraso medido entre una venta y su aparición en la bodega.
+
+**Cierra cuando:** la compuerta completa está en verde y el informe `etapa-15.md` está escrito.
+
+#### Etapa 16 — Datamarts
+
+Pasos:
+1. Datamarts de laboratorio (RLS), país y plataforma.
+2. Transformaciones incrementales cada pocos minutos.
+
+Pruebas específicas:
+- Guardián de RLS también en la bodega.
+- Los totales de los datamarts cuadran con la base transaccional (conciliación automática).
+- El datamart de plataforma solo contiene agregados.
+
+**Cierra cuando:** la compuerta completa está en verde y el informe `etapa-16.md` está escrito.
+
+#### Etapa 17 — Dashboard del laboratorio
+
+Pasos:
+1. Filtros cruzados, comparativos, mapa de calor, desglose por sección y examen, tiempos de respuesta.
+2. Alertas antifraude.
+3. Indicadores del día desde la base transaccional.
+
+Pruebas específicas:
+- Ningún filtro permite ver datos de otro laboratorio (parámetros manipulados).
+- Locust: p95 ≤ 300 ms con datos sintéticos de varios años.
+- E2E de los filtros con htmx.
+
+**Cierra cuando:** la compuerta completa está en verde y el informe `etapa-17.md` está escrito.
+
+#### Etapa 18 — Dashboard del Admin Hub
+
+Pasos:
+1. MRR/ARR, laboratorios activos y suspendidos, volumen por país.
+2. Salud del sistema.
+
+Pruebas específicas:
+- Desde el Admin Hub no se puede llegar a ningún dato a nivel de paciente.
+- Las métricas coinciden con los datos de facturación de la plataforma.
+
+**Cierra cuando:** la compuerta completa está en verde y el informe `etapa-18.md` está escrito.
+
+#### Etapa 19 — Cierre del MVP en local
+
+Pasos:
+1. Regresión completa y E2E de todos los flujos.
+2. Revisión contra **OWASP ASVS nivel 2**, punto por punto.
+3. ZAP activo completo sobre toda la aplicación, autenticado con cada rol.
+4. Prueba de carga combinada (POS + validación + dashboard).
+5. Respaldo y **restauración verificada** con `pg_dump` / `pg_restore`.
+6. Revisión del modelo de amenazas y prueba de penetración interna dirigida.
+
+**Cierra cuando:** cero hallazgos altos o medios abiertos y el informe `etapa-19.md` declara el MVP **listo para publicar**.
+
+---
+
+### Bloque E — Publicación (pendiente de decidir hosting)
+
+#### Etapa 20 — Publicación
+
+Comienza cuando se elija el hosting:
+1. Spec de hosting; BAA firmado.
+2. Entorno de staging en la nube.
+3. Pruebas que no se pueden hacer en local: configuración TLS real, WAF, reglas de red, secretos en el gestor de la nube, restauración en la nube.
+4. **Prueba de penetración externa por un tercero.**
+5. Piloto con un laboratorio.
 
 ---
 
@@ -483,6 +794,7 @@ from datetime import datetime
 class ParametroInforme:
     nombre: str
     valor: str                 # ya formateado; sin bandera ni nota interna
+    marca: str | None          # "H" o "L" solo si el laboratorio activó la marca; nunca la bandera interna
     unidad: str | None
     referencia: str | None     # rango aplicable a la edad y sexo del paciente
     es_titulo: bool = False
@@ -642,7 +954,7 @@ def generar_pdf(informe: InformeResultados, idioma: str = "es") -> tuple[bytes, 
         {% else %}
           <tr>
             <td>{{ p.nombre }}</td>
-            <td class="valor">{{ p.valor }}</td>
+            <td class="valor">{{ p.valor }}{% if p.marca %} <span class="marca">{{ p.marca }}</span>{% endif %}</td>
             <td>{{ p.unidad or "" }}</td>
             <td>{{ p.referencia or "" }}</td>
           </tr>
@@ -685,6 +997,7 @@ def generar_pdf(informe: InformeResultados, idioma: str = "es") -> tuple[bytes, 
 .resultados th { text-align: left; border-bottom: 1px solid var(--primario); }
 .resultados tr.titulo td { font-weight: bold; padding-top: .3cm; }
 .valor { font-weight: 600; }
+.marca { font-weight: 700; font-size: 8pt; }
 .correccion { color: #8a5a00; font-style: italic; }
 .validacion { font-size: 8.5pt; color: #333; }
 ```
@@ -701,7 +1014,8 @@ def generar_pdf(informe: InformeResultados, idioma: str = "es") -> tuple[bytes, 
 | `tenants.id` UUID | `tenant_id` legible + `uuid` público | [infraestructura/0007](infraestructura/0007-base-de-datos.md) |
 | TLS 1.3 | TLS 1.2 mínimo, 1.3 preferido | Compatibilidad con equipos antiguos de laboratorios |
 | Logs de actividad entre laboratorios en el Admin Hub | Solo metadatos y agregados, sin datos clínicos | [infraestructura/0005](infraestructura/0005-arquitectura-saas-multitenant.md) |
-| Pipeline de despliegue en la fase 4 | CI desde el Sprint 0; staging desde la fase 2 | Detectar fallos de aislamiento y despliegue temprano |
-| **Indicadores de estado y resaltado de rangos en el PDF** | **Pendiente de decisión** | Contradice [funcional/0004](funcional/0004-resultados-validacion-entrega.md) |
-| **Dashboard ejecutivo del laboratorio** | **Pendiente de decisión** | [funcional/0007](funcional/0007-alcance-mvp.md) lo deja fuera del MVP |
-| **Distribución de comisiones** en el Admin Hub | **Pendiente de definir** | No aparece en ninguna spec ni fuente |
+| Pipeline de despliegue en la fase 4 | CI desde la etapa 0; todo se prueba en local y la publicación es la etapa 20 | Decidido el 2026-10-12 ([infraestructura/0011](infraestructura/0011-calidad-pruebas-entorno-local.md)) |
+| Indicadores de estado y resaltado de rangos en el PDF | Marca `H`/`L` opcional por laboratorio; sin colores ni banderas internas | Decidido el 2026-10-12 ([funcional/0004](funcional/0004-resultados-validacion-entrega.md)) |
+| Dashboard ejecutivo del laboratorio | Dashboard interactivo completo en el MVP, sobre una bodega analítica separada | Decidido el 2026-10-12 ([funcional/0006](funcional/0006-gestion-inventarios-costos-dashboard.md), [infraestructura/0010](infraestructura/0010-analitica-bodega-datos.md)) |
+| Distribución de comisiones en el Admin Hub | No se construye por ahora | Decidido el 2026-10-12 |
+| Facturación e ISAs/aseguradoras | Facturación electrónica directa con la DIAN, con RIPS para aseguradoras | [infraestructura/0009](infraestructura/0009-facturacion-electronica.md) |

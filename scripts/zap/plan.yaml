@@ -1,0 +1,52 @@
+# Plan de escaneo externo con ZAP (Automation Framework), spec infraestructura/0011.
+# Lo ejecuta scripts/escaneo_externo.sh; las variables llegan por entorno.
+env:
+  contexts:
+    - name: lablinea
+      urls:
+        - ${ZAP_OBJETIVO}
+      includePaths:
+        - ${ZAP_OBJETIVO}.*
+  parameters:
+    failOnError: true
+    failOnWarning: false
+    progressToStdout: true
+
+jobs:
+  # Descubre los endpoints declarados en el esquema OpenAPI.
+  - type: openapi
+    parameters:
+      apiUrl: ${ZAP_OBJETIVO}/openapi.json
+      targetUrl: ${ZAP_OBJETIVO}
+      context: lablinea
+
+  # Descubre lo que no está en el esquema (páginas HTML, estáticos).
+  - type: spider
+    parameters:
+      context: lablinea
+      maxDuration: 3
+
+  - type: passiveScan-wait
+    parameters:
+      maxDuration: 5
+
+  # Ataques activos: inyecciones, XSS, path traversal, cabeceras, etc.
+  - type: activeScan
+    parameters:
+      context: lablinea
+      maxRuleDurationInMins: 3
+      maxScanDurationInMins: 30
+
+  - type: report
+    parameters:
+      template: traditional-json
+      reportDir: ${ZAP_REPORTES}
+      reportFile: zap-reporte
+    risks: [info, low, medium, high]
+
+  - type: report
+    parameters:
+      template: traditional-html
+      reportDir: ${ZAP_REPORTES}
+      reportFile: zap-reporte
+    risks: [info, low, medium, high]

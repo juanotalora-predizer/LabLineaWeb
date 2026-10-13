@@ -48,5 +48,6 @@ Registro con nombre comercial, NIT o identificador fiscal, país, contacto y est
 ## Consecuencias
 
 - En el MVP: laboratorios, licencias, suscripciones y facturación con registro manual de pagos. La pasarela automática va después del MVP ([0007](0007-alcance-mvp.md)).
-- **Pendiente:** las facturas de la plataforma a laboratorios colombianos deben ser **factura electrónica DIAN**; se necesita un proveedor tecnológico de facturación electrónica.
+- Las facturas de la plataforma a laboratorios colombianos se emiten como factura electrónica con la misma integración directa con la DIAN ([infraestructura/0009](../infraestructura/0009-facturacion-electronica.md)).
+- **Sin comisiones** en el Admin Hub por ahora (decidido el 2026-10-12).
 - **Pendiente:** elegir la pasarela de pagos para Colombia.

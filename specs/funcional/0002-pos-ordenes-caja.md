@@ -60,5 +60,5 @@ La recepción del laboratorio funciona como un punto de venta: registra al pacie
 ## Consecuencias
 
 - La toma de muestras depende del estado `PAGADA`.
-- **Pendiente:** en Colombia la venta a particulares exige factura electrónica o documento equivalente electrónico (DIAN). Hay que decidir si el LIS la emite (integración con proveedor tecnológico) o si el laboratorio usa su propio sistema de facturación.
+- **Facturación electrónica:** el LIS emite la factura o el documento equivalente POS electrónico de cada venta, integrado directamente con la DIAN en Colombia ([infraestructura/0009](../infraestructura/0009-facturacion-electronica.md)). Una orden pagada genera su documento electrónico.
 - Medios de pago y formas de copago son configuración por país ([infraestructura/0004](../infraestructura/0004-normativa-colombia-latam.md)).

@@ -2,7 +2,7 @@ from fastapi.testclient import TestClient
 
 from app.main import app
 
-client = TestClient(app)
+client = TestClient(app, base_url="http://lab-a.lablinea.localhost")
 
 
 def test_index_renderiza_plantilla():

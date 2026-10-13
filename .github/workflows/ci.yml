@@ -33,6 +33,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # gitleaks revisa todo el historial
 
       - uses: actions/setup-python@v5
         with:
@@ -56,5 +58,18 @@ jobs:
             -v owner_pw="$DB_OWNER_PASSWORD" -v app_pw="$DB_APP_PASSWORD" \
             -f scripts/crear_bd_local.sql
 
-      - name: Pruebas
-        run: pytest -q
+      - name: Instalar gitleaks (versión fija, verificada por checksum)
+        env:
+          VERSION: 8.30.1
+          SHA256: 551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb
+        run: |
+          curl -sSL -o gitleaks.tar.gz "https://github.com/gitleaks/gitleaks/releases/download/v${VERSION}/gitleaks_${VERSION}_linux_x64.tar.gz"
+          echo "${SHA256}  gitleaks.tar.gz" | sha256sum --check
+          tar -xzf gitleaks.tar.gz gitleaks
+          sudo mv gitleaks /usr/local/bin/
+          rm gitleaks.tar.gz
+
+      - name: Compuerta de calidad (ruff, bandit, pip-audit, gitleaks, migraciones, pruebas, cobertura)
+        env:
+          PY: python
+        run: scripts/verificar.sh

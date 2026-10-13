@@ -15,6 +15,8 @@ LabLineaWeb es un LIS en modalidad SaaS ([funcional/0001](../funcional/0001-prod
 - **Tenant = laboratorio cliente.** Un tenant puede tener varias **sedes**.
 - Cada tenant tiene un **país** fijo, del que salen su configuración regulatoria, idioma, zona horaria, terminologías y región de alojamiento.
 - Acceso por subdominio propio del tenant (p. ej. `<laboratorio>.<dominio>`). El tenant se resuelve en el servidor a partir del subdominio y la sesión, nunca a partir de un parámetro que envíe el cliente.
+- **Dominio (decidido el 2026-10-12):** `lablinea.cionetworks.com`. Laboratorios en `<laboratorio>.lablinea.cionetworks.com` y Admin Hub en `admin.lablinea.cionetworks.com`. Requiere DNS comodín (`*.lablinea.cionetworks.com`) y un certificado TLS comodín para ese nivel.
+- Como `cionetworks.com` aloja otros sitios, las cookies de sesión usan el prefijo `__Host-` (solo para el host exacto, sin atributo `Domain`): ningún otro sitio de `cionetworks.com` puede leerlas ni sobrescribirlas.
 
 ### Aislamiento de datos (doble barrera)
 

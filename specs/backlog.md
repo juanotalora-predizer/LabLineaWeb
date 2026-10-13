@@ -6,22 +6,19 @@ Formato: `- [ ] Descripción — prioridad (Alta/Media/Baja) — spec relacionad
 
 ## En curso
 
-- [ ] Sprint 1: tablas globales, roles `lablinea_plataforma` y `lablinea_metricas`, resolución de tenant por subdominio — Alta — [plan](plan-desarrollo.md)
+- [ ] **Etapa 0 — cerrar compuerta:** ruff, bandit, pip-audit, pytest-cov, hypothesis; gitleaks y mkcert; `scripts/verificar.sh` en local y CI; HTTPS local con subdominios `*.lablinea.localhost`; informe `etapas/etapa-00.md` — Alta — [0011](infraestructura/0011-calidad-pruebas-entorno-local.md)
+- [ ] Etapa 1: tablas globales, roles `lablinea_plataforma` y `lablinea_metricas`, resolución de tenant por subdominio — Alta — [plan](plan-desarrollo.md)
 
 ## Pendiente
 
 ### Decisiones por tomar
 
-- [ ] ¿Indicadores de estado o resaltado de valores fuera de rango en el PDF del paciente? (contradice funcional/0004) — Alta — [plan](plan-desarrollo.md)
-- [ ] ¿Dashboard operativo básico del laboratorio dentro del MVP? (funcional/0007 lo excluye) — Media — [plan](plan-desarrollo.md)
-- [ ] Definir qué es la "distribución de comisiones" del Admin Hub — Media — [plan](plan-desarrollo.md)
-- [ ] Elegir librería de cola de trabajos sobre PostgreSQL (spec antes del Sprint 3) — Media — [plan](plan-desarrollo.md)
-
-- [ ] Facturación electrónica DIAN de las ventas del POS: ¿la emite el LIS o el sistema propio del laboratorio? — Alta — [funcional/0002](funcional/0002-pos-ordenes-caja.md)
-- [ ] Definir hosting (PostgreSQL 16+ administrado, almacenamiento de objetos, correo; todos con cifrado y BAA; celdas regionales; país adecuado según la SIC) — Alta — [0003](infraestructura/0003-seguridad-hipaa.md), [0004](infraestructura/0004-normativa-colombia-latam.md), [0005](infraestructura/0005-arquitectura-saas-multitenant.md), [0007](infraestructura/0007-base-de-datos.md)
-- [ ] Definir dominio y esquema de subdominios por laboratorio — Media — [0005](infraestructura/0005-arquitectura-saas-multitenant.md)
+- [ ] **Hosting de la aplicación y las bases** (Bluehost queda descartado para datos de salud: no firma BAA y lo prohíbe en sus términos; el dominio y el DNS pueden seguir en Bluehost) — Media, antes de la etapa 20 (publicación); se construye y prueba en local hasta entonces — [0003](infraestructura/0003-seguridad-hipaa.md), [0007](infraestructura/0007-base-de-datos.md), [0010](infraestructura/0010-analitica-bodega-datos.md)
+- [ ] Aprobar la arquitectura analítica propuesta (bodega separada con replicación lógica) — Alta — [0010](infraestructura/0010-analitica-bodega-datos.md)
+- [ ] ¿Inventarios, equipos y costeo en el MVP? (sin ellos el dashboard no puede mostrar rentabilidad por costo real) — Media — [funcional/0006](funcional/0006-gestion-inventarios-costos-dashboard.md)
+- [ ] Elegir librería de cola de trabajos sobre PostgreSQL (spec en la etapa 3) — Media — [plan](plan-desarrollo.md)
 - [ ] Confirmar licencia de QZ Tray para impresión de etiquetas — Media — [funcional/0003](funcional/0003-muestras-impresion.md)
-- [ ] Proveedor de facturación electrónica DIAN para las facturas de la plataforma a los laboratorios — Media — [funcional/0005](funcional/0005-plataforma-saas-suscripciones.md)
+- [ ] Mecanismo de firma electrónica del informe PDF (Ley 527 de 1999) — Media — [funcional/0004](funcional/0004-resultados-validacion-entrega.md)
 
 ### Fase 1 — Base multi-tenant
 
@@ -57,6 +54,15 @@ Formato: `- [ ] Descripción — prioridad (Alta/Media/Baja) — spec relacionad
 - [ ] Sesiones de caja: apertura con base, pagos por forma de pago, abonos, arqueo y cierre — Alta — [funcional/0002](funcional/0002-pos-ordenes-caja.md)
 - [ ] Almacenamiento privado de archivos con URL firmada (evidencias) — Alta — [0007](infraestructura/0007-base-de-datos.md)
 
+### Facturación electrónica (etapas 10 y 11)
+
+- [ ] Interfaz `FacturadorElectronico` por país — Alta — [0009](infraestructura/0009-facturacion-electronica.md)
+- [ ] Colombia: UBL 2.1, CUFE/CUDE, QR, firma con certificado del laboratorio desde el gestor de secretos, envío a la DIAN con reintentos — Alta — [0009](infraestructura/0009-facturacion-electronica.md)
+- [ ] Factura electrónica, documento equivalente POS, notas crédito y débito — Alta — [0009](infraestructura/0009-facturacion-electronica.md)
+- [ ] RIPS para facturas a aseguradoras — Alta — [0009](infraestructura/0009-facturacion-electronica.md)
+- [ ] Rangos de numeración con alertas y asistente de habilitación del laboratorio — Media — [0009](infraestructura/0009-facturacion-electronica.md)
+- [ ] Facturas de la plataforma a los laboratorios con la misma integración — Media — [0009](infraestructura/0009-facturacion-electronica.md)
+
 ### Fase 4 — Muestras
 
 - [ ] Algoritmo de agrupación de tubos por tipo de muestra y tipo de tubo — Alta — [funcional/0003](funcional/0003-muestras-impresion.md)
@@ -70,17 +76,23 @@ Formato: `- [ ] Descripción — prioridad (Alta/Media/Baja) — spec relacionad
 - [ ] Resultados de solo inserción con versiones de corrección — Alta — [funcional/0004](funcional/0004-resultados-validacion-entrega.md), [0007](infraestructura/0007-base-de-datos.md)
 - [ ] Valores críticos: aviso inmediato y registro de comunicación, independiente de cartera — Alta — [funcional/0004](funcional/0004-resultados-validacion-entrega.md)
 - [ ] Validación por examen con tarjeta profesional — Alta — [funcional/0004](funcional/0004-resultados-validacion-entrega.md)
-- [ ] Informe PDF con WeasyPrint, personalizable por laboratorio, con hash SHA-256 — Alta — [funcional/0004](funcional/0004-resultados-validacion-entrega.md)
+- [ ] Informe PDF con WeasyPrint, personalizable por laboratorio, con marca H/L opcional y hash SHA-256 — Alta — [funcional/0004](funcional/0004-resultados-validacion-entrega.md)
 - [ ] Firma electrónica o digital del informe (Ley 527 de 1999) — Alta — [0004](infraestructura/0004-normativa-colombia-latam.md)
 - [ ] Regla de liberación (saldo cero o autorización de convenio) — Alta — [funcional/0004](funcional/0004-resultados-validacion-entrega.md)
 - [ ] Portal de pacientes y médicos con descarga del PDF y gráficas de tendencia — Alta — [funcional/0004](funcional/0004-resultados-validacion-entrega.md)
 - [ ] Aviso por correo sin datos clínicos con enlace al portal — Alta — [funcional/0004](funcional/0004-resultados-validacion-entrega.md)
 - [ ] Mapeo del modelo a recursos FHIR R4 con pruebas de validación — Media — [0002](infraestructura/0002-interoperabilidad-hl7-fhir.md)
 
+### Analítica y dashboards (etapas 15 a 18)
+
+- [ ] Instancia analítica, replicación lógica con columnas sin datos personales, seudónimos de pacientes — Alta — [0010](infraestructura/0010-analitica-bodega-datos.md)
+- [ ] Modelo estrella y datamarts de laboratorio (RLS), país y plataforma; transformaciones incrementales — Alta — [0010](infraestructura/0010-analitica-bodega-datos.md)
+- [ ] Dashboard interactivo del laboratorio (filtros, comparativos, mapa de calor, desglose, tiempos de respuesta, antifraude) — Alta — [funcional/0006](funcional/0006-gestion-inventarios-costos-dashboard.md)
+- [ ] Dashboard del Admin Hub (MRR/ARR, laboratorios, volumen por país, salud del sistema) — Alta — [funcional/0005](funcional/0005-plataforma-saas-suscripciones.md)
+
 ### Después del MVP
 
-- [ ] Inventarios, equipos, costeo por actividad y nómina ligera — [funcional/0006](funcional/0006-gestion-inventarios-costos-dashboard.md)
-- [ ] Dashboard gerencial y alertas antifraude — [funcional/0006](funcional/0006-gestion-inventarios-costos-dashboard.md)
+- [ ] Inventarios, equipos, costeo por actividad y nómina ligera (pendiente de decidir si entran al MVP) — [funcional/0006](funcional/0006-gestion-inventarios-costos-dashboard.md)
 - [ ] Pasarela de pagos del SaaS con webhooks firmados e idempotentes — [funcional/0005](funcional/0005-plataforma-saas-suscripciones.md)
 - [ ] API FHIR bajo `/fhir` con OAuth 2.0 / SMART on FHIR — [0002](infraestructura/0002-interoperabilidad-hl7-fhir.md)
 - [ ] Perfiles FHIR de la IHCE (MinSalud, Res. 866 de 2021) y códigos LOINC del catálogo — [0004](infraestructura/0004-normativa-colombia-latam.md)
@@ -94,13 +106,18 @@ Formato: `- [ ] Descripción — prioridad (Alta/Media/Baja) — spec relacionad
 
 ### Legal y organizacional
 
+- [ ] Asesoría tributaria: anexo técnico vigente de la DIAN, formato RIPS y si la plataforma debe habilitarse como proveedor tecnológico — Alta — [0009](infraestructura/0009-facturacion-electronica.md)
 - [ ] Asesoría legal: validar spec 0004, plazo de conservación, RNBD, país de hosting, dispositivo médico (INVIMA) y **retención de resultados por cartera** — Alta — [0004](infraestructura/0004-normativa-colombia-latam.md), [funcional/0004](funcional/0004-resultados-validacion-entrega.md)
 - [ ] Modelos de contrato con laboratorios: contrato de transmisión de datos (Ley 1581) y BAA (HIPAA) — Alta — [0003](infraestructura/0003-seguridad-hipaa.md), [0004](infraestructura/0004-normativa-colombia-latam.md)
 - [ ] Análisis de riesgos, políticas, oficial de seguridad, capacitación, notificación de brechas — Media — [0003](infraestructura/0003-seguridad-hipaa.md)
 
 ## Hecho
 
-- [x] Sprint 0: configuración por `.env`, conexión con tenant por transacción (`SET LOCAL`), Alembic con migración 0001 (esquemas `plataforma`, `global`, `lab`; función `lab.tenant_actual()`; permisos por defecto), guardián de RLS y CI con PostgreSQL 18 — 2026-10-12 — [0007](infraestructura/0007-base-de-datos.md)
+- [x] Decisión: construir y probar en local; publicación después. Plan paso a paso con compuerta de calidad por etapa — 2026-10-12 — [0011](infraestructura/0011-calidad-pruebas-entorno-local.md), [plan](plan-desarrollo.md)
+
+- [x] Decisiones: dominio `lablinea.cionetworks.com`, sin comisiones, facturación electrónica directa con la DIAN, marca H/L opcional en el PDF, dashboard completo en el MVP — 2026-10-12 — [0009](infraestructura/0009-facturacion-electronica.md), [0010](infraestructura/0010-analitica-bodega-datos.md)
+
+- [x] Etapa 0 (código; compuerta de calidad pendiente): configuración por `.env`, conexión con tenant por transacción (`SET LOCAL`), Alembic con migración 0001 (esquemas `plataforma`, `global`, `lab`; función `lab.tenant_actual()`; permisos por defecto), guardián de RLS y CI con PostgreSQL 18 — 2026-10-12 — [0007](infraestructura/0007-base-de-datos.md)
 - [x] Roles y bases locales creados (PostgreSQL 18.6) — 2026-10-12 — [0007](infraestructura/0007-base-de-datos.md)
 
 - [x] Fuentes de NotebookLM convertidas en specs: funcionales 0002 a 0007 e infraestructura 0007 y 0008; MVP definido — 2026-10-12 — [funcional/0007](funcional/0007-alcance-mvp.md)

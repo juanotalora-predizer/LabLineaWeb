@@ -7,3 +7,5 @@ __pycache__/
 # Datos reales de pacientes: nunca versionar
 Synlab_resultados.pdf
 .DS_Store
+certs/
+reportes/

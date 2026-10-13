@@ -54,9 +54,16 @@ Plantilla:
 
 - Plan de desarrollo ([plan-desarrollo.md](plan-desarrollo.md)): Tenant App y Admin Hub como dos sub-aplicaciones por host en un solo despliegue; 4 roles de base de datos; métricas del Admin Hub por agregados sin datos clínicos; 15 sprints en 4 fases; arquitectura de plantillas PDF.
 - Preparado `scripts/crear_bd_local.sql`, `.env.example` y `.env` local para PostgreSQL 18 (EDB).
+- **Decisiones del usuario:** dominio `lablinea.cionetworks.com` (laboratorios en `<lab>.lablinea.cionetworks.com`, cookies `__Host-`); sin comisiones en el Admin Hub; facturación electrónica directa con la DIAN y tercero por país si no hay API ([infraestructura/0009](infraestructura/0009-facturacion-electronica.md)); marca H/L opcional en el PDF; dashboard interactivo completo en el MVP.
+- Propuesta de bodega analítica separada con replicación lógica, datamarts de laboratorio (RLS), país y plataforma, y pacientes seudonimizados ([infraestructura/0010](infraestructura/0010-analitica-bodega-datos.md), pendiente de aprobación).
+- La hoja de ruta pasa de 15 a 20 sprints.
+- **Bluehost descartado como hosting de la aplicación:** no firma BAA y sus términos prohíben alojar información de salud protegida.
+
+- Comparación de costos Google Cloud vs Azure (≈ USD 575 vs 600–700/mes en producción; diferencia principal: WAF).
+- **Decisión:** construir y probar todo en local; el hosting se decide antes de publicar.
+- Plan reescrito como plan paso a paso de 21 etapas (0 a 20); ninguna etapa se cierra sin la compuerta de calidad funcional, de seguridad interna y externa, y su informe ([infraestructura/0011](infraestructura/0011-calidad-pruebas-entorno-local.md)). La etapa 0 queda abierta hasta pasar esa compuerta.
 
 **Bloqueos / pendientes**
-- Decidir facturación electrónica DIAN de las ventas del POS.
-- Decidir: banderas en el PDF, dashboard en el MVP, comisiones del Admin Hub.
-- Definir hosting.
+- Elegir hosting con BAA (antes de la etapa 20).
+- Aprobar la spec 0010 y decidir si inventarios y costeo entran al MVP.
 - Validar la spec 0004 con asesoría legal.

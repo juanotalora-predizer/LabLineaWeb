@@ -29,6 +29,7 @@ El resultado es el producto clínico del laboratorio. Debe evaluarse contra rang
 Al ingresar un valor, el sistema asigna una bandera: `NORMAL`, `BAJO`, `ALTO`, `CRITICO_BAJO`, `CRITICO_ALTO` o `ANORMAL` (texto distinto al esperado), y genera una **nota de alerta interna**.
 
 - **Las banderas y notas internas nunca se muestran al paciente** ni aparecen en el PDF o el correo. Solo las ve el personal del laboratorio.
+- *(Modificado el 2026-10-12)* **Marca H/L opcional en el informe:** cada laboratorio puede activar que el PDF y el portal muestren `H` o `L` junto a un valor **numérico** fuera de su rango de referencia. Los valores críticos se marcan igual (`H`/`L`), sin la palabra "crítico". Nunca se muestran la bandera interna, la nota interna ni colores de alerta. Desactivada por defecto.
 - Las banderas se mapean a `Observation.interpretation` de FHIR (L, H, LL, HH, A) para interoperabilidad con sistemas clínicos ([infraestructura/0002](../infraestructura/0002-interoperabilidad-hl7-fhir.md)).
 
 ### 4. Valores críticos
@@ -51,7 +52,7 @@ Un valor `CRITICO_*` dispara un aviso inmediato al validador. El laboratorio deb
 
 - Generado desde plantillas Jinja2 (mismo motor de la aplicación) con **WeasyPrint**.
 - Personalizable por laboratorio: logo, marca de agua, pie de página, firma del profesional.
-- Contiene: datos del paciente y la orden, cada parámetro con valor, unidad, rango de referencia aplicable a su edad y sexo, técnica, validador con tarjeta profesional, fecha y hora de validación, observaciones y notas aprobadas.
+- Contiene: datos del paciente y la orden, cada parámetro con valor (con marca H/L si el laboratorio la activó), unidad, rango de referencia aplicable a su edad y sexo, técnica, validador con tarjeta profesional, fecha y hora de validación, observaciones y notas aprobadas.
 - Hash SHA-256 del PDF guardado para verificar integridad ([infraestructura/0003](../infraestructura/0003-seguridad-hipaa.md)).
 - La imagen de la firma no basta como firma electrónica (Ley 527 de 1999): el mecanismo de firma electrónica se define en la tarea correspondiente ([infraestructura/0004](../infraestructura/0004-normativa-colombia-latam.md)).
 

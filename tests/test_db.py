@@ -11,9 +11,7 @@ pytestmark = pytest.mark.anyio
 async def test_rol_app_no_es_superusuario_ni_salta_rls(engine_app):
     async with engine_app.connect() as conn:
         fila = (
-            await conn.execute(
-                text("SELECT rolsuper, rolbypassrls FROM pg_roles WHERE rolname = current_user")
-            )
+            await conn.execute(text("SELECT rolsuper, rolbypassrls FROM pg_roles WHERE rolname = current_user"))
         ).one()
     assert fila.rolsuper is False
     assert fila.rolbypassrls is False

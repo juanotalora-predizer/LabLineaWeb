@@ -8,6 +8,7 @@ Registro de decisiones del proyecto LabLineaWeb.
 - [funcional/](funcional/): funcionalidades, flujos de usuario, reglas de negocio.
 - [fuentes/](fuentes/): documentos originales de la descripción funcional (exportados de NotebookLM).
 - [plan-desarrollo.md](plan-desarrollo.md): arquitectura, esquema de base de datos, estructura del proyecto y hoja de ruta por sprints.
+- [etapas/](etapas/): informes de cierre de cada etapa, con la evidencia de sus pruebas.
 - [backlog.md](backlog.md): tareas en curso, pendientes y hechas.
 - [daily.md](daily.md): bitácora diaria de avances y decisiones.
 
@@ -31,6 +32,9 @@ Registro de decisiones del proyecto LabLineaWeb.
 | 0006 | [Integración con sistemas clínicos y equipos](infraestructura/0006-integracion-his-equipos.md) | Aceptada | 2026-10-12 |
 | 0007 | [Base de datos: PostgreSQL con RLS](infraestructura/0007-base-de-datos.md) | Aceptada | 2026-10-12 |
 | 0008 | [Autenticación y autorización](infraestructura/0008-autenticacion-autorizacion.md) | Aceptada | 2026-10-12 |
+| 0009 | [Facturación electrónica por país](infraestructura/0009-facturacion-electronica.md) | Aceptada | 2026-10-12 |
+| 0010 | [Analítica: bodega de datos separada](infraestructura/0010-analitica-bodega-datos.md) | Propuesta | 2026-10-12 |
+| 0011 | [Calidad, pruebas y entorno local](infraestructura/0011-calidad-pruebas-entorno-local.md) | Aceptada | 2026-10-12 |
 
 ### Funcional
 
@@ -41,5 +45,5 @@ Registro de decisiones del proyecto LabLineaWeb.
 | 0003 | [Muestras, códigos de barras e impresión](funcional/0003-muestras-impresion.md) | Aceptada | 2026-10-12 |
 | 0004 | [Resultados: referencias, validación y entrega](funcional/0004-resultados-validacion-entrega.md) | Aceptada | 2026-10-12 |
 | 0005 | [Plataforma SaaS: laboratorios, licencias y facturación](funcional/0005-plataforma-saas-suscripciones.md) | Aceptada | 2026-10-12 |
-| 0006 | [Gestión: inventarios, costeo y dashboard](funcional/0006-gestion-inventarios-costos-dashboard.md) | Aceptada (fuera del MVP) | 2026-10-12 |
+| 0006 | [Gestión: inventarios, costeo y dashboard](funcional/0006-gestion-inventarios-costos-dashboard.md) | Aceptada (dashboard en el MVP) | 2026-10-12 |
 | 0007 | [Alcance del MVP](funcional/0007-alcance-mvp.md) | Aceptada | 2026-10-12 |

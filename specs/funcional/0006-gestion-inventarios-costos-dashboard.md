@@ -1,13 +1,13 @@
 # 0006. Gestión: inventarios, costeo y dashboard
 
-- **Estado:** Aceptada (fuera del MVP)
+- **Estado:** Aceptada. *(Modificado el 2026-10-12: el dashboard completo entra al MVP; inventarios, equipos y costeo siguen pendientes de decisión.)*
 - **Fecha:** 2026-10-12
 - **Responsable:** Juan Otálora
 - **Fuentes:** [12 Costos de exámenes](../fuentes/), [13 Dashboard](../fuentes/), [24 Inventarios y costeo](../fuentes/)
 
 ## Contexto
 
-Los laboratorios necesitan saber qué exámenes y convenios les dejan margen, detectar fugas de dinero y controlar sus insumos. Corresponde a la fase 6 del plan de desarrollo (fuente 21), que queda **después del MVP** ([0007](0007-alcance-mvp.md)).
+Los laboratorios necesitan saber qué exámenes y convenios les dejan margen, detectar fugas de dinero y controlar sus insumos. Corresponde a la fase 6 del plan de desarrollo (fuente 21). **El dashboard completo (sección 4) entra al MVP**, alimentado por una bodega de datos separada ([infraestructura/0010](../infraestructura/0010-analitica-bodega-datos.md)). Los indicadores de rentabilidad por costo real dependen de inventarios y costeo (secciones 1 a 3).
 
 ## Decisión
 

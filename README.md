@@ -35,4 +35,21 @@ alembic upgrade head                          # base de desarrollo
 alembic -x base=lablinea_test upgrade head    # base de prueba (pytest lo hace solo)
 ```
 
+### Calidad y seguridad (spec infraestructura/0011)
+
+Herramientas del sistema (una vez): `brew install gitleaks mkcert openjdk@21` y OWASP ZAP multiplataforma en `~/herramientas/ZAP_2.17.0` (el cask de Homebrew está deshabilitado).
+
+```bash
+scripts/verificar.sh          # ruff, bandit, pip-audit, gitleaks, migraciones, pruebas y cobertura (antes de cada commit)
+scripts/servidor_https.sh     # https://lab-a.lablinea.localhost:8443 (también lab-b y admin)
+scripts/escaneo_externo.sh    # OWASP ZAP pasivo + activo contra el servidor HTTPS local
+```
+
+Certificados locales (una vez; `mkcert -install` hace que el navegador confíe en ellos):
+
+```bash
+mkcert -cert-file certs/local.pem -key-file certs/local-key.pem \
+  lab-a.lablinea.localhost lab-b.lablinea.localhost admin.lablinea.localhost localhost 127.0.0.1 ::1
+```
+
 Las decisiones del proyecto se documentan en [specs/](specs/).

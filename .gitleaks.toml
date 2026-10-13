@@ -1,0 +1,14 @@
+# Reglas por defecto de gitleaks, más excepciones para archivos locales que git ignora.
+# El .env contiene las contraseñas de desarrollo y nunca se versiona (.gitignore);
+# el escaneo del historial (gitleaks git) sigue verificando que no se haya subido.
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Archivos locales ignorados por git"
+paths = [
+    '''(^|/)\.env$''',
+    '''(^|/)\.venv/''',
+    '''(^|/)certs/''',
+]
