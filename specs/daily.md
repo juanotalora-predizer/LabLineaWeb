@@ -22,7 +22,7 @@ Plantilla:
 ## 2026-10-13
 
 **Avances**
-- **Etapa 4** construida y con la compuerta local en verde ([informe](etapas/etapa-04.md)); falta subirla y que pase la CI.
+- **Etapa 4 cerrada** ([informe](etapas/etapa-04.md)): commit `14bc0d3`, CI verde.
   - Admin Hub en `admin.<dominio>` con su propio esquema, rol de base de datos, usuarios, roles y auditoría; mismo código de ingreso que los laboratorios (el `search_path` de la transacción decide el esquema).
   - Alta de laboratorio atómica (laboratorio, sede, roles, administrador e invitación); el administrador crea su propia contraseña con un enlace de un solo uso.
   - Planes con módulos y máximo de usuarios; fuera del plan, 403 y fuera del menú.
@@ -43,7 +43,6 @@ Plantilla:
 - Las particiones de la auditoría se crean sin privilegios para la aplicación: consultadas directamente no aplican el RLS de la tabla madre.
 
 **Bloqueos / pendientes**
-- Commit, push y CI de la etapa 4 (a la espera de autorización del usuario).
 - Riesgo bajo documentado: el token de invitación queda en la URL (un solo uso, 72 horas); en la etapa 20 el log del proxy no debe guardar esa ruta.
 - Hallazgo: la configuración de logs de Alembic deshabilitaba los loggers de la aplicación durante las pruebas, así que las pruebas de logs de la etapa 2 no veían nada. Corregido; ahora las pruebas exigen que haya registros.
 

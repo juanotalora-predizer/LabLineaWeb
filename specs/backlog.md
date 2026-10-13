@@ -6,7 +6,7 @@ Formato: `- [ ] Descripción — prioridad (Alta/Media/Baja) — spec relacionad
 
 ## En curso
 
-- [ ] Etapa 4: compuerta local en verde; falta commit, push y CI verde para cerrarla — Alta — [informe](etapas/etapa-04.md)
+- [ ] Etapa 5: suscripciones, facturación manual de la plataforma y acceso de soporte — Alta — [plan](plan-desarrollo.md)
 
 ## Pendiente
 
@@ -112,7 +112,7 @@ Formato: `- [ ] Descripción — prioridad (Alta/Media/Baja) — spec relacionad
 
 ## Hecho
 
-- [x] Etapa 4 (compuerta local): Admin Hub con ingreso propio y TOTP, roles de plataforma, alta atómica de laboratorios con invitación al administrador, planes con módulos y máximo de usuarios, invitar y desactivar usuarios del laboratorio; 435 pruebas, cobertura 99,5%, ZAP sin hallazgos en los dos sitios, 14/14 pruebas manuales — 2026-10-13 — [informe](etapas/etapa-04.md)
+- [x] **Etapa 4 cerrada** (CI verde, commit `14bc0d3`): Admin Hub con ingreso propio y TOTP, roles de plataforma, alta atómica de laboratorios con invitación al administrador, planes con módulos y máximo de usuarios, invitar y desactivar usuarios del laboratorio; 435 pruebas, cobertura 99,5%, ZAP sin hallazgos en los dos sitios, 14/14 pruebas manuales — 2026-10-13 — [informe](etapas/etapa-04.md)
 
 - [x] **Etapa 3 cerrada** (CI verde, commit `77a82ea`): auditoría particionada de solo inserción con antes y después, lecturas y accesos denegados auditados; cola de tareas propia sobre PostgreSQL con reintentos y ejecución única; textos externalizados `es-CO` y fechas en UTC; generador de datos sintéticos; 305 pruebas, cobertura 99,3%, ZAP sin hallazgos, 11/11 pruebas manuales — 2026-10-13 — [informe](etapas/etapa-03.md), [0012](infraestructura/0012-cola-de-tareas.md), [0013](infraestructura/0013-textos-externalizados-i18n.md)
 

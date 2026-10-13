@@ -1,9 +1,9 @@
 # Informe de cierre — Etapa 4: Alta de laboratorios y planes (Admin Hub)
 
-- **Fecha de cierre:** 2026-10-13 (pendiente de la CI)
-- **Commit verificado:** pendiente
-- **CI:** pendiente: se ejecuta al subir los cambios
-- **Estado:** Abierta. Toda la compuerta local está en verde; falta que la CI pase después del push (criterio 1)
+- **Fecha de cierre:** 2026-10-13
+- **Commit verificado:** `14bc0d3`
+- **CI:** ejecución [38473620997](https://github.com/juanotalora-predizer/LabLineaWeb/actions/runs/38473620997), exitosa (incluye las pruebas en Chromium)
+- **Estado:** Cerrada
 
 ## Alcance entregado
 
@@ -36,7 +36,7 @@ Detalle en las secciones "Implementación (etapa 4)" de [funcional/0005](../func
 
 | # | Criterio | Resultado | Evidencia |
 |---|----------|-----------|-----------|
-| 1 | Pruebas en verde (local y CI) | ⏳ local ✅, CI pendiente | 435 pruebas (129 nuevas) con `scripts/verificar.sh` |
+| 1 | Pruebas en verde (local y CI) | ✅ | 435 pruebas (129 nuevas), local y CI |
 | 2 | Cobertura ≥ 85% | ✅ | 99,5% de líneas y ramas |
 | 3 | E2E de flujos nuevos | ✅ | Chromium, servidor HTTPS real: ingreso al Admin Hub con TOTP → alta del laboratorio → invitación (trabajador) → activación en el nuevo subdominio → ingreso con código por correo → inscripción de TOTP → lista de usuarios solo del laboratorio. Los 5 flujos anteriores siguen en verde |
 | 4 | Migraciones upgrade/downgrade | ✅ | 0005 sube y baja en limpio, también con datos (usuarios invitados sin contraseña) |
