@@ -1,4 +1,6 @@
 import asyncio
+import contextlib
+import logging
 import os
 from concurrent.futures import ThreadPoolExecutor
 
@@ -24,6 +26,7 @@ from app.auth import repositorio  # noqa: E402
 from app.auth.roles_sistema import ROLES, crear_roles_sistema  # noqa: E402
 from app.core import correo, db  # noqa: E402
 from app.core.config import get_settings  # noqa: E402
+from scripts.sinteticos import generar_personas  # noqa: E402
 
 RAIZ = Path(__file__).resolve().parent.parent
 
@@ -73,6 +76,10 @@ USUARIOS = [
     # Mismo correo en dos laboratorios: son cuentas distintas.
     ("lab_b", "paciente@lab-a.test", "Paciente A en B", "PACIENTE", (), None, False),
 ]
+# Pacientes sintéticos (scripts/sinteticos.py), usuarios del portal en lab_a. Sus identificadores no
+# pueden aparecer en ningún log de la corrida (ver pytest_sessionfinish).
+PACIENTES_SINTETICOS = generar_personas(6, semilla=2026, tipos_documento=("CC", "TI", "CE", "RC"))
+
 # Un secreto TOTP por usuario sintético con app autenticadora.
 SECRETOS_TOTP = {(lab, email): pyotp.random_base32() for lab, email, *_, totp in USUARIOS if totp}
 
@@ -120,6 +127,11 @@ async def _sembrar_usuarios() -> None:
                     usuario = await repositorio.buscar_usuario(sesion, usuario_id)
                     await repositorio.guardar_totp(sesion, usuario, SECRETOS_TOTP[(lab, email)])
                     await repositorio.confirmar_totp(sesion, usuario_id, 0)
+            if tenant_id == "lab_a":
+                for persona in PACIENTES_SINTETICOS:
+                    await repositorio.crear_usuario(
+                        sesion, email=persona.email, nombre=persona.nombre_completo, tipo="PACIENTE", clave=CLAVE
+                    )
 
         await ejecutar_en_tenant("app", tenant_id, sembrar)
 
@@ -130,6 +142,7 @@ def base_de_prueba_migrada():
     settings = get_settings()
     cfg = Config(str(RAIZ / "alembic.ini"), cmd_opts=Namespace(x=[f"base={settings.db_name_test}"]))
     command.upgrade(cfg, "head")
+    instalar_colector_de_logs()
     asyncio.run(_sembrar_laboratorios())
     asyncio.run(_sembrar_usuarios())
 
@@ -175,7 +188,53 @@ def buzon(monkeypatch):
     return mensajes
 
 
-__all__ = ["CLAVE", "ROLES", "SECRETOS_TOTP", "USUARIOS"]
+# --- Datos de pacientes en los logs (spec infraestructura/0011, criterio 8) ---
+
+
+class _ColectorDeLogs(logging.Handler):
+    """Guarda todo lo que se registra durante la corrida, incluidas las trazas de excepciones."""
+
+    def __init__(self) -> None:
+        super().__init__(logging.DEBUG)
+        self.textos: list[str] = []
+
+    def emit(self, registro: logging.LogRecord) -> None:
+        # Un registro mal formado no debe romper la corrida.
+        with contextlib.suppress(Exception):
+            self.textos.append(self.format(registro))
+
+
+COLECTOR_DE_LOGS = _ColectorDeLogs()
+
+
+def instalar_colector_de_logs() -> None:
+    """Idempotente. Se repite después de migrar: la configuración de logs de Alembic reemplaza la raíz."""
+    raiz = logging.getLogger()
+    if COLECTOR_DE_LOGS not in raiz.handlers:
+        raiz.addHandler(COLECTOR_DE_LOGS)
+    raiz.setLevel(logging.DEBUG)
+
+
+def pytest_configure(config):
+    instalar_colector_de_logs()
+
+
+def identificadores_en_logs(textos: list[str]) -> list[str]:
+    todo = "\n".join(textos)
+    return sorted({v for p in PACIENTES_SINTETICOS for v in p.identificadores() if v in todo})
+
+
+def pytest_sessionfinish(session, exitstatus):
+    """Búsqueda automática: ningún identificador de paciente sintético en los logs de toda la corrida."""
+    encontrados = identificadores_en_logs(COLECTOR_DE_LOGS.textos)
+    if encontrados:
+        reporte = session.config.pluginmanager.get_plugin("terminalreporter")
+        if reporte:
+            reporte.write_line(f"FALLA: datos de pacientes sintéticos en los logs: {encontrados}", red=True)
+        session.exitstatus = pytest.ExitCode.TESTS_FAILED
+
+
+__all__ = ["CLAVE", "PACIENTES_SINTETICOS", "ROLES", "SECRETOS_TOTP", "USUARIOS"]
 
 
 @pytest.fixture
@@ -191,7 +250,9 @@ async def engine_app():
     conexión, que es justo el caso en que un tenant podría filtrarse.
     """
     settings = get_settings()
-    engine = create_async_engine(settings.url_app(settings.db_name_test), pool_size=1, max_overflow=0)
+    engine = create_async_engine(
+        settings.url_app(settings.db_name_test), pool_size=1, max_overflow=0, connect_args=db.CONEXION_UTC
+    )
     db.configurar(engine)
     yield engine
     await db.cerrar()

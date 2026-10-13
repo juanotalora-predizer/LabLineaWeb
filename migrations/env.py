@@ -19,7 +19,9 @@ from app.core.config import get_settings
 config = context.config
 
 if config.config_file_name is not None:
-    fileConfig(config.config_file_name)
+    # Sin deshabilitar los loggers ya creados: cuando las pruebas migran, los de la aplicación
+    # deben seguir registrando (la suite verifica que no lleven datos de pacientes).
+    fileConfig(config.config_file_name, disable_existing_loggers=False)
 
 # Sin autogenerate: las migraciones se escriben a mano para controlar RLS, permisos y triggers.
 target_metadata = None

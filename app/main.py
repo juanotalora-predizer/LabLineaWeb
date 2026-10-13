@@ -5,12 +5,13 @@ from fastapi import Depends, FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import HTMLResponse, PlainTextResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from app.auth.rutas import router as rutas_auth
 from app.auth.web import InscripcionTotpPendiente, NoAutenticado, SegundoFactorPendiente
 from app.core.config import get_settings
+from app.core.i18n import t
+from app.core.plantillas import templates
 from app.core.seguridad import CabecerasSeguridad
 from app.core.tenancy import Laboratorio, ResolverLaboratorio, laboratorio_actual
 
@@ -36,7 +37,6 @@ app.add_middleware(
 )
 app.add_middleware(CabecerasSeguridad)
 app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
-templates = Jinja2Templates(directory=BASE_DIR / "templates")
 app.include_router(rutas_auth)
 
 
@@ -58,14 +58,12 @@ async def _inscripcion_totp(request: Request, _exc: InscripcionTotpPendiente):
 @app.exception_handler(RequestValidationError)
 async def _validacion(request: Request, _exc: RequestValidationError):
     # El manejador por defecto devuelve el valor recibido (podría ser una contraseña): respuesta genérica.
-    return PlainTextResponse("Solicitud inválida", status_code=400)
+    return PlainTextResponse(t("error.solicitud_invalida"), status_code=400)
 
 
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request, laboratorio: Annotated[Laboratorio, Depends(laboratorio_actual)]):
-    return templates.TemplateResponse(
-        request, "index.html", {"titulo": "Laboratorio en Línea", "laboratorio": laboratorio}
-    )
+    return templates.TemplateResponse(request, "index.html", {"laboratorio": laboratorio})
 
 
 @app.get("/health")

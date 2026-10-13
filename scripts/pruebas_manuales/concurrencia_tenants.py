@@ -32,7 +32,8 @@ async def main() -> None:
     async with httpx.AsyncClient(verify=contexto, timeout=20) as cliente:
 
         async def una(i: int) -> None:
-            sub = random.choice(["lab-a", "lab-b", "no-existe"])  # noqa: S311  # nosec B311 - solo mezcla peticiones
+            # Azar solo para mezclar peticiones; no es criptografía.
+            sub = random.choice(["lab-a", "lab-b", "no-existe"])  # noqa: S311  # nosec B311
             async with limite:
                 inicio = time.perf_counter()
                 r = await cliente.get(f"https://{sub}.lablinea.localhost:8443/")

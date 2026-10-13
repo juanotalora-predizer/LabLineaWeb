@@ -35,6 +35,8 @@ Registro de decisiones del proyecto LabLineaWeb.
 | 0009 | [Facturación electrónica por país](infraestructura/0009-facturacion-electronica.md) | Aceptada | 2026-10-12 |
 | 0010 | [Analítica: bodega de datos separada](infraestructura/0010-analitica-bodega-datos.md) | Propuesta | 2026-10-12 |
 | 0011 | [Calidad, pruebas y entorno local](infraestructura/0011-calidad-pruebas-entorno-local.md) | Aceptada | 2026-10-12 |
+| 0012 | [Cola de tareas en segundo plano sobre PostgreSQL](infraestructura/0012-cola-de-tareas.md) | Aceptada | 2026-10-13 |
+| 0013 | [Textos externalizados (i18n) y fechas locales](infraestructura/0013-textos-externalizados-i18n.md) | Aceptada | 2026-10-13 |
 
 ### Funcional
 

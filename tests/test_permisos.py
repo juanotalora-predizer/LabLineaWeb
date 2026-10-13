@@ -3,7 +3,7 @@
 import asyncio
 
 import pytest
-from fastapi import HTTPException
+from fastapi import HTTPException, Request
 from sqlalchemy import text
 from sqlalchemy.exc import DBAPIError
 
@@ -11,6 +11,7 @@ from app.auth import repositorio
 from app.auth.repositorio import Permisos, Usuario
 from app.auth.roles_sistema import ROLES
 from app.auth.web import SesionActiva, requiere_accion, requiere_permiso
+from app.core.tenancy import Laboratorio
 from tests.ayudas import autenticar, cliente
 from tests.conftest import USUARIOS, ejecutar_en_tenant
 
@@ -63,6 +64,14 @@ def _activa(roles=(), modulos=None, acciones=(), tarjeta=None) -> SesionActiva:
     return SesionActiva(1, usuario, Permisos(tuple(roles), modulos or {}, frozenset(acciones)), True)
 
 
+LAB_A = Laboratorio("lab_a", "Laboratorio A Sintético", "COL", "ACTIVO", "America/Bogota", "es-CO", "COP")
+
+
+def _peticion() -> Request:
+    """Petición mínima del laboratorio A: la dependencia la usa para auditar el acceso denegado."""
+    return Request({"type": "http", "headers": [], "client": ("127.0.0.1", 1), "state": {"laboratorio": LAB_A}})
+
+
 @pytest.mark.anyio
 @pytest.mark.parametrize(
     ("activa", "permitido"),
@@ -76,10 +85,10 @@ def _activa(roles=(), modulos=None, acciones=(), tarjeta=None) -> SesionActiva:
 async def test_validar_resultados_exige_accion_y_tarjeta_profesional(activa, permitido):
     dependencia = requiere_accion("VALIDAR_RESULTADOS")
     if permitido:
-        assert await dependencia(activa) is activa
+        assert await dependencia(_peticion(), activa) is activa
     else:
         with pytest.raises(HTTPException) as error:
-            await dependencia(activa)
+            await dependencia(_peticion(), activa)
         assert error.value.status_code == 403
 
 
@@ -89,17 +98,17 @@ async def test_requiere_permiso_por_operacion(operacion):
     activa = _activa(modulos={"pacientes": frozenset({"consultar"})})
     dependencia = requiere_permiso("pacientes", operacion)
     if operacion == "consultar":
-        assert await dependencia(activa) is activa
+        assert await dependencia(_peticion(), activa) is activa
     else:
         with pytest.raises(HTTPException):
-            await dependencia(activa)
+            await dependencia(_peticion(), activa)
 
 
 @pytest.mark.anyio
 async def test_otros_modulos_no_heredan_permisos():
     activa = _activa(modulos={"pacientes": frozenset({"consultar", "crear", "modificar", "eliminar"})})
     with pytest.raises(HTTPException):
-        await requiere_permiso("resultados", "consultar")(activa)
+        await requiere_permiso("resultados", "consultar")(_peticion(), activa)
 
 
 # --- Eventos de seguridad: solo inserción ---
@@ -145,4 +154,6 @@ async def test_usuarios_de_otro_laboratorio_invisibles_con_rls(engine_app):
                         " VALUES ('lab_b', 'intruso@lab-b.test', 'Intruso', 'PERSONAL', '$argon2id$x')"
                     )
                 )
-    assert correos and all(c.endswith("@lab-a.test") for c in correos)
+    # Solo correos de lab_a (personal @lab-a.test y pacientes sintéticos); ninguno exclusivo de lab_b.
+    assert correos and all(c.endswith(("@lab-a.test", "@sintetico.test")) for c in correos)
+    assert not {"admin@lab-b.test", "paciente@lab-b.test"} & set(correos)

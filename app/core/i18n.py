@@ -1,0 +1,106 @@
+"""Textos externalizados y fechas locales (specs infraestructura/0004 y 0013).
+
+- Los textos viven en app/locales/<idioma>.toml (p. ej. es-CO.toml), nunca en el HTML ni en el
+  código. Se buscan en el idioma del laboratorio, luego en el idioma base ("es") y por último en
+  el idioma por defecto. Una clave inexistente es un error: las pruebas lo detectan.
+- Las fechas se guardan en UTC y solo se convierten a la zona del laboratorio al mostrarlas.
+"""
+
+import re
+import tomllib
+from datetime import datetime
+from functools import lru_cache
+from pathlib import Path
+from zoneinfo import ZoneInfo
+
+from jinja2 import Environment, pass_context
+
+CARPETA = Path(__file__).resolve().parent.parent / "locales"
+IDIOMA_POR_DEFECTO = "es-CO"
+ZONA_POR_DEFECTO = "UTC"
+_IDIOMA = re.compile(r"^[a-z]{2}(-[A-Z]{2})?$")
+
+
+class TextoNoEncontrado(KeyError):
+    """La clave no existe en ningún catálogo de la cadena de idiomas."""
+
+
+def _aplanar(datos: dict, prefijo: str = "") -> dict[str, str]:
+    plano: dict[str, str] = {}
+    for clave, valor in datos.items():
+        ruta = f"{prefijo}{clave}"
+        if isinstance(valor, dict):
+            plano.update(_aplanar(valor, ruta + "."))
+        else:
+            plano[ruta] = str(valor)
+    return plano
+
+
+@lru_cache
+def catalogo(idioma: str) -> dict[str, str]:
+    """Textos de un idioma; vacío si no existe el archivo (o el código de idioma no es válido)."""
+    if not _IDIOMA.match(idioma):
+        return {}
+    archivo = CARPETA / f"{idioma}.toml"
+    if not archivo.is_file():
+        return {}
+    with archivo.open("rb") as f:
+        return _aplanar(tomllib.load(f))
+
+
+def cadena_de_idiomas(idioma: str | None) -> list[str]:
+    cadena = []
+    for candidato in (idioma, (idioma or "").split("-")[0], IDIOMA_POR_DEFECTO):
+        if candidato and candidato not in cadena:
+            cadena.append(candidato)
+    return cadena
+
+
+def t(clave: str, idioma: str | None = None, **parametros: object) -> str:
+    """Texto de `clave` en `idioma`, con los marcadores {nombre} reemplazados por los parámetros."""
+    for candidato in cadena_de_idiomas(idioma):
+        texto = catalogo(candidato).get(clave)
+        if texto is not None:
+            return texto.format(**parametros) if parametros else texto
+    raise TextoNoEncontrado(clave)
+
+
+def fecha_local(
+    valor: datetime, zona: str = ZONA_POR_DEFECTO, idioma: str | None = None, formato: str = "fecha_hora"
+) -> str:
+    """Muestra un instante (con zona, normalmente UTC desde la base) en la zona local."""
+    if valor.tzinfo is None:
+        raise ValueError("fecha sin zona horaria: en la base todo instante es TIMESTAMPTZ")
+    return valor.astimezone(ZoneInfo(zona)).strftime(t(f"formato.{formato}", idioma))
+
+
+# --- Plantillas ---
+
+
+def _laboratorio(contexto) -> object | None:
+    return contexto.get("laboratorio")
+
+
+@pass_context
+def _t_plantilla(contexto, clave: str, **parametros: object) -> str:
+    laboratorio = _laboratorio(contexto)
+    return t(clave, getattr(laboratorio, "idioma", None), **parametros)
+
+
+@pass_context
+def _idioma_plantilla(contexto) -> str:
+    return getattr(_laboratorio(contexto), "idioma", None) or IDIOMA_POR_DEFECTO
+
+
+@pass_context
+def _fecha_plantilla(contexto, valor: datetime, formato: str = "fecha_hora") -> str:
+    laboratorio = _laboratorio(contexto)
+    zona = getattr(laboratorio, "zona_horaria", None) or ZONA_POR_DEFECTO
+    return fecha_local(valor, zona, getattr(laboratorio, "idioma", None), formato)
+
+
+def configurar_plantillas(entorno: Environment) -> None:
+    """Expone t(), idioma() y el filtro |fecha a las plantillas. El idioma y la zona salen del laboratorio."""
+    entorno.globals["t"] = _t_plantilla
+    entorno.globals["idioma"] = _idioma_plantilla
+    entorno.filters["fecha"] = _fecha_plantilla

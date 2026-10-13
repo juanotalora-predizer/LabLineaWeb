@@ -86,7 +86,7 @@ flowchart LR
 
 - **Cómo ve el Admin Hub los indicadores de todos los laboratorios:** desde el datamart de plataforma de la bodega analítica, solo con agregados ([infraestructura/0010](infraestructura/0010-analitica-bodega-datos.md), *propuesta*). Nunca consulta `lab`. Si la bodega no se aprueba, se usa la alternativa de la tabla `plataforma.metricas_diarias` (sección 2).
 - **Dominio:** `<laboratorio>.lablinea.cionetworks.com` y `admin.lablinea.cionetworks.com`, con cookies `__Host-` ([infraestructura/0005](infraestructura/0005-arquitectura-saas-multitenant.md)).
-- **Tareas en segundo plano** (PDF, correos, métricas): cola de trabajos sobre PostgreSQL (`SELECT … FOR UPDATE SKIP LOCKED`), con reintentos. Evita agregar Redis. *La librería se fija en una spec en la etapa 3.*
+- **Tareas en segundo plano** (PDF, correos, métricas): cola de trabajos sobre PostgreSQL (`SELECT … FOR UPDATE SKIP LOCKED`), con reintentos. Evita agregar Redis. Implementación propia, sin librería externa ([infraestructura/0012](infraestructura/0012-cola-de-tareas.md)).
 
 ---
 
@@ -493,7 +493,7 @@ Pruebas específicas:
 
 **Cierra cuando:** la compuerta completa está en verde y el informe `etapa-02.md` está escrito.
 
-#### Etapa 3 — Auditoría, tareas en segundo plano e i18n
+#### Etapa 3 — Auditoría, tareas en segundo plano e i18n · *compuerta local en verde el 2026-10-13; falta la CI ([informe](etapas/etapa-03.md))*
 
 Pasos:
 1. Spec de la librería de cola de tareas; implementación con reintentos.

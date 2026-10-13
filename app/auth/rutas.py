@@ -33,8 +33,10 @@ from app.auth.web import (
     sesion_pendiente,
 )
 from app.core import correo, cripto
+from app.core.auditoria import registrar_acceso
 from app.core.config import get_settings
 from app.core.db import sesion_tenant
+from app.core.i18n import t
 
 # Todas las rutas responden HTML (o redirecciones).
 router = APIRouter(default_response_class=HTMLResponse)
@@ -44,11 +46,6 @@ VENTANA_MIN = 15
 MAX_INTENTOS_POR_IP = 100  # todo el personal de un laboratorio suele compartir IP
 MAX_FALLOS_POR_CORREO = 5
 MAX_FALLOS_SEGUNDO_FACTOR = 5
-
-ERROR_CREDENCIALES = "Correo o contraseña incorrectos."
-ERROR_DEMASIADOS = "Demasiados intentos. Espere unos minutos e inténtelo de nuevo."
-ERROR_CODIGO = "Código incorrecto o vencido."
-ERROR_CORREO = "No pudimos enviar el código. Inténtelo de nuevo en unos minutos."
 
 
 def _clave_limite(tipo: str, valor: str) -> str:
@@ -67,11 +64,17 @@ async def _enviar_codigo(laboratorio, usuario, codigo: str) -> bool:
 
 
 async def _enviar(laboratorio, usuario, codigo: str) -> None:
+    idioma = laboratorio.idioma
     await correo.enviar(
         usuario.email,
-        "Código de verificación",
-        f"Su código de verificación de {laboratorio.nombre_comercial} es {codigo}.\n"
-        f"Vence en {repositorio.CODIGO_VIGENCIA_MIN} minutos. Si usted no intentó ingresar, ignore este mensaje.",
+        t("auth.correo_codigo.asunto", idioma),
+        t(
+            "auth.correo_codigo.cuerpo",
+            idioma,
+            laboratorio=laboratorio.nombre_comercial,
+            codigo=codigo,
+            minutos=repositorio.CODIGO_VIGENCIA_MIN,
+        ),
     )
 
 
@@ -114,7 +117,7 @@ async def ingresar(
             MAX_INTENTOS_POR_IP
         ):
             await repositorio.registrar_evento(sesion, "INGRESO_LIMITADO_IP", email=email or None, ip=ip)
-            error, estado = ERROR_DEMASIADOS, 429
+            error, estado = t("auth.error_demasiados", laboratorio.idioma), 429
         else:
             clave_correo = _clave_limite("ingreso-correo", email)
             bloqueado = await repositorio.limite_contar(sesion, clave_correo, VENTANA_MIN) >= MAX_FALLOS_POR_CORREO
@@ -130,7 +133,7 @@ async def ingresar(
                     await repositorio.marcar_bloqueo(sesion, usuario.id, VENTANA_MIN)
                     await repositorio.registrar_evento(sesion, "CUENTA_BLOQUEADA", usuario_id=usuario.id, ip=ip)
                 # Mismo mensaje si el correo no existe, la contraseña falla o la cuenta está bloqueada.
-                error = ERROR_CREDENCIALES
+                error = t("auth.error_credenciales", laboratorio.idioma)
             else:
                 await repositorio.limite_reiniciar(sesion, clave_correo)
                 if contrasenas.necesita_rehash(usuario.password_hash):
@@ -162,12 +165,19 @@ async def ingresar(
 # --- Segundo factor ---
 
 
+def _contexto_verificar(laboratorio, usuario) -> dict:
+    return {
+        "laboratorio": laboratorio,
+        "usa_totp": usuario.usa_totp,
+        "vigencia_min": repositorio.CODIGO_VIGENCIA_MIN,
+    }
+
+
 @router.get("/verificar")
 async def verificar_formulario(
     request: Request, laboratorio: LaboratorioActual, pendiente: Annotated[SesionActiva, Depends(sesion_pendiente)]
 ):
-    contexto = {"laboratorio": laboratorio, "usa_totp": pendiente.usuario.usa_totp}
-    return render(request, "auth/verificar.html", contexto)
+    return render(request, "auth/verificar.html", _contexto_verificar(laboratorio, pendiente.usuario))
 
 
 @router.post("/verificar")
@@ -182,13 +192,13 @@ async def verificar(
     ip = ip_cliente(request)
     usuario = pendiente.usuario
     codigo = codigo.strip()
-    token, error, estado = None, ERROR_CODIGO, 400
+    token, error, estado = None, t("auth.error_codigo", laboratorio.idioma), 400
 
     async with sesion_tenant(laboratorio.tenant_id, usuario_id=usuario.uuid, ip=ip) as sesion:
         intentos = await repositorio.limite_sumar(sesion, f"segundo-factor:{usuario.id}", VENTANA_MIN)
         correcto = False
         if intentos > MAX_FALLOS_SEGUNDO_FACTOR:
-            error, estado = ERROR_DEMASIADOS, 429
+            error, estado = t("auth.error_demasiados", laboratorio.idioma), 429
         else:
             contador = _verificar_totp(usuario, codigo) if usuario.usa_totp else None
             if contador is not None:
@@ -213,7 +223,7 @@ async def verificar(
             await repositorio.registrar_evento(sesion, "SEGUNDO_FACTOR_FALLIDO", usuario_id=usuario.id, ip=ip)
 
     if token is None:
-        contexto = {"laboratorio": laboratorio, "usa_totp": usuario.usa_totp, "error": error}
+        contexto = {**_contexto_verificar(laboratorio, usuario), "error": error}
         return render(request, "auth/verificar.html", contexto, estado)
     rotar_csrf(request)
     respuesta = redirigir(request, "/seguridad/totp" if usuario.debe_inscribir_totp else "/panel")
@@ -230,12 +240,13 @@ async def reenviar_codigo(
 ):
     async with sesion_tenant(laboratorio.tenant_id, usuario_id=pendiente.usuario.uuid) as sesion:
         codigo = await repositorio.crear_codigo(sesion, pendiente.usuario)
-    contexto = {"laboratorio": laboratorio, "usa_totp": pendiente.usuario.usa_totp}
+    contexto = _contexto_verificar(laboratorio, pendiente.usuario)
+    idioma = laboratorio.idioma
     if codigo is None:
-        return render(request, "auth/verificar.html", {**contexto, "error": ERROR_DEMASIADOS}, 429)
+        return render(request, "auth/verificar.html", {**contexto, "error": t("auth.error_demasiados", idioma)}, 429)
     if not await _enviar_codigo(laboratorio, pendiente.usuario, codigo):
-        return render(request, "auth/verificar.html", {**contexto, "error": ERROR_CORREO}, 503)
-    return render(request, "auth/verificar.html", {**contexto, "aviso": "Le enviamos un código nuevo."})
+        return render(request, "auth/verificar.html", {**contexto, "error": t("auth.error_correo", idioma)}, 503)
+    return render(request, "auth/verificar.html", {**contexto, "aviso": t("auth.aviso_codigo_nuevo", idioma)})
 
 
 # --- Inscripción de la app autenticadora (personal) ---
@@ -310,7 +321,7 @@ async def lista_usuarios(
     laboratorio: LaboratorioActual,
     activa: Annotated[SesionActiva, Depends(requiere_permiso("usuarios", "consultar"))],
 ):
-    async with sesion_tenant(laboratorio.tenant_id, usuario_id=activa.usuario.uuid) as sesion:
+    async with sesion_tenant(laboratorio.tenant_id, usuario_id=activa.usuario.uuid, ip=ip_cliente(request)) as sesion:
         usuarios = (
             (
                 await sesion.execute(
@@ -326,6 +337,8 @@ async def lista_usuarios(
             .mappings()
             .all()
         )
+        # Datos personales del personal y de pacientes: la consulta queda auditada.
+        await registrar_acceso(sesion, "usuarios", detalle={"vista": "lista_usuarios", "filas": len(usuarios)})
     contexto = {"laboratorio": laboratorio, "activa": activa, "usuarios": usuarios}
     return render(request, "panel/usuarios.html", contexto)
 

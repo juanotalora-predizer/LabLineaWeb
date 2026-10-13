@@ -1,0 +1,79 @@
+# Textos de la interfaz en español de Colombia (idioma por defecto, spec infraestructura/0013).
+# Las claves se usan con t("seccion.clave") en Python y {{ t("seccion.clave") }} en las plantillas.
+# Los marcadores {nombre} se reemplazan con los parámetros; los valores se escapan al mostrarse.
+
+[app]
+nombre = "LabLineaWeb"
+pie = "LabLineaWeb · Laboratorio en Línea"
+
+[formato]
+fecha = "%d/%m/%Y"
+fecha_hora = "%d/%m/%Y %H:%M"
+
+[error]
+no_encontrado = "No encontrado"
+solicitud_invalida = "Solicitud inválida"
+origen_no_permitido = "Origen no permitido"
+csrf_invalido = "Token CSRF inválido"
+
+[menu]
+panel = "Panel"
+usuarios = "Usuarios"
+salir = "Salir"
+
+[inicio]
+titulo = "Laboratorio en Línea"
+descripcion = "Laboratorio en Línea: consulta tus resultados de laboratorio en línea."
+ingresar = "Ingresar"
+
+[auth]
+error_credenciales = "Correo o contraseña incorrectos."
+error_demasiados = "Demasiados intentos. Espere unos minutos e inténtelo de nuevo."
+error_codigo = "Código incorrecto o vencido."
+error_correo = "No pudimos enviar el código. Inténtelo de nuevo en unos minutos."
+aviso_codigo_nuevo = "Le enviamos un código nuevo."
+codigo = "Código"
+
+[auth.ingresar]
+titulo = "Ingresar"
+correo = "Correo electrónico"
+clave = "Contraseña"
+continuar = "Continuar"
+nota_bloqueo = "Después de 5 intentos fallidos el acceso se bloquea durante 15 minutos."
+
+[auth.verificar]
+titulo = "Verificación"
+instruccion_totp = "Escriba el código de 6 dígitos de su app autenticadora."
+instruccion_correo = "Le enviamos un código de 6 dígitos a su correo. Vence en {minutos} minutos."
+boton = "Verificar"
+sin_app = "No tengo mi app: enviarme un código por correo"
+reenviar = "Enviar un código nuevo"
+
+[auth.totp]
+titulo = "App autenticadora"
+encabezado = "Configure su app autenticadora"
+error = "Código incorrecto. Inténtelo de nuevo."
+explicacion = "Para proteger los datos de salud, el personal del laboratorio ingresa con una app autenticadora (Google Authenticator, Microsoft Authenticator, 1Password u otra compatible con TOTP)."
+paso_clave = "En la app, agregue una cuenta nueva con esta clave:"
+paso_codigo = "Escriba el código de 6 dígitos que muestra la app."
+confirmar = "Confirmar"
+
+[auth.correo_codigo]
+asunto = "Código de verificación"
+cuerpo = """Su código de verificación de {laboratorio} es {codigo}.
+Vence en {minutos} minutos. Si usted no intentó ingresar, ignore este mensaje."""
+
+[panel]
+titulo = "Panel"
+saludo = "Hola, {nombre}"
+roles = "Roles: {roles}"
+modulos = "Módulos disponibles"
+sin_roles = "Aquí podrá consultar sus resultados cuando estén disponibles."
+
+[usuarios]
+titulo = "Usuarios"
+nombre = "Nombre"
+correo = "Correo"
+tipo = "Tipo"
+roles = "Roles"
+estado = "Estado"

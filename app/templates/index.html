@@ -1,9 +1,9 @@
 {% extends "base.html" %}
 
-{% block title %}{{ laboratorio.nombre_comercial }} · LabLineaWeb{% endblock %}
+{% block title %}{{ laboratorio.nombre_comercial }} · {{ t("app.nombre") }}{% endblock %}
 
 {% block content %}
 <h1>{{ laboratorio.nombre_comercial }}</h1>
-<p>{{ titulo }}: consulta tus resultados de laboratorio en línea.</p>
-<p><a class="boton" href="/ingresar">Ingresar</a></p>
+<p>{{ t("inicio.descripcion") }}</p>
+<p><a class="boton" href="/ingresar">{{ t("inicio.ingresar") }}</a></p>
 {% endblock %}

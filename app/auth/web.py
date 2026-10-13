@@ -9,25 +9,24 @@
 import ipaddress
 from collections.abc import Callable
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Annotated, Any
 
 from fastapi import Depends, Form, HTTPException, Request
 from fastapi.responses import RedirectResponse
-from fastapi.templating import Jinja2Templates
 from pydantic import AfterValidator
 
 from app.auth import repositorio
 from app.auth.repositorio import Permisos, Usuario
 from app.core import cripto
+from app.core.auditoria import registrar_acceso
 from app.core.config import get_settings
 from app.core.db import sesion_tenant
+from app.core.i18n import t
+from app.core.plantillas import templates
 from app.core.tenancy import Laboratorio, laboratorio_actual
 
 COOKIE_SESION = "__Host-sesion"
 COOKIE_CSRF = "__Host-csrf"
-
-templates = Jinja2Templates(directory=Path(__file__).resolve().parent.parent / "templates")
 
 
 # --- Excepciones que se convierten en respuestas (ver app/main.py) ---
@@ -97,12 +96,12 @@ async def verificar_csrf(request: Request, csrf: Annotated[str, Form(max_length=
     origen = request.headers.get("origin")
     propio = f"{request.url.scheme}://{request.headers.get('host', '')}"
     if origen is not None and origen != propio:
-        raise HTTPException(status_code=403, detail="Origen no permitido")
+        raise HTTPException(status_code=403, detail=t("error.origen_no_permitido"))
     if request.headers.get("sec-fetch-site") not in (None, "same-origin", "none"):
-        raise HTTPException(status_code=403, detail="Origen no permitido")
+        raise HTTPException(status_code=403, detail=t("error.origen_no_permitido"))
     cookie = request.cookies.get(COOKIE_CSRF, "")
     if not cookie or not csrf or not cripto.comparar(cookie, csrf):
-        raise HTTPException(status_code=403, detail="Token CSRF inválido")
+        raise HTTPException(status_code=403, detail=t("error.csrf_invalido"))
 
 
 Csrf = Annotated[None, Depends(verificar_csrf)]
@@ -176,22 +175,29 @@ async def usuario_actual(activa: Annotated[SesionActiva, Depends(sesion_completa
 UsuarioActual = Annotated[SesionActiva, Depends(usuario_actual)]
 
 
+async def _denegar(request: Request, activa: SesionActiva, recurso: str, permiso: str) -> HTTPException:
+    """Registra el acceso denegado en la auditoría (HIPAA: también se auditan los intentos) y devuelve el 403."""
+    laboratorio = request.state.laboratorio
+    async with sesion_tenant(laboratorio.tenant_id, usuario_id=activa.usuario.uuid, ip=ip_cliente(request)) as sesion:
+        await registrar_acceso(sesion, recurso, operacion="ACCESO", denegado=True, detalle={"permiso": permiso})
+    return HTTPException(status_code=403)
+
+
 def requiere_permiso(modulo: str, operacion: str) -> Callable:
-    async def dependencia(activa: UsuarioActual) -> SesionActiva:
+    async def dependencia(request: Request, activa: UsuarioActual) -> SesionActiva:
         if not activa.permisos.puede(modulo, operacion):
-            raise HTTPException(status_code=403)
+            raise await _denegar(request, activa, f"modulo:{modulo}", f"{modulo}.{operacion}")
         return activa
 
     return dependencia
 
 
 def requiere_accion(accion: str) -> Callable:
-    async def dependencia(activa: UsuarioActual) -> SesionActiva:
-        if accion not in activa.permisos.acciones:
-            raise HTTPException(status_code=403)
+    async def dependencia(request: Request, activa: UsuarioActual) -> SesionActiva:
         # Validar resultados exige además tarjeta profesional registrada (spec infraestructura/0008).
-        if accion == "VALIDAR_RESULTADOS" and not activa.usuario.tarjeta_profesional:
-            raise HTTPException(status_code=403)
+        sin_tarjeta = accion == "VALIDAR_RESULTADOS" and not activa.usuario.tarjeta_profesional
+        if accion not in activa.permisos.acciones or sin_tarjeta:
+            raise await _denegar(request, activa, f"accion:{accion}", accion)
         return activa
 
     return dependencia

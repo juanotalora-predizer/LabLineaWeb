@@ -73,3 +73,15 @@ PDFs de resultados, firmas, logos y evidencias de descuentos en almacenamiento d
 
 - Toda migración nueva de una tabla en `lab` incluye `tenant_id`, sus políticas RLS y `FORCE`. Se agrega una prueba que recorre el catálogo de PostgreSQL y falla si alguna tabla de `lab` no cumple.
 - El proveedor de hosting debe ofrecer PostgreSQL 16+ administrado, cifrado y con BAA (decisión pendiente).
+
+## Implementación de la auditoría (etapa 3, 2026-10-13)
+
+Ver [informe de la etapa 3](../etapas/etapa-03.md). Migración `0004`.
+
+- **Tabla:** `lab.auditoria` particionada por mes (`ocurrido_en`), con `tabla`, `operacion` (`INSERT`, `UPDATE`, `DELETE`, `READ`, `EXPORT`, `ACCESO`), `registro_id`, `usuario_id` (UUID del usuario o `tarea:<uuid>`), `ip`, `resultado` (`EXITO` o `DENEGADO`), `antes` y `despues` en JSONB.
+- **Escrituras:** trigger genérico `lab.auditar(columnas…)`, `SECURITY DEFINER`. Sus argumentos nombran las columnas secretas, que se guardan como `[protegido]` o `[protegido, modificado]`, y las ignoradas (`-columna`). Un `UPDATE` que solo cambia columnas ignoradas no se registra. Hoy se auditan `usuarios`, `roles`, `usuario_roles`, `rol_permisos` y `rol_acciones`.
+- **Tablas sin trigger:** las operativas (`sesiones`, `codigos_verificacion`, `limites`) y las bitácoras (`eventos_seguridad`, `auditoria`). Cualquier otra tabla de `lab` debe tener el trigger: lo verifica `tests/test_auditoria.py`.
+- **Lecturas, exportaciones y accesos denegados:** `app.core.auditoria.registrar_acceso()`, que llama a `lab.registrar_acceso()` (`SECURITY DEFINER`). Exige laboratorio y solo admite `READ`, `EXPORT` y `ACCESO`. El detalle lleva identificadores y conteos, nunca contenido. `requiere_permiso` y `requiere_accion` registran cada 403.
+- **Solo inserción:** la aplicación solo tiene `SELECT` (bajo RLS). Triggers rechazan `UPDATE`, `DELETE` y `TRUNCATE` incluso al dueño.
+- **Particiones:** `lab.crear_particion_auditoria(mes)` crea el mes con RLS forzado, su política y **sin privilegios para la aplicación**: una partición consultada directamente no aplica las políticas de la tabla madre. Admite desde el mes anterior hasta 24 meses adelante. La migración crea 12 meses y una partición por defecto; el trabajador mantiene 3 meses por delante.
+- **Conservación:** las particiones no se borran desde la aplicación. El archivo o borrado después de 6 años se define con el hosting (etapa 20).

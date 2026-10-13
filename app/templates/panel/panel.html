@@ -1,18 +1,18 @@
 {% extends "base.html" %}
 
-{% block title %}Panel · {{ laboratorio.nombre_comercial }}{% endblock %}
+{% block title %}{{ t("panel.titulo") }} · {{ laboratorio.nombre_comercial }}{% endblock %}
 
 {% block content %}
-<h1>Hola, {{ activa.usuario.nombre }}</h1>
+<h1>{{ t("panel.saludo", nombre=activa.usuario.nombre) }}</h1>
 {% if activa.permisos.roles %}
-<p>Roles: {{ activa.permisos.roles | join(", ") }}</p>
-<h2>Módulos disponibles</h2>
+<p>{{ t("panel.roles", roles=activa.permisos.roles | join(", ")) }}</p>
+<h2>{{ t("panel.modulos") }}</h2>
 <ul class="modulos">
     {% for modulo, operaciones in activa.permisos.modulos | dictsort %}
     <li>{{ modulo }} <small>({{ operaciones | sort | join(", ") }})</small></li>
     {% endfor %}
 </ul>
 {% else %}
-<p>Aquí podrá consultar sus resultados cuando estén disponibles.</p>
+<p>{{ t("panel.sin_roles") }}</p>
 {% endif %}
 {% endblock %}

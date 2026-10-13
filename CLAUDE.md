@@ -107,6 +107,7 @@ alembic upgrade head            # migrar la base de desarrollo
 scripts/verificar.sh            # compuerta automática: correrla antes de cada commit
 scripts/servidor_https.sh       # HTTPS local en https://lab-a.lablinea.localhost:8443
 scripts/escaneo_externo.sh      # ZAP pasivo + activo; falla con hallazgos altos o medios
+python trabajador.py            # tareas en segundo plano
 ```
 
 - **Formularios:** toda ruta POST declara `_csrf: Csrf` (lo verifica `tests/test_csrf.py`) y sus campos de texto usan `TextoSeguro` con `max_length`. Permisos con `requiere_permiso(modulo, operacion)` o `requiere_accion(ACCION)`.
@@ -115,6 +116,10 @@ scripts/escaneo_externo.sh      # ZAP pasivo + activo; falla con hallazgos altos
 - Toda petición debe llegar con un `Host` del dominio propio (`TrustedHostMiddleware`): en pruebas, usar `base_url="http://lab-a.lablinea.localhost"`.
 
 - Acceso a datos de un laboratorio **siempre** con `app.core.db.sesion_tenant(tenant_id)`; nunca abrir sesiones sin tenant sobre `lab`.
+- **Auditoría** ([infraestructura/0007](specs/infraestructura/0007-base-de-datos.md)): toda tabla nueva de `lab` lleva el trigger `lab.auditar(...)`, con sus columnas secretas como argumento, o se justifica en `SIN_TRIGGER` de `tests/test_auditoria.py`. Toda lectura o exportación de datos personales o de salud llama a `app.core.auditoria.registrar_acceso()` con identificadores y conteos, nunca contenido.
+- **Tareas** ([infraestructura/0012](specs/infraestructura/0012-cola-de-tareas.md)): `app.core.tareas.encolar()` dentro de `sesion_tenant`. Los datos de la tarea son solo identificadores. Nunca registrar el mensaje de una excepción, solo su tipo.
+- **Textos** ([infraestructura/0013](specs/infraestructura/0013-textos-externalizados-i18n.md)): todo texto para el usuario va en `app/locales/es-CO.toml` y se usa con `t()`. Fechas con el filtro `|fecha`. `tests/test_i18n.py` falla si una plantilla tiene texto escrito directamente.
+- **Datos de prueba** con `scripts/sinteticos.py`. La suite falla si un dato de un paciente sintético aparece en cualquier log.
 - Migraciones escritas a mano en `migrations/versions/` (sin autogenerate), con `upgrade` y `downgrade`. Toda tabla nueva en `lab` incluye `tenant_id`, RLS habilitado y forzado, y política con `USING` y `WITH CHECK`; `tests/test_db.py::test_toda_tabla_de_lab_cumple_rls` lo verifica.
 - La CI (`.github/workflows/ci.yml`) corre las pruebas contra PostgreSQL 18 en cada push y pull request.
 

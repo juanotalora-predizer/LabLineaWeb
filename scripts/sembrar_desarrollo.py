@@ -3,6 +3,7 @@
 - Laboratorios lab-a y lab-b (rol de la plataforma, como lo hará el Admin Hub).
 - Roles del sistema y usuarios de prueba en cada laboratorio (rol de la aplicación, con RLS).
   Contraseña y secreto TOTP salen de DEV_CLAVE_USUARIOS y DEV_TOTP_SECRETO del .env.
+- Pacientes sintéticos (scripts/sinteticos.py) como usuarios del portal en cada laboratorio.
 
     .venv/bin/python scripts/sembrar_desarrollo.py
 """
@@ -21,6 +22,7 @@ from app.auth import repositorio  # noqa: E402
 from app.auth.roles_sistema import crear_roles_sistema  # noqa: E402
 from app.core import db  # noqa: E402
 from app.core.config import get_settings  # noqa: E402
+from scripts.sinteticos import generar_personas  # noqa: E402
 
 # (tenant_id, subdominio, nombre, NIT ficticio)
 LABORATORIOS = [
@@ -34,6 +36,8 @@ USUARIOS = [
     ("recepcion", "Recepción", "PERSONAL", ("RECEPCION",), True),
     ("paciente", "Paciente Sintético", "PACIENTE", (), False),
 ]
+
+PACIENTES_POR_LABORATORIO = 10
 
 
 async def sembrar() -> None:
@@ -72,6 +76,23 @@ async def sembrar() -> None:
                     usuario = await repositorio.buscar_usuario(sesion, usuario_id)
                     await repositorio.guardar_totp(sesion, usuario, secreto)
                     await repositorio.confirmar_totp(sesion, usuario_id, 0)
+            # Tipos de documento del país del laboratorio: el generador no conoce ningún país.
+            tipos = tuple(
+                (
+                    await sesion.execute(
+                        text(
+                            'SELECT codigo FROM "global".tipos_documento'
+                            " WHERE pais = 'COL' AND aplica_a = 'PERSONA' AND activo ORDER BY codigo"
+                        )
+                    )
+                ).scalars()
+            )
+            semilla = sum(map(ord, tenant_id))
+            for persona in generar_personas(PACIENTES_POR_LABORATORIO, semilla=semilla, tipos_documento=tipos):
+                if not await repositorio.buscar_usuario_por_email(sesion, persona.email):
+                    await repositorio.crear_usuario(
+                        sesion, email=persona.email, nombre=persona.nombre_completo, tipo="PACIENTE", clave=clave
+                    )
     await db.cerrar()
     print("Datos sintéticos en", settings.db_name, "· usuarios:", ", ".join(f"{u[0]}@<lab>.test" for u in USUARIOS))
 

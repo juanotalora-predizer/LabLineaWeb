@@ -6,7 +6,7 @@ Formato: `- [ ] Descripción — prioridad (Alta/Media/Baja) — spec relacionad
 
 ## En curso
 
-- [ ] Etapa 3: auditoría de datos (triggers con antes y después, lecturas), cola de tareas, i18n y generador de datos sintéticos — Alta — [plan](plan-desarrollo.md)
+- [ ] Etapa 3: compuerta local en verde; falta commit, push y CI verde para cerrarla — Alta — [informe](etapas/etapa-03.md)
 
 ## Pendiente
 
@@ -15,7 +15,6 @@ Formato: `- [ ] Descripción — prioridad (Alta/Media/Baja) — spec relacionad
 - [ ] **Hosting de la aplicación y las bases** (Bluehost queda descartado para datos de salud: no firma BAA y lo prohíbe en sus términos; el dominio y el DNS pueden seguir en Bluehost) — Media, antes de la etapa 20 (publicación); se construye y prueba en local hasta entonces — [0003](infraestructura/0003-seguridad-hipaa.md), [0007](infraestructura/0007-base-de-datos.md), [0010](infraestructura/0010-analitica-bodega-datos.md)
 - [ ] Aprobar la arquitectura analítica propuesta (bodega separada con replicación lógica) — Alta — [0010](infraestructura/0010-analitica-bodega-datos.md)
 - [ ] ¿Inventarios, equipos y costeo en el MVP? (sin ellos el dashboard no puede mostrar rentabilidad por costo real) — Media — [funcional/0006](funcional/0006-gestion-inventarios-costos-dashboard.md)
-- [ ] Elegir librería de cola de trabajos sobre PostgreSQL (spec en la etapa 3) — Media — [plan](plan-desarrollo.md)
 - [ ] Confirmar licencia de QZ Tray para impresión de etiquetas — Media — [funcional/0003](funcional/0003-muestras-impresion.md)
 - [ ] Mecanismo de firma electrónica del informe PDF (Ley 527 de 1999) — Media — [funcional/0004](funcional/0004-resultados-validacion-entrega.md)
 
@@ -29,8 +28,6 @@ Formato: `- [ ] Descripción — prioridad (Alta/Media/Baja) — spec relacionad
 - [ ] Importador del catálogo de Lablinea (Access) con vista previa y marcado de rangos para revisión — Alta — [funcional/0007](funcional/0007-alcance-mvp.md)
 - [ ] Licencias, listas de precios, campañas y suscripciones; bloqueo de órdenes nuevas con suscripción vencida — Media — [funcional/0005](funcional/0005-plataforma-saas-suscripciones.md)
 - [ ] Facturas de la plataforma con registro manual de pagos — Media — [funcional/0005](funcional/0005-plataforma-saas-suscripciones.md)
-- [ ] Externalizar textos de plantillas para i18n (`es-CO`) y fechas en UTC — Media — [0004](infraestructura/0004-normativa-colombia-latam.md)
-- [ ] Generador de datos sintéticos — Media — [0003](infraestructura/0003-seguridad-hipaa.md)
 - [ ] Incorporar htmx y Chart.js como estáticos propios — Baja — [0001](infraestructura/0001-stack-fastapi-jinja2.md)
 
 ### Fase 2 — Seguridad
@@ -40,7 +37,9 @@ Formato: `- [ ] Descripción — prioridad (Alta/Media/Baja) — spec relacionad
 - [ ] Administración de usuarios y roles desde la interfaz del laboratorio — Media — [0008](infraestructura/0008-autenticacion-autorizacion.md)
 
 - [ ] Usuarios y roles de la plataforma; acceso de soporte autorizado y auditado — Media — [funcional/0005](funcional/0005-plataforma-saas-suscripciones.md), [0005](infraestructura/0005-arquitectura-saas-multitenant.md)
-- [ ] Auditoría: triggers de escritura con antes y después, auditoría de lecturas desde la aplicación, tabla de solo inserción particionada — Alta — [0007](infraestructura/0007-base-de-datos.md)
+- [ ] Vista de la auditoría para el rol AUDITOR, con filtros y exportación auditada — Media — [0007](infraestructura/0007-base-de-datos.md)
+- [ ] Purga de tareas terminadas antiguas y rol de base de datos propio para el trabajador (etapa 20) — Baja — [0012](infraestructura/0012-cola-de-tareas.md)
+- [ ] Traducir códigos de módulos y operaciones de permisos en la interfaz (etapa 4); formatos de número y moneda por país (etapa 8) — Baja — [0013](infraestructura/0013-textos-externalizados-i18n.md)
 
 ### Fase 3 — POS y caja
 
@@ -110,6 +109,8 @@ Formato: `- [ ] Descripción — prioridad (Alta/Media/Baja) — spec relacionad
 - [ ] Análisis de riesgos, políticas, oficial de seguridad, capacitación, notificación de brechas — Media — [0003](infraestructura/0003-seguridad-hipaa.md)
 
 ## Hecho
+
+- [x] Etapa 3 (compuerta local): auditoría particionada de solo inserción con antes y después, lecturas y accesos denegados auditados; cola de tareas propia sobre PostgreSQL con reintentos y ejecución única; textos externalizados `es-CO` y fechas en UTC; generador de datos sintéticos; 305 pruebas, cobertura 99,3%, ZAP sin hallazgos, 11/11 pruebas manuales — 2026-10-13 — [informe](etapas/etapa-03.md), [0012](infraestructura/0012-cola-de-tareas.md), [0013](infraestructura/0013-textos-externalizados-i18n.md)
 
 - [x] **Etapa 2 cerrada** — autenticación y autorización: Argon2id, TOTP y código por correo, sesiones `__Host-`, CSRF, bloqueos, roles y permisos; 226 pruebas (5 en Chromium), cobertura 99%, ZAP autenticado sin hallazgos, 3 errores encontrados por las pruebas y corregidos — 2026-10-12 — [informe](etapas/etapa-02.md)
 

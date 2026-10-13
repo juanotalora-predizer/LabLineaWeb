@@ -20,6 +20,7 @@ from starlette.types import ASGIApp, Receive, Scope, Send
 
 from app.core import db
 from app.core.config import get_settings
+from app.core.i18n import t
 
 SUBDOMINIO_ADMIN = "admin"
 # Misma regla que el CHECK de plataforma.laboratorios: una etiqueta DNS en minúsculas.
@@ -98,7 +99,7 @@ class ResolverLaboratorio:
 
 async def _no_encontrado(scope: Scope, receive: Receive, send: Send) -> None:
     # Mismo 404 para subdominio inexistente, cancelado o mal formado: no revela cuáles existen.
-    await PlainTextResponse("No encontrado", status_code=404)(scope, receive, send)
+    await PlainTextResponse(t("error.no_encontrado"), status_code=404)(scope, receive, send)
 
 
 def laboratorio_actual(request: Request) -> Laboratorio:

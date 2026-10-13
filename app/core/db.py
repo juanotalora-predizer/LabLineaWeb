@@ -15,6 +15,10 @@ from sqlalchemy.pool import NullPool
 
 from app.core.config import get_settings
 
+# Fechas en UTC en la base (spec infraestructura/0004): la sesión no depende de la zona del servidor.
+# La zona del laboratorio solo se aplica al mostrar (app/core/i18n.py).
+CONEXION_UTC = {"server_settings": {"timezone": "UTC"}}
+
 _engine: AsyncEngine | None = None
 _sesiones: async_sessionmaker[AsyncSession] | None = None
 
@@ -33,7 +37,7 @@ def engine_app() -> AsyncEngine:
         # asyncpg no pueden pasar de un bucle a otro: sin pool. La reutilización de conexiones
         # (y que el tenant no se filtre entre peticiones) se prueba aparte en tests/test_db.py.
         opciones = {"poolclass": NullPool} if settings.entorno == "pruebas" else {"pool_pre_ping": True}
-        configurar(create_async_engine(settings.url_app(), **opciones))
+        configurar(create_async_engine(settings.url_app(), connect_args=CONEXION_UTC, **opciones))
     return _engine
 
 
