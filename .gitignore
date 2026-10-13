@@ -1,0 +1,9 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.env
+
+# Datos reales de pacientes: nunca versionar
+Synlab_resultados.pdf
+.DS_Store

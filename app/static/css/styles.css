@@ -1,0 +1,24 @@
+body {
+    margin: 0;
+    font-family: system-ui, -apple-system, sans-serif;
+    color: #1f2933;
+    background: #ffffff;
+}
+
+header,
+footer {
+    padding: 1rem;
+    background: #f5f7fa;
+}
+
+header a {
+    font-weight: 600;
+    color: inherit;
+    text-decoration: none;
+}
+
+main {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 1rem;
+}
