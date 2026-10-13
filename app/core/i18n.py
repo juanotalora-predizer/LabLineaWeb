@@ -9,6 +9,7 @@
 import re
 import tomllib
 from datetime import datetime
+from decimal import ROUND_HALF_UP, Decimal
 from functools import lru_cache
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -74,6 +75,15 @@ def fecha_local(
     return valor.astimezone(ZoneInfo(zona)).strftime(t(f"formato.{formato}", idioma))
 
 
+def dinero(valor: Decimal, moneda: str, idioma: str | None = None, decimales: int = 2) -> str:
+    """Valor monetario con los separadores del idioma (p. ej. "COP 1.234.567,50"). Nunca usa float."""
+    cuanto = Decimal(10) ** -decimales
+    texto = f"{Decimal(valor).quantize(cuanto, rounding=ROUND_HALF_UP):,.{decimales}f}"
+    miles, decimal = t("formato.miles", idioma), t("formato.decimal", idioma)
+    texto = texto.replace(",", "\0").replace(".", decimal).replace("\0", miles)
+    return f"{moneda} {texto}"
+
+
 # --- Plantillas ---
 
 
@@ -94,6 +104,11 @@ def _idioma_plantilla(contexto) -> str:
 
 
 @pass_context
+def _dinero_plantilla(contexto, valor: Decimal, moneda: str) -> str:
+    return dinero(valor, moneda, getattr(_sitio(contexto), "idioma", None))
+
+
+@pass_context
 def _fecha_plantilla(contexto, valor: datetime, formato: str = "fecha_hora") -> str:
     sitio = _sitio(contexto)
     zona = getattr(sitio, "zona_horaria", None) or ZONA_POR_DEFECTO
@@ -105,3 +120,4 @@ def configurar_plantillas(entorno: Environment) -> None:
     entorno.globals["t"] = _t_plantilla
     entorno.globals["idioma"] = _idioma_plantilla
     entorno.filters["fecha"] = _fecha_plantilla
+    entorno.filters["dinero"] = _dinero_plantilla

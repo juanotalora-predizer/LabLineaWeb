@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t("facturas.titulo") }} · {{ sitio.nombre_comercial }}{% endblock %}
+
+{% block content %}
+<h1>{{ t("facturas.titulo") }}</h1>
+<p class="filtros">
+    <a href="/facturas">{{ t("facturas.todas") }}</a>
+    {% for e in estados %} · <a href="/facturas?estado={{ e }}" {% if filtro == e %}aria-current="true"{% endif %}>{{ e }}</a>{% endfor %}
+</p>
+<table>
+    <thead><tr><th>{{ t("facturas.numero") }}</th><th>{{ t("facturas.laboratorio") }}</th><th>{{ t("suscripcion.licencia") }}</th><th>{{ t("facturas.total") }}</th><th>{{ t("facturas.saldo") }}</th><th>{{ t("facturas.estado") }}</th><th>{{ t("facturas.vence") }}</th></tr></thead>
+    <tbody>
+    {% for f in facturas %}
+    <tr><td><a href="/facturas/{{ f.uuid }}">{{ f.numero }}</a></td><td>{{ f.laboratorio }}</td><td>{{ f.tipo_licencia }}</td><td>{{ f.total | dinero(f.moneda) }}</td><td>{{ f.saldo | dinero(f.moneda) }}</td><td>{{ f.estado }}</td><td>{{ f.vence_en | fecha("fecha") }}</td></tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

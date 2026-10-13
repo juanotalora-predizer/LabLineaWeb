@@ -19,6 +19,9 @@
         <select id="pais" name="pais">{% for p in paises %}<option value="{{ p.codigo }}" {% if datos.pais == p.codigo %}selected{% endif %}>{{ p.nombre }}</option>{% endfor %}</select>
         <label for="plan">{{ t("laboratorios.plan") }}</label>
         <select id="plan" name="plan">{% for p in planes %}<option value="{{ p.uuid }}" {% if datos.plan == p.uuid %}selected{% endif %}>{{ p.nombre }}</option>{% endfor %}</select>
+        <label for="tipo_licencia">{{ t("suscripcion.licencia") }}</label>
+        <select id="tipo_licencia" name="tipo_licencia">{% for l in licencias %}<option value="{{ l.codigo }}" {% if (datos.tipo_licencia or "DEMO") == l.codigo %}selected{% endif %}>{{ l.nombre }}</option>{% endfor %}</select>
+        <p class="nota">{{ t("suscripcion.ayuda_licencia") }}</p>
         <label for="sede">{{ t("laboratorios.sede") }}</label>
         <input id="sede" name="sede" required minlength="2" maxlength="120" value="{{ datos.sede or '' }}">
         <label for="ciudad">{{ t("laboratorios.ciudad") }}</label>

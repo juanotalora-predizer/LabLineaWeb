@@ -21,6 +21,8 @@ ROLES_PLATAFORMA = {
         "Soporte financiero",
         {"laboratorios": LECTURA, "suscripciones": ESCRITURA, "facturacion": ESCRITURA},
     ),
+    # Entra a un laboratorio solo con su autorización vigente, en modo de solo lectura (etapa 5).
+    "SOPORTE_TECNICO": ("Soporte técnico", {"laboratorios": LECTURA, "soporte": ESCRITURA}),
 }
 
 

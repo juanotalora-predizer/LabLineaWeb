@@ -46,3 +46,8 @@ label.opcion input { width: auto; margin-right: 0.4rem; }
 .ficha { display: grid; grid-template-columns: max-content 1fr; gap: 0.3rem 1rem; }
 .ficha dt { font-weight: 600; }
 .ficha dd { margin: 0; }
+.franja { margin: 0; padding: 0.6rem 1rem; text-align: center; font-weight: 600; }
+.franja.soporte { background: #fff4e5; color: #8a4b00; }
+.franja.alerta { background: #fdecea; color: #8a1c13; }
+.acciones form { margin-top: 0.75rem; }
+.filtros a[aria-current] { font-weight: 700; }

@@ -33,6 +33,9 @@ _TEXTO_MAXIMO = 200
 
 Manejador = Callable[[AsyncSession, dict], Awaitable[None]]
 MANEJADORES: dict[str, Manejador] = {}
+# Tareas periódicas del trabajador (al arrancar y cada `mantenimiento_cada` segundos).
+Mantenimiento = Callable[[], Awaitable[None]]
+MANTENIMIENTOS: list[Mantenimiento] = []
 
 
 class ErrorPermanente(Exception):  # noqa: N818
@@ -51,6 +54,21 @@ def tarea(tipo: str) -> Callable[[Manejador], Manejador]:
         return funcion
 
     return registrar
+
+
+def mantenimiento(funcion: Mantenimiento) -> Mantenimiento:
+    """Registra una tarea periódica del trabajador."""
+    MANTENIMIENTOS.append(funcion)
+    return funcion
+
+
+async def mantener() -> None:
+    """Ejecuta las tareas periódicas. Un fallo en una no impide las demás; solo se registra su tipo."""
+    for funcion in (mantener_particiones, *MANTENIMIENTOS):
+        try:
+            await funcion()
+        except Exception as exc:  # noqa: BLE001 — el trabajador sigue procesando tareas
+            log.warning("Mantenimiento %s falló: %s", funcion.__name__, type(exc).__name__)
 
 
 def _validar_datos(datos: dict) -> None:
@@ -200,7 +218,7 @@ async def trabajar(parar: asyncio.Event, *, intervalo: float = 1.0, mantenimient
     bucle = asyncio.get_running_loop()
     while not parar.is_set():
         if bucle.time() >= proximo_mantenimiento:
-            await mantener_particiones()
+            await mantener()
             proximo_mantenimiento = bucle.time() + mantenimiento_cada
         if not await procesar_una():
             with contextlib.suppress(TimeoutError):

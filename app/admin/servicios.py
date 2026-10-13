@@ -1,7 +1,7 @@
 """Alta de laboratorios (spec funcional/0005, sección 2; plan, etapa 4).
 
 El alta completa ocurre en UNA transacción, dentro de `plataforma.alta_laboratorio` (SECURITY DEFINER):
-el laboratorio, su sede inicial, los roles del sistema y el administrador sin contraseña, más la
+el laboratorio, su suscripción inicial, su sede, los roles del sistema y el administrador sin contraseña, más la
 tarea que le envía la invitación. Si algo falla, no queda nada creado. Es la única escritura de la
 plataforma en el esquema lab.
 """
@@ -34,6 +34,7 @@ class DatosAlta:
     ciudad: str
     admin_email: str
     admin_nombre: str
+    tipo_licencia: str = "DEMO"
 
     @property
     def tenant_id(self) -> str:
@@ -83,7 +84,7 @@ async def dar_de_alta(
             uuid = await sesion.scalar(
                 text(
                     "SELECT plataforma.alta_laboratorio(:tenant, :sub, :nombre, :nit, :pais, CAST(:plan AS uuid),"
-                    " :sede, :ciudad, :email, :admin, CAST(:roles AS jsonb))::text"
+                    " :sede, :ciudad, :email, :admin, CAST(:roles AS jsonb), :licencia)::text"
                 ),
                 {
                     "tenant": datos.tenant_id,
@@ -97,6 +98,7 @@ async def dar_de_alta(
                     "email": datos.admin_email,
                     "admin": datos.admin_nombre,
                     "roles": roles_iniciales(),
+                    "licencia": datos.tipo_licencia,
                 },
             )
     except IntegrityError as error:

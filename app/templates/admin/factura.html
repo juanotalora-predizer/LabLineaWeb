@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %}{{ factura.numero }} · {{ sitio.nombre_comercial }}{% endblock %}
+
+{% block content %}
+<h1>{{ t("facturas.factura") }} {{ factura.numero }}</h1>
+{% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+<p class="nota">{{ t("facturas.nota_electronica") }}</p>
+<dl class="ficha">
+    <dt>{{ t("facturas.laboratorio") }}</dt><dd><a href="/laboratorios/{{ factura.laboratorio_uuid }}">{{ factura.laboratorio }}</a></dd>
+    <dt>{{ t("suscripcion.licencia") }}</dt><dd>{{ factura.tipo_licencia }}</dd>
+    <dt>{{ t("facturas.periodo") }}</dt><dd>{{ factura.periodo_desde | fecha("fecha") }} – {{ factura.periodo_hasta | fecha("fecha") }}</dd>
+    <dt>{{ t("facturas.valor_lista") }}</dt><dd>{{ factura.valor_lista | dinero(factura.moneda) }}</dd>
+    {% if factura.descuento %}<dt>{{ t("facturas.descuento") }} ({{ factura.descuento_porcentaje }} %{% if factura.campana %}, {{ factura.campana }}{% endif %})</dt><dd>{{ factura.descuento | dinero(factura.moneda) }}</dd>{% endif %}
+    <dt>{{ t("facturas.subtotal") }}</dt><dd>{{ factura.subtotal | dinero(factura.moneda) }}</dd>
+    <dt>{{ t("facturas.impuesto") }} ({{ factura.impuesto_porcentaje }} %)</dt><dd>{{ factura.impuesto | dinero(factura.moneda) }}</dd>
+    <dt>{{ t("facturas.total") }}</dt><dd><strong>{{ factura.total | dinero(factura.moneda) }}</strong></dd>
+    <dt>{{ t("facturas.saldo") }}</dt><dd><strong>{{ factura.saldo | dinero(factura.moneda) }}</strong></dd>
+    <dt>{{ t("facturas.estado") }}</dt><dd>{{ factura.estado }}</dd>
+    <dt>{{ t("facturas.emitida") }}</dt><dd>{{ factura.emitida_en | fecha }}</dd>
+    <dt>{{ t("facturas.vence") }}</dt><dd>{{ factura.vence_en | fecha("fecha") }}</dd>
+    {% if factura.motivo_anulacion %}<dt>{{ t("facturas.motivo_anulacion") }}</dt><dd>{{ factura.motivo_anulacion }}</dd>{% endif %}
+</dl>
+
+<h2>{{ t("facturas.pagos") }}</h2>
+<table>
+    <thead><tr><th>{{ t("facturas.recibido") }}</th><th>{{ t("facturas.valor") }}</th><th>{{ t("facturas.medio") }}</th><th>{{ t("facturas.referencia") }}</th><th>{{ t("facturas.estado") }}</th><th></th></tr></thead>
+    <tbody>
+    {% for p in pagos %}
+    <tr>
+        <td>{{ p.recibido_en }}</td><td>{{ p.valor | dinero(factura.moneda) }}</td><td>{{ p.medio }}</td><td>{{ p.referencia or "" }}</td>
+        <td>{% if p.anulado_en %}{{ t("facturas.pago_anulado") }}: {{ p.motivo_anulacion }}{% else %}{{ t("facturas.pago_vigente") }}{% endif %}</td>
+        <td>
+        {% if not p.anulado_en and activa.permisos.puede("facturacion", "eliminar") %}
+            <form method="post" action="/facturas/{{ factura.uuid }}/pagos/{{ p.uuid }}/anular" class="en-linea">
+                <input type="hidden" name="csrf" value="{{ csrf }}">
+                <input name="motivo" required minlength="5" maxlength="300" aria-label="{{ t('facturas.motivo_anulacion') }}">
+                <button type="submit" class="secundario">{{ t("facturas.anular_pago") }}</button>
+            </form>
+        {% endif %}
+        </td>
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+{% if factura.estado in ("PENDIENTE", "PAGADA_PARCIAL") and activa.permisos.puede("facturacion", "crear") %}
+<section class="tarjeta ancha">
+    <h2>{{ t("facturas.registrar_pago") }}</h2>
+    <form method="post" action="/facturas/{{ factura.uuid }}/pagos">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+        <label for="valor">{{ t("facturas.valor") }}</label>
+        <input id="valor" name="valor" required inputmode="decimal" pattern="[0-9]+(\.[0-9]{1,2})?" maxlength="15">
+        <p class="nota">{{ t("facturas.ayuda_valor") }}</p>
+        <label for="medio">{{ t("facturas.medio") }}</label>
+        <select id="medio" name="medio">{% for m in medios %}<option value="{{ m }}">{{ t("facturas.medio_" ~ m | lower) }}</option>{% endfor %}</select>
+        <label for="referencia">{{ t("facturas.referencia") }}</label>
+        <input id="referencia" name="referencia" maxlength="100">
+        <label for="recibido_en">{{ t("facturas.recibido") }}</label>
+        <input id="recibido_en" name="recibido_en" type="date" required value="{{ hoy }}">
+        <button type="submit">{{ t("facturas.registrar_pago") }}</button>
+    </form>
+</section>
+{% endif %}
+{% if factura.estado == "PENDIENTE" and activa.permisos.puede("facturacion", "eliminar") %}
+<form method="post" action="/facturas/{{ factura.uuid }}/anular">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <label for="motivo_factura">{{ t("facturas.motivo_anulacion") }}</label>
+    <input id="motivo_factura" name="motivo" required minlength="5" maxlength="300">
+    <button type="submit" class="secundario">{{ t("facturas.anular_factura") }}</button>
+</form>
+{% endif %}
+{% endblock %}

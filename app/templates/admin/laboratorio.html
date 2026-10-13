@@ -6,7 +6,8 @@
 <h1>{{ laboratorio.nombre_comercial }}</h1>
 {% if aviso == "plan" %}<p class="aviso" role="status">{{ t("laboratorios.aviso_plan") }}</p>{% endif %}
 {% if aviso == "invitacion" %}<p class="aviso" role="status">{{ t("laboratorios.aviso_invitacion") }}</p>{% endif %}
-{% if error == "invitacion" %}<p class="error" role="alert">{{ t("laboratorios.error_invitacion") }}</p>{% endif %}
+{% if aviso == "suscripcion" %}<p class="aviso" role="status">{{ t("suscripcion.aviso_cambio") }}</p>{% endif %}
+{% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
 <dl class="ficha">
     <dt>{{ t("laboratorios.subdominio") }}</dt><dd>{{ laboratorio.subdominio }}</dd>
     <dt>{{ t("laboratorios.identificador_fiscal") }}</dt><dd>{{ laboratorio.identificador_fiscal }}</dd>
@@ -27,4 +28,66 @@
     <button type="submit" class="secundario">{{ t("laboratorios.reenviar_invitacion") }}</button>
 </form>
 {% endif %}
+
+<h2>{{ t("suscripcion.titulo") }}</h2>
+{% if laboratorio.suscripcion_estado %}
+<dl class="ficha">
+    <dt>{{ t("suscripcion.licencia") }}</dt><dd>{{ laboratorio.tipo_licencia }}</dd>
+    <dt>{{ t("suscripcion.estado") }}</dt><dd>{{ laboratorio.suscripcion_estado }}</dd>
+    <dt>{{ t("suscripcion.inicio") }}</dt><dd>{{ laboratorio.inicio | fecha }}</dd>
+    <dt>{{ t("suscripcion.fin") }}</dt><dd>{% if laboratorio.fin %}{{ laboratorio.fin | fecha }}{% else %}{{ t("suscripcion.indefinida") }}{% endif %}</dd>
+    <dt>{{ t("suscripcion.renovacion") }}</dt><dd>{% if laboratorio.renovacion_automatica %}{{ t("suscripcion.si") }}{% else %}{{ t("suscripcion.no") }}{% endif %}</dd>
+    {% if laboratorio.motivo_suspension %}<dt>{{ t("suscripcion.motivo") }}</dt><dd>{{ laboratorio.motivo_suspension }}</dd>{% endif %}
+</dl>
+{% if activa.permisos.puede("suscripciones", "modificar") and laboratorio.suscripcion_estado != "CANCELADA" %}
+<div class="acciones">
+    {% if laboratorio.suscripcion_estado == "SUSPENDIDA" %}
+    <form method="post" action="/laboratorios/{{ laboratorio.uuid }}/suscripcion" class="en-linea">
+        <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="accion" value="reactivar">
+        <button type="submit">{{ t("suscripcion.reactivar") }}</button>
+    </form>
+    {% else %}
+    <form method="post" action="/laboratorios/{{ laboratorio.uuid }}/suscripcion">
+        <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="accion" value="suspender">
+        <label for="motivo">{{ t("suscripcion.motivo") }}</label>
+        <input id="motivo" name="motivo" required minlength="5" maxlength="300">
+        <button type="submit">{{ t("suscripcion.suspender") }}</button>
+    </form>
+    {% endif %}
+    <form method="post" action="/laboratorios/{{ laboratorio.uuid }}/suscripcion" class="en-linea">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+        <input type="hidden" name="accion" value="{% if laboratorio.renovacion_automatica %}renovacion_no{% else %}renovacion_si{% endif %}">
+        <button type="submit" class="secundario">{% if laboratorio.renovacion_automatica %}{{ t("suscripcion.desactivar_renovacion") }}{% else %}{{ t("suscripcion.activar_renovacion") }}{% endif %}</button>
+    </form>
+    <form method="post" action="/laboratorios/{{ laboratorio.uuid }}/suscripcion">
+        <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="accion" value="licencia">
+        <label for="tipo_licencia_gratuita">{{ t("suscripcion.licencia_sin_cobro") }}</label>
+        <select id="tipo_licencia_gratuita" name="tipo_licencia">{% for l in licencias if not l.facturable %}<option value="{{ l.codigo }}">{{ l.nombre }}</option>{% endfor %}</select>
+        <button type="submit">{{ t("suscripcion.aplicar_licencia") }}</button>
+    </form>
+    <form method="post" action="/laboratorios/{{ laboratorio.uuid }}/suscripcion" class="en-linea">
+        <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="accion" value="cancelar">
+        <button type="submit" class="secundario">{{ t("suscripcion.cancelar") }}</button>
+    </form>
+</div>
+{% endif %}
+{% endif %}
+
+<h2>{{ t("facturas.titulo") }}</h2>
+{% if activa.permisos.puede("facturacion", "crear") %}
+<form method="post" action="/laboratorios/{{ laboratorio.uuid }}/facturas">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <label for="tipo_factura">{{ t("facturas.generar_para") }}</label>
+    <select id="tipo_factura" name="tipo_licencia">{% for l in licencias if l.facturable %}<option value="{{ l.codigo }}">{{ l.nombre }}</option>{% endfor %}</select>
+    <button type="submit">{{ t("facturas.generar") }}</button>
+</form>
+{% endif %}
+<table>
+    <thead><tr><th>{{ t("facturas.numero") }}</th><th>{{ t("suscripcion.licencia") }}</th><th>{{ t("facturas.periodo") }}</th><th>{{ t("facturas.total") }}</th><th>{{ t("facturas.saldo") }}</th><th>{{ t("facturas.estado") }}</th></tr></thead>
+    <tbody>
+    {% for f in facturas %}
+    <tr><td><a href="/facturas/{{ f.uuid }}">{{ f.numero }}</a></td><td>{{ f.tipo_licencia }}</td><td>{{ f.periodo_desde | fecha("fecha") }} – {{ f.periodo_hasta | fecha("fecha") }}</td><td>{{ f.total | dinero(f.moneda) }}</td><td>{{ f.saldo | dinero(f.moneda) }}</td><td>{{ f.estado }}</td></tr>
+    {% endfor %}
+    </tbody>
+</table>
 {% endblock %}

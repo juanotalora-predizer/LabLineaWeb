@@ -6,7 +6,7 @@ Formato: `- [ ] Descripción — prioridad (Alta/Media/Baja) — spec relacionad
 
 ## En curso
 
-- [ ] Etapa 5: suscripciones, facturación manual de la plataforma y acceso de soporte — Alta — [plan](plan-desarrollo.md)
+- [ ] Etapa 5: compuerta local en verde; falta commit, push y CI verde para cerrarla — Alta — [informe](etapas/etapa-05.md)
 
 ## Pendiente
 
@@ -26,8 +26,7 @@ Formato: `- [ ] Descripción — prioridad (Alta/Media/Baja) — spec relacionad
 - [ ] Catálogo de exámenes: secciones, parámetros, unidades, listas de valores, técnica, requisitos de muestra, tarifas, códigos CUPS y alternos — Alta — [funcional/0004](funcional/0004-resultados-validacion-entrega.md), [funcional/0003](funcional/0003-muestras-impresion.md)
 - [ ] Rangos de referencia por sexo y edad en días, con rangos críticos — Alta — [funcional/0004](funcional/0004-resultados-validacion-entrega.md)
 - [ ] Importador del catálogo de Lablinea (Access) con vista previa y marcado de rangos para revisión — Alta — [funcional/0007](funcional/0007-alcance-mvp.md)
-- [ ] Licencias, listas de precios, campañas y suscripciones; bloqueo de órdenes nuevas con suscripción vencida (planes y módulos ya están, etapa 4) — Media — [funcional/0005](funcional/0005-plataforma-saas-suscripciones.md)
-- [ ] Facturas de la plataforma con registro manual de pagos — Media — [funcional/0005](funcional/0005-plataforma-saas-suscripciones.md)
+- [ ] Usar `SuscripcionVigente` en las rutas que crean órdenes (etapa 8) — Alta — [funcional/0005](funcional/0005-plataforma-saas-suscripciones.md)
 - [ ] Incorporar htmx y Chart.js como estáticos propios — Baja — [0001](infraestructura/0001-stack-fastapi-jinja2.md)
 
 ### Fase 2 — Seguridad
@@ -38,7 +37,7 @@ Formato: `- [ ] Descripción — prioridad (Alta/Media/Baja) — spec relacionad
 - [ ] Editar y desactivar personal de la plataforma desde el Admin Hub (hoy por script) — Baja — [funcional/0005](funcional/0005-plataforma-saas-suscripciones.md)
 - [ ] Etapa 20: el log de acceso del proxy no guarda la ruta completa de `/activar/<token>` — Baja — [informe etapa 4](etapas/etapa-04.md)
 
-- [ ] Acceso de soporte autorizado y auditado (usuarios y roles de la plataforma ya están, etapa 4) — Media — [funcional/0005](funcional/0005-plataforma-saas-suscripciones.md), [0005](infraestructura/0005-arquitectura-saas-multitenant.md)
+- [ ] Validar con el asesor tributario el IVA de la suscripción (19% configurado para Colombia) — Media — [funcional/0005](funcional/0005-plataforma-saas-suscripciones.md)
 - [ ] Vista de la auditoría para el rol AUDITOR, con filtros y exportación auditada — Media — [0007](infraestructura/0007-base-de-datos.md)
 - [ ] Purga de tareas terminadas antiguas y rol de base de datos propio para el trabajador (etapa 20) — Baja — [0012](infraestructura/0012-cola-de-tareas.md)
 - [ ] Traducir códigos de módulos y operaciones de permisos en la interfaz (etapa 4); formatos de número y moneda por país (etapa 8) — Baja — [0013](infraestructura/0013-textos-externalizados-i18n.md)
@@ -111,6 +110,8 @@ Formato: `- [ ] Descripción — prioridad (Alta/Media/Baja) — spec relacionad
 - [ ] Análisis de riesgos, políticas, oficial de seguridad, capacitación, notificación de brechas — Media — [0003](infraestructura/0003-seguridad-hipaa.md)
 
 ## Hecho
+
+- [x] Etapa 5 (compuerta local): licencias y suscripciones con vencimiento, suspensión y avisos de renovación; precios, campañas, facturas inmutables con pagos parciales (saldo y estado por trigger, sin sobrepagos ni con concurrencia) que extienden la suscripción; acceso de soporte autorizado por el laboratorio, de solo lectura, con tiquete de un solo uso y cada petición auditada — 2026-10-13 — [informe](etapas/etapa-05.md)
 
 - [x] **Etapa 4 cerrada** (CI verde, commit `14bc0d3`): Admin Hub con ingreso propio y TOTP, roles de plataforma, alta atómica de laboratorios con invitación al administrador, planes con módulos y máximo de usuarios, invitar y desactivar usuarios del laboratorio; 435 pruebas, cobertura 99,5%, ZAP sin hallazgos en los dos sitios, 14/14 pruebas manuales — 2026-10-13 — [informe](etapas/etapa-04.md)
 

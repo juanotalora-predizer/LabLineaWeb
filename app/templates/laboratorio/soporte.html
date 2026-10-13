@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t("soporte.titulo") }} · {{ sitio.nombre_comercial }}{% endblock %}
+
+{% block content %}
+<h1>{{ t("soporte.titulo") }}</h1>
+<p>{{ t("soporte.explicacion_laboratorio") }}</p>
+{% if errores %}<ul class="error" role="alert">{% for e in errores %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+<section class="tarjeta ancha">
+    <h2>{{ t("soporte.autorizar") }}</h2>
+    <form method="post" action="/configuracion/soporte">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+        <label for="horas">{{ t("soporte.horas") }}</label>
+        <input id="horas" name="horas" inputmode="numeric" pattern="[0-9]{1,2}" required value="{{ datos.horas or 4 }}" maxlength="2">
+        <p class="nota">{{ t("soporte.ayuda_horas", maximo=horas_maximas) }}</p>
+        <label for="motivo">{{ t("soporte.motivo") }}</label>
+        <input id="motivo" name="motivo" required minlength="5" maxlength="300" value="{{ datos.motivo or '' }}">
+        <p class="nota">{{ t("soporte.ayuda_motivo") }}</p>
+        <button type="submit">{{ t("soporte.autorizar") }}</button>
+    </form>
+</section>
+<table>
+    <thead><tr><th>{{ t("soporte.motivo") }}</th><th>{{ t("soporte.autorizado_por") }}</th><th>{{ t("soporte.desde") }}</th><th>{{ t("soporte.hasta") }}</th><th>{{ t("soporte.estado") }}</th><th></th></tr></thead>
+    <tbody>
+    {% for a in accesos %}
+    <tr>
+        <td>{{ a.motivo }}</td><td>{{ a.autorizado_por }}</td><td>{{ a.inicio | fecha }}</td><td>{{ a.fin | fecha }}</td>
+        <td>{% if a.vigente %}{{ t("soporte.vigente") }}{% elif a.revocado_en %}{{ t("soporte.revocado") }}{% else %}{{ t("soporte.vencido") }}{% endif %}</td>
+        <td>{% if a.vigente %}
+            <form method="post" action="/configuracion/soporte/{{ a.uuid }}/revocar" class="en-linea"><input type="hidden" name="csrf" value="{{ csrf }}"><button type="submit" class="secundario">{{ t("soporte.revocar") }}</button></form>
+        {% endif %}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

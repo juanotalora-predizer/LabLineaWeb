@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t("soporte.titulo") }} · {{ sitio.nombre_comercial }}{% endblock %}
+
+{% block content %}
+<section class="tarjeta">
+    <h1>{{ t("soporte.titulo") }}</h1>
+    {% if invalido %}
+    <p class="error" role="alert">{{ t("soporte.tiquete_invalido") }}</p>
+    {% else %}
+    <p>{{ t("soporte.confirmar_entrada") }}</p>
+    <form method="post" action="/soporte/entrar/{{ token }}">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+        <button type="submit">{{ t("soporte.entrar") }}</button>
+    </form>
+    {% endif %}
+</section>
+{% endblock %}

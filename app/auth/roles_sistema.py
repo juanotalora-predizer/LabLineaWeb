@@ -4,6 +4,7 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 TODAS = ("consultar", "crear", "modificar", "eliminar")
+ROL_SOPORTE = "SOPORTE"
 LECTURA = ("consultar",)
 ESCRITURA = ("consultar", "crear", "modificar")
 
@@ -44,6 +45,16 @@ ROLES = {
     "AUDITOR": (
         "Auditoría y calidad",
         {m: LECTURA for m in ("usuarios", "pacientes", "ordenes", "caja", "muestras", "resultados", "reportes")},
+        (),
+    ),
+    # Solo para el personal de la plataforma que entra con una autorización de soporte del laboratorio.
+    # No se asigna desde la interfaz del laboratorio.
+    ROL_SOPORTE: (
+        "Soporte de la plataforma (solo lectura)",
+        {
+            m: LECTURA
+            for m in ("usuarios", "configuracion", "pacientes", "ordenes", "caja", "muestras", "resultados", "reportes")
+        },
         (),
     ),
 }

@@ -58,6 +58,16 @@ async def _sembrar_laboratorios() -> None:
                 ),
                 {"t": tenant_id, "s": subdominio, "n": nombre, "nit": nit, "e": estado},
             )
+            # Suscripción ad honorem vigente: cada corrida parte de laboratorios al día.
+            await conexion.execute(
+                text(
+                    "INSERT INTO plataforma.suscripciones (laboratorio_id, tipo_licencia)"
+                    " SELECT id, 'AD_HONOREM' FROM plataforma.laboratorios WHERE tenant_id = :t"
+                    " ON CONFLICT (laboratorio_id) DO UPDATE SET tipo_licencia = 'AD_HONOREM', estado = 'ACTIVA',"
+                    " fin = NULL, motivo_suspension = NULL, renovacion_automatica = false"
+                ),
+                {"t": tenant_id},
+            )
     await engine.dispose()
 
 
@@ -87,6 +97,7 @@ SECRETOS_TOTP = {(lab, email): pyotp.random_base32() for lab, email, *_, totp in
 
 TABLAS_AUTH = (
     "lab.eventos_seguridad, lab.limites, lab.codigos_verificacion, lab.sesiones, lab.invitaciones, lab.sedes,"
+    " lab.tickets_soporte, lab.accesos_soporte,"
     " lab.rol_acciones, lab.rol_permisos, lab.usuario_roles, lab.roles, lab.usuarios"
 )
 # plataforma.eventos_seguridad y plataforma.auditoria no se vacían: un trigger lo impide (solo inserción).
@@ -100,6 +111,7 @@ USUARIOS_PLATAFORMA = [
     ("maestro@plataforma.test", "Admin Maestro", ("ADMIN_MAESTRO",)),
     ("comercial@plataforma.test", "Gerente Comercial", ("GERENTE_COMERCIAL",)),
     ("financiero@plataforma.test", "Soporte Financiero", ("SOPORTE_FINANCIERO",)),
+    ("tecnico@plataforma.test", "Soporte Técnico", ("SOPORTE_TECNICO",)),
 ]
 SECRETOS_TOTP.update({("plataforma", email): pyotp.random_base32() for email, *_ in USUARIOS_PLATAFORMA})
 

@@ -16,12 +16,20 @@ Plantilla:
 -
 
 **Bloqueos / pendientes**
+- Commit, push y CI de la etapa 5 (a la espera de autorización del usuario).
+- Validar el IVA de la suscripción con el asesor tributario.
 -
 -->
 
 ## 2026-10-13
 
 **Avances**
+- **Etapa 5** construida y con la compuerta local en verde ([informe](etapas/etapa-05.md)); falta subirla y que pase la CI.
+  - Licencias y suscripciones: el estado efectivo vence en el instante exacto; suspensión, cancelación, renovación automática y avisos de renovación 7 días y 1 día antes.
+  - Facturas de la plataforma inmutables, con precios por país y plan, campañas e IVA del país; pagos parciales cuyo saldo y estado calcula la base, sin sobrepagos ni con pagos simultáneos; al pagarse extienden la suscripción.
+  - Soporte autorizado por el laboratorio (máximo 72 horas, revocable): tiquete de un solo uso, sesión de solo lectura, cada petición auditada y la autorización verificada en cada petición.
+  - 571 pruebas (136 nuevas, incluidas pruebas con hypothesis de saldo y facturas contra la base real), cobertura 99%, ZAP sin hallazgos en los dos sitios, 12/12 pruebas manuales.
+- Hallazgos: el E2E mostró que la CSP bloqueaba la redirección del Admin Hub al laboratorio (ahora es un enlace); el fuzzing encontró un error 500 con "²" (`str.isdigit()`), corregido también en los planes de la etapa 4.
 - **Etapa 4 cerrada** ([informe](etapas/etapa-04.md)): commit `14bc0d3`, CI verde.
   - Admin Hub en `admin.<dominio>` con su propio esquema, rol de base de datos, usuarios, roles y auditoría; mismo código de ingreso que los laboratorios (el `search_path` de la transacción decide el esquema).
   - Alta de laboratorio atómica (laboratorio, sede, roles, administrador e invitación); el administrador crea su propia contraseña con un enlace de un solo uso.

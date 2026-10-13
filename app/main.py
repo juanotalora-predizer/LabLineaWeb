@@ -8,6 +8,7 @@ from fastapi.staticfiles import StaticFiles
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from app.admin.rutas import router as rutas_admin
+from app.admin.suscripciones import router as rutas_suscripciones
 from app.auth.invitaciones import router as rutas_invitaciones
 from app.auth.rutas import router as rutas_auth
 from app.auth.web import InscripcionTotpPendiente, NoAutenticado, SegundoFactorPendiente
@@ -16,6 +17,8 @@ from app.core.i18n import t
 from app.core.plantillas import templates
 from app.core.seguridad import CabecerasSeguridad
 from app.core.tenancy import Laboratorio, ResolverLaboratorio, Sitio, sitio_actual
+from app.laboratorio import suscripcion  # noqa: F401 — registra el aviso de renovación
+from app.laboratorio.soporte import router as rutas_soporte
 from app.laboratorio.usuarios import router as rutas_usuarios_laboratorio
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -44,6 +47,8 @@ app.include_router(rutas_auth)
 app.include_router(rutas_invitaciones)
 app.include_router(rutas_usuarios_laboratorio)
 app.include_router(rutas_admin)
+app.include_router(rutas_suscripciones)
+app.include_router(rutas_soporte)
 
 
 @app.exception_handler(NoAutenticado)

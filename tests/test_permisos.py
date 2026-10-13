@@ -154,6 +154,7 @@ async def test_usuarios_de_otro_laboratorio_invisibles_con_rls(engine_app):
                         " VALUES ('lab_b', 'intruso@lab-b.test', 'Intruso', 'PERSONAL', '$argon2id$x')"
                     )
                 )
-    # Solo correos de lab_a (personal @lab-a.test y pacientes sintéticos); ninguno exclusivo de lab_b.
-    assert correos and all(c.endswith(("@lab-a.test", "@sintetico.test")) for c in correos)
+    # Solo correos de lab_a (personal, pacientes sintéticos y soporte de la plataforma que entró con
+    # autorización); ninguno exclusivo de lab_b.
+    assert correos and all(c.endswith(("@lab-a.test", "@sintetico.test", "@plataforma.test")) for c in correos)
     assert not {"admin@lab-b.test", "paciente@lab-b.test"} & set(correos)

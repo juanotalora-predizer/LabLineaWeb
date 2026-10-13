@@ -252,7 +252,7 @@ def test_alta_que_falla_a_mitad_no_deja_nada(buzon):
         await sesion.execute(
             text(
                 "SELECT plataforma.alta_laboratorio(:t, :s, :n, :nit, 'COL', CAST(:p AS uuid), 'Sede', 'Cali',"
-                " 'correo invalido', 'Jefe', CAST(:r AS jsonb))"
+                " 'correo invalido', 'Jefe', CAST(:r AS jsonb), 'DEMO')"
             ),
             {
                 "t": datos.tenant_id,
@@ -477,4 +477,19 @@ def test_cambiar_plan_a_inexistente_404(buzon):
     respuesta = c.post(f"/laboratorios/{lab}/plan", data={"plan": str(uuid.uuid4()), "csrf": csrf(c, "/laboratorios")})
     assert respuesta.status_code == 404
     respuesta = c.post(f"/laboratorios/{lab}/plan", data={"plan": "x", "csrf": csrf(c, "/laboratorios")})
+    assert respuesta.status_code == 400
+
+
+@pytest.mark.parametrize("maximo", ["²", "٣", "１"])
+def test_regresion_digitos_unicode_en_el_maximo_de_usuarios(buzon, maximo):
+    c = admin(MAESTRO, buzon)
+    respuesta = c.post(
+        "/planes/nuevo",
+        data={
+            "codigo": f"UNI_{_unico().upper()}",
+            "nombre": "Plan Unicode",
+            "max_usuarios": maximo,
+            "csrf": csrf(c, "/planes/nuevo"),
+        },
+    )
     assert respuesta.status_code == 400

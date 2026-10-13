@@ -156,7 +156,7 @@ async def test_tarea_corre_con_el_laboratorio_de_la_tarea(engine_owner, manejado
     for esperado, tenant, dominios in vistos:
         assert tenant == esperado
         # lab_b tiene un paciente con correo @lab-a.test; lo importante es que solo ve sus filas.
-        assert dominios <= {"lab-a.test", "lab-b.test", "sintetico.test"}
+        assert dominios <= {"lab-a.test", "lab-b.test", "sintetico.test", "plataforma.test"}
     async with sesion_tenant("lab_b") as sesion:
         en_b = await sesion.scalar(text("SELECT count(*) FROM lab.usuarios"))
     assert en_b < 10  # el manejador de lab_b no ve los usuarios de lab_a (más de 10)

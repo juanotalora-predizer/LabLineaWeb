@@ -5,6 +5,7 @@
   Contraseña y secreto TOTP salen de DEV_CLAVE_USUARIOS y DEV_TOTP_SECRETO del .env.
 - Pacientes sintéticos (scripts/sinteticos.py) como usuarios del portal en cada laboratorio.
 - Admin Hub: roles de la plataforma y admin@admin.test (ADMIN_MAESTRO), con la misma clave y TOTP.
+- Suscripciones ad honorem vigentes y precios de ejemplo (plan completo, Colombia).
 
     .venv/bin/python scripts/sembrar_desarrollo.py
 """
@@ -69,6 +70,25 @@ async def sembrar() -> None:
                 ),
                 {"t": tenant_id, "s": subdominio, "n": nombre, "nit": nit},
             )
+            # Suscripción ad honorem vigente (un escaneo activo pudo suspenderla, cancelarla o vencerla).
+            await conexion.execute(
+                text(
+                    "INSERT INTO plataforma.suscripciones (laboratorio_id, tipo_licencia)"
+                    " SELECT id, 'AD_HONOREM' FROM plataforma.laboratorios WHERE tenant_id = :t"
+                    " ON CONFLICT (laboratorio_id) DO UPDATE SET tipo_licencia = 'AD_HONOREM', estado = 'ACTIVA',"
+                    " fin = NULL, motivo_suspension = NULL, renovacion_automatica = false"
+                ),
+                {"t": tenant_id},
+            )
+        # Precios de ejemplo del plan completo en Colombia (datos sintéticos).
+        await conexion.execute(
+            text(
+                "INSERT INTO plataforma.precios (pais, plan_id, tipo_licencia, moneda, valor, vigente_desde)"
+                " SELECT 'COL', p.id, v.tipo, 'COP', v.valor, DATE '2026-01-01' FROM plataforma.planes p,"
+                " (VALUES ('MENSUAL', 450000), ('ANUAL', 4500000)) AS v (tipo, valor)"
+                " WHERE p.codigo = 'COMPLETO' ON CONFLICT DO NOTHING"
+            )
+        )
     await engine.dispose()
 
     clave = settings.dev_clave_usuarios.get_secret_value()

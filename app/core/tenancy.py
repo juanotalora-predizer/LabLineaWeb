@@ -11,6 +11,7 @@ Ningún parámetro, cookie ni cabecera enviada por el cliente puede cambiarlo.
 
 import re
 from dataclasses import dataclass, field
+from datetime import datetime
 from typing import Literal
 
 from fastapi import HTTPException, Request
@@ -42,6 +43,13 @@ class Laboratorio:
     # Módulos del plan más los siempre activos: fuera de ellos ningún permiso aplica.
     modulos: frozenset[str] = field(default_factory=frozenset)
     max_usuarios: int | None = None
+    # Estado efectivo (spec funcional/0005): una ACTIVA con fin pasado ya es VENCIDA.
+    suscripcion_estado: str = "ACTIVA"
+    suscripcion_fin: datetime | None = None
+
+    @property
+    def suscripcion_vigente(self) -> bool:
+        return self.suscripcion_estado == "ACTIVA"
 
 
 @dataclass(frozen=True)

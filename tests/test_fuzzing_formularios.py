@@ -180,3 +180,82 @@ def test_activar_con_entradas_arbitrarias(token, clave, confirmacion):
     ruta = f"/activar/{token}" if token else "/activar/x"
     respuesta = c.post(ruta, data={"clave": clave, "confirmacion": confirmacion, "csrf": csrf(c)})
     assert respuesta.status_code in PERMITIDOS | {404}, respuesta.status_code
+
+
+# --- Formularios de la etapa 5 ---
+
+
+@pytest.fixture(scope="module")
+def factura_para_fuzzing():
+    """Una factura pendiente de un laboratorio sintético (valor de lista 100.000 COP)."""
+    from sqlalchemy import text
+
+    from app.admin import facturacion
+    from tests.ayudas import nuevo_laboratorio
+    from tests.conftest import ejecutar_en_plataforma
+
+    lab = nuevo_laboratorio("MENSUAL")
+
+    async def generar(sesion):
+        await sesion.execute(
+            text(
+                "INSERT INTO plataforma.precios (pais, plan_id, tipo_licencia, moneda, valor, vigente_desde)"
+                " SELECT 'COL', id, 'MENSUAL', 'COP', 100000, DATE '2026-01-01' FROM plataforma.planes"
+                " WHERE codigo = 'COMPLETO' ON CONFLICT DO NOTHING"
+            )
+        )
+        return await facturacion.generar_factura(sesion, lab["uuid"], "MENSUAL")
+
+    return lab, correr(ejecutar_en_plataforma(generar))
+
+
+@AJUSTES
+@given(valor=texto, medio=texto, referencia=texto, recibido=texto)
+def test_pago_con_entradas_arbitrarias(maestro, factura_para_fuzzing, valor, medio, referencia, recibido):
+    _, factura = factura_para_fuzzing
+    c, ruta = maestro, f"/facturas/{factura}"
+    datos = {"valor": valor, "medio": medio, "referencia": referencia, "recibido_en": recibido}
+    respuesta = c.post(f"{ruta}/pagos", data={**datos, "csrf": csrf(c, ruta)})
+    assert respuesta.status_code in PERMITIDOS, respuesta.status_code
+    _sin_reflejo_peligroso(respuesta.text)
+
+
+@AJUSTES
+@given(
+    datos=st.fixed_dictionaries(
+        {c: texto for c in ("pais", "plan", "tipo_licencia", "moneda", "valor", "vigente_desde")}
+    )
+)
+def test_precio_con_entradas_arbitrarias(maestro, datos):
+    respuesta = maestro.post("/precios", data={**datos, "csrf": csrf(maestro, "/precios")})
+    assert respuesta.status_code in PERMITIDOS, respuesta.status_code
+    _sin_reflejo_peligroso(respuesta.text)
+
+
+@AJUSTES
+@given(datos=st.fixed_dictionaries({c: texto for c in ("nombre", "porcentaje", "tipo_licencia", "desde", "hasta")}))
+def test_campana_con_entradas_arbitrarias(maestro, datos):
+    respuesta = maestro.post("/campanas", data={**datos, "csrf": csrf(maestro, "/precios")})
+    assert respuesta.status_code in PERMITIDOS, respuesta.status_code
+    _sin_reflejo_peligroso(respuesta.text)
+
+
+@AJUSTES
+@given(accion=texto, motivo=texto, licencia=texto)
+def test_suscripcion_con_entradas_arbitrarias(maestro, factura_para_fuzzing, accion, motivo, licencia):
+    lab, _ = factura_para_fuzzing
+    ruta = f"/laboratorios/{lab['uuid']}"
+    datos = {"accion": accion, "motivo": motivo, "tipo_licencia": licencia}
+    respuesta = maestro.post(f"{ruta}/suscripcion", data={**datos, "csrf": csrf(maestro, ruta)})
+    assert respuesta.status_code in PERMITIDOS, respuesta.status_code
+
+
+@AJUSTES
+@given(horas=texto, motivo=texto)
+def test_autorizar_soporte_con_entradas_arbitrarias(admin_lab_a, horas, motivo):
+    c = admin_lab_a
+    respuesta = c.post(
+        "/configuracion/soporte", data={"horas": horas, "motivo": motivo, "csrf": csrf(c, "/configuracion/soporte")}
+    )
+    assert respuesta.status_code in PERMITIDOS, respuesta.status_code
+    _sin_reflejo_peligroso(respuesta.text)

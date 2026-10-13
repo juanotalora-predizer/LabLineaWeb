@@ -67,3 +67,20 @@ Si un cliente grande o una ley local lo exige, el tenant puede moverse a una **b
 - `tests/test_admin.py::test_toda_ruta_declara_su_sitio` falla si una ruta nueva no declara su sitio.
 - Se prefirió esto a montar dos sub-aplicaciones por host porque deja una sola fuente de rutas para el fuzzing (schemathesis) y el escaneo, y comparte el ingreso sin duplicarlo.
 - **Base de datos:** cada transacción fija su `search_path` (`lab` o `plataforma`), y el código de autenticación usa nombres de tabla sin esquema. Como cada rol solo puede usar su esquema, un error de `search_path` falla con *permission denied* en lugar de mezclar datos.
+
+## Implementación del acceso de soporte (etapa 5, 2026-10-13)
+
+1. **El laboratorio autoriza.** Requiere la acción `AUTORIZAR_SOPORTE`, que tiene el rol ADMINISTRADOR.
+   - Define la duración (1 a 72 horas) y un motivo, por ejemplo el número del caso, sin datos de pacientes.
+   - Puede revocar la autorización cuando quiera: eso cierra las sesiones de soporte y anula los tiquetes pendientes.
+2. **La plataforma emite un tiquete.** Solo quien tiene el módulo `soporte` (roles `ADMIN_MAESTRO` y `SOPORTE_TECNICO`) y solo con una autorización vigente.
+   - `plataforma.iniciar_soporte` crea o reactiva un usuario del laboratorio de tipo `SOPORTE`, que nunca tiene contraseña. Le asigna el rol `SOPORTE` (solo consulta) y guarda el hash de un tiquete de un solo uso válido 2 minutos.
+   - Sin autorización vigente responde 403, y el intento queda en la auditoría de la plataforma.
+   - Si el correo del técnico pertenece a una persona del laboratorio, se rechaza para no mezclar cuentas.
+3. **El técnico entra al laboratorio.** El Admin Hub muestra un enlace al subdominio del laboratorio; no redirige, porque la CSP `form-action 'self'` lo impide y no se abre a otros orígenes.
+   - En el laboratorio, una página de confirmación consume el tiquete con un POST protegido por CSRF.
+   - Se crea una sesión con el segundo factor ya cumplido en el Admin Hub, que vence cuando vence la autorización.
+4. **Auditoría y vigencia:**
+   - Cada petición del soporte queda en la auditoría del laboratorio (método y ruta) a nombre del usuario de soporte.
+   - En cada petición se verifica que la autorización siga vigente; si no, la sesión se revoca.
+   - El laboratorio ve a la persona de soporte en su lista de usuarios, y la persona de soporte ve una franja que indica que su sesión es de solo lectura y auditada.

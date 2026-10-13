@@ -314,6 +314,7 @@ SIN_TRIGGER_PLATAFORMA = {
     "limites": "operativa: contadores de intentos",
     "modulos": "catálogo fijo de la migración; la plataforma no lo modifica",
     "acciones": "catálogo fijo de la migración; la plataforma no lo modifica",
+    "tipos_licencia": "catálogo fijo de la migración; la plataforma no lo modifica",
 }
 
 

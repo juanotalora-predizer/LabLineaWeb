@@ -24,6 +24,13 @@ from app.core.tenancy import SitioAdmin, sitio_admin
 router = APIRouter(default_response_class=HTMLResponse, dependencies=[Depends(sitio_admin)])
 AdminActual = Annotated[SitioAdmin, Depends(sitio_admin)]
 CODIGO_PLAN = re.compile(r"^[A-Z][A-Z0-9_]{1,39}$")
+# Errores que llegan por ?error= tras una redirección: solo estos se muestran (lista blanca).
+ERRORES_LABORATORIO = {
+    "invitacion": "laboratorios.error_invitacion",
+    "suscripcion": "suscripcion.error_suscripcion",
+    "motivo": "suscripcion.error_motivo",
+    **{c: f"facturas.error_{c}" for c in ("laboratorio", "cancelada", "licencia", "sin_precio", "periodo_facturado")},
+}
 
 
 def _sesion(request: Request, activa: SesionActiva):
@@ -37,9 +44,19 @@ _SQL_LABORATORIOS = text(
     " FROM plataforma.laboratorios l JOIN plataforma.planes p ON p.id = l.plan_id ORDER BY l.nombre_comercial"
 )
 _SQL_LABORATORIO = text(
-    "SELECT l.uuid::text AS uuid, l.nombre_comercial, l.subdominio, l.identificador_fiscal, l.pais, l.estado,"
-    " l.creado_en, p.uuid::text AS plan_uuid, p.nombre AS plan"
-    " FROM plataforma.laboratorios l JOIN plataforma.planes p ON p.id = l.plan_id WHERE l.uuid = :u"
+    "SELECT l.id, l.uuid::text AS uuid, l.nombre_comercial, l.subdominio, l.identificador_fiscal, l.pais, l.estado,"
+    " l.creado_en, p.uuid::text AS plan_uuid, p.nombre AS plan,"
+    " s.tipo_licencia, s.inicio, s.fin, s.renovacion_automatica, s.motivo_suspension,"
+    # Estado efectivo: una ACTIVA con fin pasado ya está vencida aunque el trabajador no la haya marcado.
+    " CASE WHEN s.estado = 'ACTIVA' AND s.fin IS NOT NULL AND s.fin <= now() THEN 'VENCIDA'"
+    "      ELSE s.estado END AS suscripcion_estado"
+    " FROM plataforma.laboratorios l JOIN plataforma.planes p ON p.id = l.plan_id"
+    " LEFT JOIN plataforma.suscripciones s ON s.laboratorio_id = l.id WHERE l.uuid = :u"
+)
+_SQL_LICENCIAS = text("SELECT codigo, nombre, facturable FROM plataforma.tipos_licencia ORDER BY codigo")
+_SQL_FACTURAS_LAB = text(
+    "SELECT uuid::text AS uuid, numero, tipo_licencia, periodo_desde, periodo_hasta, total, saldo, moneda, estado"
+    " FROM plataforma.facturas WHERE laboratorio_id = :l ORDER BY emitida_en DESC"
 )
 _SQL_PAISES = text('SELECT codigo, nombre FROM "global".paises WHERE habilitado ORDER BY nombre')
 _SQL_PLANES_ACTIVOS = text("SELECT uuid::text AS uuid, nombre FROM plataforma.planes WHERE activo ORDER BY nombre")
@@ -60,9 +77,11 @@ async def _formulario_alta(request, sitio, activa, *, errores=(), datos=None, es
     async with _sesion(request, activa) as sesion:
         paises = (await sesion.execute(_SQL_PAISES)).mappings().all()
         planes = (await sesion.execute(_SQL_PLANES_ACTIVOS)).mappings().all()
+        licencias = (await sesion.execute(_SQL_LICENCIAS)).mappings().all()
     contexto = {
         "sitio": sitio,
         "activa": activa,
+        "licencias": licencias,
         "paises": paises,
         "planes": planes,
         "errores": list(errores),
@@ -95,8 +114,10 @@ async def alta(
     ciudad: Annotated[TextoSeguro, Form(max_length=80)] = "",
     admin_email: Annotated[TextoSeguro, Form(max_length=254)] = "",
     admin_nombre: Annotated[TextoSeguro, Form(max_length=120)] = "",
+    tipo_licencia: Annotated[TextoSeguro, Form(max_length=20)] = "DEMO",
 ):
     datos = servicios.DatosAlta(
+        tipo_licencia=tipo_licencia.strip().upper(),
         nombre=nombre.strip(),
         subdominio=subdominio.strip().lower(),
         identificador_fiscal=identificador_fiscal.strip(),
@@ -123,16 +144,22 @@ async def laboratorio(
 ):
     async with _sesion(request, activa) as sesion:
         fila = (await sesion.execute(_SQL_LABORATORIO, {"u": laboratorio_uuid})).mappings().first()
+        if fila is None:
+            raise HTTPException(status_code=404)
         planes = (await sesion.execute(_SQL_PLANES_ACTIVOS)).mappings().all()
-    if fila is None:
-        raise HTTPException(status_code=404)
+        licencias = (await sesion.execute(_SQL_LICENCIAS)).mappings().all()
+        facturas = (await sesion.execute(_SQL_FACTURAS_LAB, {"l": fila["id"]})).mappings().all()
     contexto = {
         "sitio": sitio,
         "activa": activa,
         "laboratorio": fila,
         "planes": planes,
+        "licencias": licencias,
+        "facturas": facturas,
         "aviso": request.query_params.get("aviso"),
-        "error": request.query_params.get("error"),
+        "error": t(clave, sitio.idioma)
+        if (clave := ERRORES_LABORATORIO.get(request.query_params.get("error", "")))
+        else None,
     }
     return render(request, "admin/laboratorio.html", contexto)
 
@@ -216,7 +243,7 @@ def _validar_plan(nombre: str, max_usuarios: str, modulos: list[str], idioma: st
         errores.append(t("planes.error_nombre", idioma))
     maximo = None
     if max_usuarios.strip():
-        if not max_usuarios.strip().isdigit() or not 1 <= int(max_usuarios) <= 100000:
+        if not re.fullmatch(r"[0-9]{1,6}", max_usuarios.strip()) or not 1 <= int(max_usuarios) <= 100000:
             errores.append(t("planes.error_maximo", idioma))
         else:
             maximo = int(max_usuarios)

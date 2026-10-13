@@ -86,7 +86,13 @@ def servidor(tmp_path_factory, buzon_smtp):
     _, puerto_smtp = buzon_smtp
     cert, clave = _certificado(tmp_path_factory.mktemp("tls"))
     puerto = _puerto_libre()
-    entorno = {**os.environ, "ENTORNO": "pruebas", "SMTP_HOST": "127.0.0.1", "SMTP_PORT": str(puerto_smtp)}
+    entorno = {
+        **os.environ,
+        "ENTORNO": "pruebas",
+        "SMTP_HOST": "127.0.0.1",
+        "SMTP_PORT": str(puerto_smtp),
+        "PUERTO_PUBLICO": str(puerto),  # redirecciones entre sitios (Admin Hub → laboratorio)
+    }
     proceso = subprocess.Popen(  # noqa: S603 (comando fijo, sin entrada externa)
         [
             sys.executable,

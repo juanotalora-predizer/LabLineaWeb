@@ -57,3 +57,43 @@ def autenticar(c: TestClient, email: str, buzon: list, laboratorio: str = "lab_a
         respuesta = enviar_codigo(c, totp_actual(laboratorio, email, desfase=30))
     assert respuesta.status_code == 303, respuesta.text
     return c
+
+
+# --- Admin Hub ---
+
+
+def cliente_admin(email: str, buzon: list) -> TestClient:
+    """Personal de la plataforma con sesión completa en admin.<dominio>."""
+    return autenticar(cliente("admin"), email, buzon, laboratorio="plataforma")
+
+
+def nuevo_laboratorio(tipo_licencia: str = "DEMO") -> dict:
+    """Da de alta un laboratorio sintético (como el Admin Hub) y devuelve uuid, tenant y subdominio."""
+    import uuid
+
+    from sqlalchemy import text
+
+    from app.admin import servicios
+    from tests.conftest import correr, ejecutar_en_plataforma
+
+    sub = f"t-{uuid.uuid4().hex[:10]}"
+
+    async def alta(sesion):
+        plan = await sesion.scalar(text("SELECT uuid::text FROM plataforma.planes WHERE codigo = 'COMPLETO'"))
+        datos = servicios.DatosAlta(
+            nombre=f"Laboratorio {sub}",
+            subdominio=sub,
+            identificador_fiscal="9" + str(uuid.uuid4().int)[:9],
+            pais="COL",
+            plan=plan,
+            sede="Sede",
+            ciudad="Cali",
+            admin_email=f"jefe@{sub}.test",
+            admin_nombre="Jefe Sintético",
+            tipo_licencia=tipo_licencia,
+        )
+        uuid_lab, errores = await servicios.dar_de_alta(sesion, datos)
+        assert not errores, errores
+        return {"uuid": uuid_lab, "tenant": datos.tenant_id, "subdominio": sub}
+
+    return correr(ejecutar_en_plataforma(alta))

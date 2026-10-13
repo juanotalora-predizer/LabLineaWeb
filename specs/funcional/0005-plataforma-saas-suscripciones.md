@@ -71,4 +71,42 @@ Ver [informe de la etapa 4](../etapas/etapa-04.md). Migración `0005`.
   - El plan `COMPLETO` incluye todos los módulos; los laboratorios existentes quedaron en él.
 - **Auditoría de la plataforma** (`plataforma.auditoria`): las escrituras en laboratorios, planes, módulos de plan, usuarios, roles y permisos quedan registradas por trigger. Lecturas y accesos denegados quedan registrados desde la aplicación. Es de solo inserción.
 
-**Pendiente para la etapa 5:** tipos de licencia, suscripciones con vencimiento y suspensión, facturas con pagos manuales y acceso de soporte autorizado.
+Lo pendiente de la etapa 4 se construyó en la etapa 5 (abajo).
+
+## Implementación (etapa 5, 2026-10-13)
+
+Ver [informe de la etapa 5](../etapas/etapa-05.md). Migración `0006`.
+
+- **Licencias:**
+
+  | Licencia | Duración | Cobro | Máx. usuarios |
+  |---|---|---|---|
+  | `DEMO` | 30 días | No | 3 |
+  | `AD_HONOREM` | Indefinida | No | Sin límite |
+  | `GRATUITO_BASICO` | Indefinida | No | 2 |
+  | `MENSUAL` | 1 mes | Sí | Sin límite |
+  | `ANUAL` | 1 año | Sí | Sin límite |
+
+  El límite efectivo de usuarios es el menor entre el del plan y el de la licencia.
+- **Suscripción:** una por laboratorio.
+  - El alta la crea con la licencia elegida. Las facturables tienen 7 días para pagar la primera factura.
+  - **Estado efectivo:** una suscripción activa con fecha de fin pasada ya cuenta como vencida, aunque el trabajador todavía no la haya marcado.
+  - Desde el Admin Hub se puede suspender (con motivo), reactivar, cancelar, activar o quitar la renovación automática y cambiar a una licencia sin cobro. Las licencias con cobro se activan pagando.
+- **Bloqueo:** sin suscripción vigente, la dependencia `SuscripcionVigente` responde 403 y lo audita. **La usarán las rutas que crean órdenes (etapa 8)**. El ingreso, la consulta y la exportación nunca la usan. El laboratorio ve un aviso en todas sus páginas.
+- **Avisos de renovación:** el trabajador marca las suscripciones vencidas y encola un correo a la administración del laboratorio 7 días y 1 día antes del vencimiento, una sola vez por umbral. La fecha se muestra en la zona horaria del laboratorio.
+- **Precios y campañas:**
+  - El precio depende de país, plan, licencia y moneda, y tiene fecha de vigencia.
+  - Las campañas son un porcentaje de descuento con vigencia, para todas las licencias o para una sola. Si aplican varias, se usa la de mayor descuento.
+  - El impuesto sale de la configuración del país (`global.paises.impuesto_servicios`). Colombia: 19 %, **por validar con el asesor tributario**.
+- **Facturas:**
+  - Numeración `PLT-000001`. Cada factura cubre el siguiente periodo de la suscripción y vence a los 15 días.
+  - Montos en `NUMERIC`, con redondeo al medio hacia arriba en los decimales de la moneda.
+  - **Inmutables:** la plataforma no puede actualizar ni borrar facturas ni pagos; solo crearlos y anularlos con funciones que verifican las reglas. Ni el dueño de la base puede cambiar los montos.
+- **Pagos:**
+  - Medios: transferencia, consignación, efectivo, tarjeta u otro, con referencia.
+  - Un pago nunca supera el saldo; esto se mantiene también con pagos simultáneos, porque la base bloquea la factura.
+  - El saldo y el estado (`PENDIENTE`, `PAGADA_PARCIAL`, `PAGADA`) se recalculan con cada pago o anulación.
+  - **Al quedar pagada, la suscripción se activa y se extiende hasta el final del periodo facturado.**
+  - Un pago se anula con motivo. Una factura solo se anula si no tiene pagos vigentes.
+- **Renovación automática:** si está activada y la suscripción vence en 7 días o menos, el trabajador genera la factura del siguiente periodo, una sola vez.
+- Es un documento interno de cobro. La factura electrónica ante la DIAN llega en la etapa 11 ([infraestructura/0009](../infraestructura/0009-facturacion-electronica.md)).

@@ -9,7 +9,10 @@ import asyncio
 import logging
 import signal
 
-import app.auth.invitaciones  # noqa: F401 — registra el manejador de invitaciones
+# Registran manejadores de tareas y tareas periódicas.
+import app.admin.facturacion  # noqa: F401
+import app.auth.invitaciones  # noqa: F401
+import app.laboratorio.suscripcion  # noqa: F401
 from app.core import db, tareas
 
 

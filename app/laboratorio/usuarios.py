@@ -43,7 +43,8 @@ _SQL_LISTA = text(
     " LEFT JOIN lab.roles r ON r.id = ur.rol_id"
     " GROUP BY u.id ORDER BY u.nombre"
 )
-_SQL_ROLES = text("SELECT codigo, nombre FROM lab.roles ORDER BY nombre")
+# El rol de soporte es solo para el personal de la plataforma con autorización (app/laboratorio/soporte.py).
+_SQL_ROLES = text("SELECT codigo, nombre FROM lab.roles WHERE codigo <> 'SOPORTE' ORDER BY nombre")
 _SQL_CUENTA_PERSONAL = text(
     "SELECT count(*) FROM lab.usuarios WHERE estado = 'ACTIVO' AND tipo IN ('PERSONAL', 'MEDICO')"
 )
@@ -114,7 +115,7 @@ async def invitar_usuario(
         async with sesion_tenant(
             laboratorio.tenant_id, usuario_id=activa.usuario.uuid, ip=ip_cliente(request)
         ) as sesion:
-            disponibles = set((await sesion.execute(text("SELECT codigo FROM lab.roles"))).scalars())
+            disponibles = {r["codigo"] for r in (await sesion.execute(_SQL_ROLES)).mappings()}
             if not set(roles) <= disponibles:
                 errores.append(t("usuarios.error_roles", idioma))
             elif laboratorio.max_usuarios is not None and (

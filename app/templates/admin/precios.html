@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t("precios.titulo") }} · {{ sitio.nombre_comercial }}{% endblock %}
+
+{% block content %}
+<h1>{{ t("precios.titulo") }}</h1>
+{% if errores %}<ul class="error" role="alert">{% for e in errores %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+<table>
+    <thead><tr><th>{{ t("laboratorios.pais") }}</th><th>{{ t("laboratorios.plan") }}</th><th>{{ t("suscripcion.licencia") }}</th><th>{{ t("precios.valor") }}</th><th>{{ t("precios.vigente_desde") }}</th></tr></thead>
+    <tbody>
+    {% for p in precios %}
+    <tr><td>{{ p.pais }}</td><td>{{ p.plan }}</td><td>{{ p.tipo_licencia }}</td><td>{{ p.valor | dinero(p.moneda) }}</td><td>{{ p.vigente_desde }}</td></tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% if activa.permisos.puede("facturacion", "crear") %}
+<section class="tarjeta ancha">
+    <h2>{{ t("precios.nuevo") }}</h2>
+    <form method="post" action="/precios">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+        <label for="pais">{{ t("laboratorios.pais") }}</label>
+        <select id="pais" name="pais">{% for c, n in paises %}<option value="{{ c }}">{{ n }}</option>{% endfor %}</select>
+        <label for="plan">{{ t("laboratorios.plan") }}</label>
+        <select id="plan" name="plan">{% for u, n in planes %}<option value="{{ u }}">{{ n }}</option>{% endfor %}</select>
+        <label for="tipo_licencia">{{ t("suscripcion.licencia") }}</label>
+        <select id="tipo_licencia" name="tipo_licencia">{% for c, n in licencias %}<option value="{{ c }}">{{ n }}</option>{% endfor %}</select>
+        <label for="moneda">{{ t("precios.moneda") }}</label>
+        <select id="moneda" name="moneda">{% for m in monedas %}<option value="{{ m }}">{{ m }}</option>{% endfor %}</select>
+        <label for="valor">{{ t("precios.valor") }}</label>
+        <input id="valor" name="valor" required inputmode="decimal" maxlength="15">
+        <label for="vigente_desde">{{ t("precios.vigente_desde") }}</label>
+        <input id="vigente_desde" name="vigente_desde" type="date" required>
+        <button type="submit">{{ t("precios.guardar") }}</button>
+    </form>
+</section>
+{% endif %}
+
+<h2>{{ t("campanas.titulo") }}</h2>
+<table>
+    <thead><tr><th>{{ t("campanas.nombre") }}</th><th>{{ t("campanas.porcentaje") }}</th><th>{{ t("suscripcion.licencia") }}</th><th>{{ t("campanas.vigencia") }}</th><th>{{ t("campanas.estado") }}</th><th></th></tr></thead>
+    <tbody>
+    {% for c in campanas %}
+    <tr>
+        <td>{{ c.nombre }}</td><td>{{ c.porcentaje }} %</td><td>{{ c.tipo_licencia or t("campanas.todas") }}</td><td>{{ c.desde }} – {{ c.hasta }}</td>
+        <td>{% if c.activa %}{{ t("planes.activo") }}{% else %}{{ t("planes.inactivo") }}{% endif %}</td>
+        <td>{% if c.activa and activa.permisos.puede("facturacion", "modificar") %}
+            <form method="post" action="/campanas/{{ c.uuid }}/desactivar" class="en-linea"><input type="hidden" name="csrf" value="{{ csrf }}"><button type="submit" class="secundario">{{ t("campanas.desactivar") }}</button></form>
+        {% endif %}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% if activa.permisos.puede("facturacion", "crear") %}
+<section class="tarjeta ancha">
+    <h2>{{ t("campanas.nueva") }}</h2>
+    <form method="post" action="/campanas">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+        <label for="nombre_campana">{{ t("campanas.nombre") }}</label>
+        <input id="nombre_campana" name="nombre" required minlength="2" maxlength="120">
+        <label for="porcentaje">{{ t("campanas.porcentaje") }}</label>
+        <input id="porcentaje" name="porcentaje" required inputmode="decimal" maxlength="6">
+        <label for="licencia_campana">{{ t("suscripcion.licencia") }}</label>
+        <select id="licencia_campana" name="tipo_licencia"><option value="">{{ t("campanas.todas") }}</option>{% for c, n in licencias %}<option value="{{ c }}">{{ n }}</option>{% endfor %}</select>
+        <label for="desde">{{ t("campanas.desde") }}</label>
+        <input id="desde" name="desde" type="date" required>
+        <label for="hasta">{{ t("campanas.hasta") }}</label>
+        <input id="hasta" name="hasta" type="date" required>
+        <button type="submit">{{ t("campanas.guardar") }}</button>
+    </form>
+</section>
+{% endif %}
+{% endblock %}

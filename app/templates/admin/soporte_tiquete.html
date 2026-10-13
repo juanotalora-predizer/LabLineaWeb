@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t("soporte.titulo") }} · {{ sitio.nombre_comercial }}{% endblock %}
+
+{% block content %}
+<section class="tarjeta">
+    <h1>{{ t("soporte.titulo") }}</h1>
+    <p>{{ t("soporte.tiquete_listo") }}</p>
+    <p><a class="boton" href="{{ enlace }}" rel="noreferrer">{{ t("soporte.continuar") }}</a></p>
+</section>
+{% endblock %}

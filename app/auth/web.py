@@ -14,6 +14,7 @@ from typing import Annotated, Any
 from fastapi import Depends, Form, HTTPException, Request
 from fastapi.responses import RedirectResponse
 from pydantic import AfterValidator
+from sqlalchemy import text
 
 from app.auth import repositorio
 from app.auth.repositorio import Permisos, Usuario
@@ -181,10 +182,35 @@ async def sesion_completa(request: Request, sitio: SitioActual) -> SesionActiva:
     return activa
 
 
-async def usuario_actual(activa: Annotated[SesionActiva, Depends(sesion_completa)]) -> SesionActiva:
-    """Usuario autenticado y en regla: el personal debe tener su app autenticadora inscrita."""
+_SQL_SOPORTE_VIGENTE = text(
+    "SELECT EXISTS (SELECT 1 FROM lab.accesos_soporte WHERE revocado_en IS NULL AND inicio <= now() AND fin > now())"
+)
+
+
+async def usuario_actual(
+    request: Request, sitio: SitioActual, activa: Annotated[SesionActiva, Depends(sesion_completa)]
+) -> SesionActiva:
+    """Usuario autenticado y en regla: el personal debe tener su app autenticadora inscrita.
+
+    Cada petición del soporte de la plataforma dentro de un laboratorio queda en su auditoría.
+    """
     if activa.usuario.debe_inscribir_totp:
         raise InscripcionTotpPendiente
+    if activa.usuario.tipo == "SOPORTE":
+        async with sesion_del_sitio(sitio, usuario_id=activa.usuario.uuid, ip=ip_cliente(request)) as sesion:
+            # Defensa adicional: la sesión vence con la autorización, pero se verifica en cada petición.
+            vigente = await sesion.scalar(_SQL_SOPORTE_VIGENTE)
+            if not vigente:
+                await repositorio.revocar_sesion(sesion, activa.sesion_id)
+            await registrar_acceso(
+                sesion,
+                "soporte",
+                operacion="ACCESO",
+                denegado=not vigente,
+                detalle={"metodo": request.method, "ruta": request.url.path},
+            )
+        if not vigente:
+            raise NoAutenticado
     return activa
 
 
@@ -205,6 +231,18 @@ def requiere_permiso(modulo: str, operacion: str) -> Callable:
         return activa
 
     return dependencia
+
+
+async def requiere_suscripcion_vigente(request: Request, laboratorio: LaboratorioActual, activa: UsuarioActual) -> None:
+    """Para crear órdenes nuevas (y toda operación que la spec funcional/0005 condicione a la suscripción).
+
+    Nunca se usa en la consulta de resultados ni en la exportación de datos: esas siguen disponibles.
+    """
+    if not laboratorio.suscripcion_vigente:
+        raise await _denegar(request, laboratorio, activa, "suscripcion", laboratorio.suscripcion_estado)
+
+
+SuscripcionVigente = Annotated[None, Depends(requiere_suscripcion_vigente)]
 
 
 def requiere_accion(accion: str) -> Callable:
