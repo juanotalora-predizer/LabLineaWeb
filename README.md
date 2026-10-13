@@ -56,8 +56,10 @@ mkcert -cert-file certs/local.pem -key-file certs/local-key.pem \
 
 ```bash
 .venv/bin/python scripts/sembrar_desarrollo.py      # lab-a, lab-b y usuarios admin/recepcion/paciente@<lab>.test
-.venv/bin/python -m aiosmtpd -n -l 127.0.0.1:1025   # correo de captura: muestra los códigos de verificación
+PYTHONUNBUFFERED=1 .venv/bin/python -m aiosmtpd -n -l 127.0.0.1:1025   # correo de captura (terminal aparte)
 ```
+
+En desarrollo **ningún correo sale a internet**: los códigos de verificación aparecen en la terminal del servidor de captura. El servidor (`scripts/servidor_https.sh`) va en otra terminal; si el puerto 8443 está ocupado, el script indica cómo liberarlo.
 
 La contraseña de los usuarios sintéticos está en `DEV_CLAVE_USUARIOS` del `.env`. El personal ingresa con TOTP: el secreto es `DEV_TOTP_SECRETO`, que se agrega a cualquier app autenticadora.
 

@@ -13,6 +13,13 @@ if [[ ! -f certs/local.pem || ! -f certs/local-key.pem ]]; then
   exit 1
 fi
 
+if lsof -nP -iTCP:"$PUERTO" -sTCP:LISTEN >/dev/null 2>&1; then
+  echo "El puerto $PUERTO ya está en uso (¿quedó otro servidor abierto?):" >&2
+  lsof -nP -iTCP:"$PUERTO" -sTCP:LISTEN >&2
+  echo "Ciérrelo con:  kill \$(lsof -t -iTCP:$PUERTO -sTCP:LISTEN)   o use otro puerto:  PUERTO=8444 $0" >&2
+  exit 1
+fi
+
 exec .venv/bin/uvicorn app.main:app \
   --host 127.0.0.1 --port "$PUERTO" \
   --ssl-certfile certs/local.pem --ssl-keyfile certs/local-key.pem \

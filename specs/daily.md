@@ -38,6 +38,8 @@ Plantilla:
 - **Etapa 2 cerrada** ([informe](etapas/etapa-02.md)): autenticación en dos pasos (Argon2id + TOTP o código por correo), sesiones `__Host-` con rotación y vencimientos, CSRF de doble envío, bloqueos sin enumeración, roles y permisos. 226 pruebas (5 en Chromium), cobertura 99%, ZAP autenticado 0 altos/medios/bajos, 11/11 pruebas manuales.
 - Las pruebas encontraron 3 errores, ya corregidos: `Referrer-Policy: no-referrer` bloqueaba todos los formularios en el navegador; el carácter nulo daba 500; un fallo del correo daba 500. También se detectó que el primer escaneo ZAP no estaba realmente autenticado.
 
+- Prueba manual del usuario: el ingreso funciona; se aclaró que en desarrollo los códigos aparecen en la terminal del SMTP de captura. `servidor_https.sh` ahora avisa si el puerto 8443 está ocupado.
+
 **Decisiones**
 - Las decisiones de infraestructura y funcionales se registran en `specs/`, un archivo por decisión.
 - Stack base: FastAPI + Jinja2 con renderizado en servidor ([infraestructura/0001](infraestructura/0001-stack-fastapi-jinja2.md)).
