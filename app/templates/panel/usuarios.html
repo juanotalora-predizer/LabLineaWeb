@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block title %}Usuarios · {{ laboratorio.nombre_comercial }}{% endblock %}
+
+{% block content %}
+<h1>Usuarios</h1>
+<table>
+    <thead><tr><th>Nombre</th><th>Correo</th><th>Tipo</th><th>Roles</th><th>Estado</th></tr></thead>
+    <tbody>
+    {% for u in usuarios %}
+    <tr><td>{{ u.nombre }}</td><td>{{ u.email }}</td><td>{{ u.tipo }}</td><td>{{ u.roles }}</td><td>{{ u.estado }}</td></tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

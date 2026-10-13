@@ -109,6 +109,9 @@ scripts/servidor_https.sh       # HTTPS local en https://lab-a.lablinea.localhos
 scripts/escaneo_externo.sh      # ZAP pasivo + activo; falla con hallazgos altos o medios
 ```
 
+- **Formularios:** toda ruta POST declara `_csrf: Csrf` (lo verifica `tests/test_csrf.py`) y sus campos de texto usan `TextoSeguro` con `max_length`. Permisos con `requiere_permiso(modulo, operacion)` o `requiere_accion(ACCION)`.
+- **SQL:** solo texto literal con parámetros (`:nombre`); nunca f-strings ni concatenación, aunque el valor sea constante (bandit lo bloquea).
+- **Pruebas de formularios:** además de TestClient, fuzzing con token CSRF válido (`tests/test_fuzzing_formularios.py`) y flujos en Chromium (`tests/e2e/`).
 - Toda petición debe llegar con un `Host` del dominio propio (`TrustedHostMiddleware`): en pruebas, usar `base_url="http://lab-a.lablinea.localhost"`.
 
 - Acceso a datos de un laboratorio **siempre** con `app.core.db.sesion_tenant(tenant_id)`; nunca abrir sesiones sin tenant sobre `lab`.

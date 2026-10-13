@@ -3,18 +3,30 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="referrer" content="same-origin">
     <title>{% block title %}LabLineaWeb{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', path='css/styles.css') }}">
 </head>
 <body>
     <header>
-        <a href="/">LabLineaWeb</a>
+        <a href="/">{% if laboratorio %}{{ laboratorio.nombre_comercial }}{% else %}LabLineaWeb{% endif %}</a>
+        {% if activa %}
+        <nav>
+            <span class="usuario">{{ activa.usuario.nombre }}</span>
+            <a href="/panel">Panel</a>
+            {% if activa.permisos.puede("usuarios", "consultar") %}<a href="/configuracion/usuarios">Usuarios</a>{% endif %}
+            <form method="post" action="/salir" class="en-linea">
+                <input type="hidden" name="csrf" value="{{ csrf }}">
+                <button type="submit">Salir</button>
+            </form>
+        </nav>
+        {% endif %}
     </header>
     <main>
         {% block content %}{% endblock %}
     </main>
     <footer>
-        <small>Laboratorio en Línea</small>
+        <small>LabLineaWeb · Laboratorio en Línea</small>
     </footer>
 </body>
 </html>

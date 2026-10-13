@@ -7,12 +7,17 @@ env:
         - ${ZAP_OBJETIVO}
       includePaths:
         - ${ZAP_OBJETIVO}.*
+      excludePaths:
+        - ${ZAP_OBJETIVO}/salir.*   # no cerrar la sesión con la que se escanea
   parameters:
     failOnError: true
     failOnWarning: false
     progressToStdout: true
 
 jobs:
+  # La sesión autenticada llega por las variables ZAP_AUTH_HEADER* (ver scripts/escaneo_externo.sh):
+  # ZAP agrega la cookie del administrador sintético de lab-a a toda petición hacia ese sitio.
+
   # Descubre los endpoints declarados en el esquema OpenAPI.
   - type: openapi
     parameters:
@@ -24,6 +29,7 @@ jobs:
   - type: spider
     parameters:
       context: lablinea
+      url: ${ZAP_OBJETIVO}/panel
       maxDuration: 3
 
   - type: passiveScan-wait

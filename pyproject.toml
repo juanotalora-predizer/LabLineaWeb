@@ -4,6 +4,7 @@
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "--strict-markers"
+markers = ["e2e: pruebas de punta a punta con navegador (Playwright)"]
 
 [tool.coverage.run]
 source = ["app"]

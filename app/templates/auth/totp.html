@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}App autenticadora · {{ laboratorio.nombre_comercial }}{% endblock %}
+
+{% block content %}
+<section class="tarjeta">
+    <h1>Configure su app autenticadora</h1>
+    {% if request.query_params.get("error") %}<p class="error" role="alert">Código incorrecto. Inténtelo de nuevo.</p>{% endif %}
+    <p>Para proteger los datos de salud, el personal del laboratorio ingresa con una app autenticadora
+       (Google Authenticator, Microsoft Authenticator, 1Password u otra compatible con TOTP).</p>
+    <ol>
+        <li>En la app, agregue una cuenta nueva con esta clave:
+            <code class="secreto" data-uri="{{ uri }}">{{ secreto }}</code></li>
+        <li>Escriba el código de 6 dígitos que muestra la app.</li>
+    </ol>
+    <form method="post" action="/seguridad/totp">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+        <label for="codigo">Código</label>
+        <input id="codigo" name="codigo" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required autocomplete="one-time-code">
+        <button type="submit">Confirmar</button>
+    </form>
+</section>
+{% endblock %}

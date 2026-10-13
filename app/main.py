@@ -2,11 +2,14 @@ from pathlib import Path
 from typing import Annotated
 
 from fastapi import Depends, FastAPI, Request
-from fastapi.responses import HTMLResponse
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import HTMLResponse, PlainTextResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
+from app.auth.rutas import router as rutas_auth
+from app.auth.web import InscripcionTotpPendiente, NoAutenticado, SegundoFactorPendiente
 from app.core.config import get_settings
 from app.core.seguridad import CabecerasSeguridad
 from app.core.tenancy import Laboratorio, ResolverLaboratorio, laboratorio_actual
@@ -34,6 +37,28 @@ app.add_middleware(
 app.add_middleware(CabecerasSeguridad)
 app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 templates = Jinja2Templates(directory=BASE_DIR / "templates")
+app.include_router(rutas_auth)
+
+
+@app.exception_handler(NoAutenticado)
+async def _no_autenticado(request: Request, _exc: NoAutenticado):
+    return RedirectResponse("/ingresar", status_code=303)
+
+
+@app.exception_handler(SegundoFactorPendiente)
+async def _segundo_factor(request: Request, _exc: SegundoFactorPendiente):
+    return RedirectResponse("/verificar", status_code=303)
+
+
+@app.exception_handler(InscripcionTotpPendiente)
+async def _inscripcion_totp(request: Request, _exc: InscripcionTotpPendiente):
+    return RedirectResponse("/seguridad/totp", status_code=303)
+
+
+@app.exception_handler(RequestValidationError)
+async def _validacion(request: Request, _exc: RequestValidationError):
+    # El manejador por defecto devuelve el valor recibido (podría ser una contraseña): respuesta genérica.
+    return PlainTextResponse("Solicitud inválida", status_code=400)
 
 
 @app.get("/", response_class=HTMLResponse)

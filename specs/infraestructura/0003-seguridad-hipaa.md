@@ -54,7 +54,7 @@ Se tratan como **obligatorios** todos los controles técnicos de la Security Rul
 ### Protección de la aplicación web
 
 - Protección CSRF en todos los formularios.
-- Cabeceras de seguridad: `Content-Security-Policy`, `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`.
+- Cabeceras de seguridad: `Content-Security-Policy`, `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: same-origin` *(modificado en la etapa 2: con `no-referrer` los navegadores envían `Origin: null` en los formularios y la verificación CSRF no puede validar el origen; `same-origin` sigue sin enviar nada a sitios externos)*.
 - `Cache-Control: no-store` en toda respuesta que contenga PHI.
 - Cookies de sesión `Secure`, `HttpOnly`, `SameSite=Lax` o `Strict`.
 - Sin PHI en URLs, parámetros de consulta, mensajes de error, logs de aplicación ni herramientas de analítica de terceros.

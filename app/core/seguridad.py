@@ -22,7 +22,9 @@ CABECERAS = {
     "content-security-policy": CSP,
     "x-content-type-options": "nosniff",
     "x-frame-options": "DENY",
-    "referrer-policy": "no-referrer",
+    # same-origin y no no-referrer: con no-referrer los navegadores envían "Origin: null" en los POST y la
+    # verificación CSRF de origen no podría distinguir el propio sitio. Hacia otros sitios no se envía nada.
+    "referrer-policy": "same-origin",
     "permissions-policy": "camera=(), microphone=(), geolocation=(), payment=(), usb=()",
     "cross-origin-opener-policy": "same-origin",
     "cross-origin-resource-policy": "same-origin",

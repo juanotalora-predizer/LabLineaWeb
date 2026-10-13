@@ -7,3 +7,5 @@ schemathesis>=4.31,<5
 ruff>=0.17,<0.18
 bandit>=1.9,<2
 pip-audit>=2.10,<3
+aiosmtpd>=1.4.6,<2
+playwright>=1.63,<2

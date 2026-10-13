@@ -54,3 +54,21 @@ La spec [0003](0003-seguridad-hipaa.md) exige cuentas únicas, MFA, Argon2id, bl
 - Se necesita un servicio de envío de correo con BAA para los códigos y avisos ([0003](0003-seguridad-hipaa.md)).
 - Todos los inicios de sesión, fallos, bloqueos y cambios de permisos quedan en la auditoría.
 - Cada acción especial tiene su prueba de autorización.
+
+## Implementación (etapa 2, 2026-10-12)
+
+Detalles fijados al construir; ver [informe de la etapa 2](../etapas/etapa-02.md).
+
+- **Dependencias:** `argon2-cffi` (Argon2id, perfil RFC 9106 de baja memoria), `pyotp` (TOTP), `cryptography` (AES-256-GCM para el secreto TOTP, ligado al laboratorio y al usuario; subclaves por HKDF desde `CLAVE_CIFRADO`).
+- **Sesiones:** en `lab.sesiones` solo se guarda el SHA-256 del token. Una sesión pendiente (contraseña correcta, segundo factor por completar) dura 5 minutos; al completar el ingreso se emite un token nuevo y el anterior se revoca (fijación de sesión). Duración máxima: 12 horas.
+- **Cookies:** `__Host-sesion` (`SameSite=Lax`) y `__Host-csrf` (`SameSite=Strict`), ambas `Secure` y `HttpOnly`, sin `Domain`.
+- **CSRF:** doble envío (campo `csrf` igual a la cookie `__Host-csrf`), más verificación de `Origin` y `Sec-Fetch-Site`. Una prueba falla si alguna ruta POST/PUT/PATCH/DELETE no exige CSRF.
+- **Límites:** 5 fallos por correo en 15 minutos bloquean el acceso con el mismo mensaje genérico, exista o no la cuenta. 100 intentos por IP en 15 minutos, porque todo el personal de un laboratorio suele compartir IP. 5 intentos de segundo factor y 5 códigos por correo por hora. Las claves de límites guardan un HMAC, no el correo ni la IP.
+- **Enumeración:** si el correo no existe se calcula igual un Argon2, y todos los fallos dan el mismo mensaje y estado.
+- **Códigos por correo:** 6 dígitos, 5 minutos, un solo uso, guardados como HMAC. El personal con TOTP puede pedir uno como respaldo.
+- **Entradas:** los campos de formulario rechazan caracteres de control (`TextoSeguro`), y los errores de validación responden un 400 genérico sin repetir la entrada.
+- **Eventos de seguridad:** `lab.eventos_seguridad`, solo inserción (permisos más trigger).
+- **Roles del sistema:** ADMINISTRADOR, RECEPCION, FLEBOTOMIA, BACTERIOLOGO, VALIDADOR, AUDITOR (`app/auth/roles_sistema.py`). El administrador no tiene acciones clínicas (validar resultados, valores críticos).
+
+**Pendiente:** recuperación de contraseña por enlace, código QR para inscribir el TOTP, administración de usuarios y roles desde la interfaz (con el alta de laboratorios, etapa 4), y transporte cifrado del correo e IP real detrás del proxy (etapa 20).
+

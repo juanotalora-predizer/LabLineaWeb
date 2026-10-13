@@ -35,6 +35,23 @@ class Settings(BaseSettings):
     db_plataforma_user: str = "lablinea_plataforma"
     db_plataforma_password: SecretStr
 
+    # Clave maestra (32 bytes en base64): cifra secretos TOTP y deriva claves HMAC (app/core/cripto.py).
+    clave_cifrado: SecretStr
+
+    # Correo saliente. En local, servidor de captura: python -m aiosmtpd -n -l 127.0.0.1:1025
+    smtp_host: str = "127.0.0.1"
+    smtp_port: int = 1025
+    smtp_remitente: str = "no-responder@lablinea.localhost"
+
+    # Solo desarrollo: credenciales de los usuarios sintéticos (scripts/sembrar_desarrollo.py).
+    dev_clave_usuarios: SecretStr | None = None
+    dev_totp_secreto: SecretStr | None = None
+
+    # Sesiones (spec infraestructura/0008).
+    sesion_inactividad_min: int = 15
+    sesion_maxima_horas: int = 12
+    sesion_pendiente_min: int = 5  # contraseña correcta, segundo factor pendiente
+
     @property
     def base_aplicacion(self) -> str:
         """Base que usa la aplicación: la de prueba cuando corre la suite de pruebas."""

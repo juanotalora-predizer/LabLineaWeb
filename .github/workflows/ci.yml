@@ -45,11 +45,15 @@ jobs:
       - name: Instalar dependencias
         run: pip install -r requirements-dev.txt
 
+      - name: Instalar Chromium para las pruebas de punta a punta
+        run: python -m playwright install --with-deps chromium
+
       - name: Generar contraseñas de los roles
         run: |
           echo "DB_OWNER_PASSWORD=$(openssl rand -hex 24)" >> "$GITHUB_ENV"
           echo "DB_APP_PASSWORD=$(openssl rand -hex 24)" >> "$GITHUB_ENV"
           echo "DB_PLATAFORMA_PASSWORD=$(openssl rand -hex 24)" >> "$GITHUB_ENV"
+          echo "CLAVE_CIFRADO=$(openssl rand -base64 32)" >> "$GITHUB_ENV"
 
       - name: Crear roles y bases
         env:
