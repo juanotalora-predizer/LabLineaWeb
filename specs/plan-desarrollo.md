@@ -439,7 +439,7 @@ LabLineaWeb/
 
 ### Bloque A — Fundaciones
 
-#### Etapa 0 — Herramientas, base de datos y CI · *código hecho, compuerta pendiente*
+#### Etapa 0 — Herramientas, base de datos y CI · *cerrada el 2026-10-12 ([informe](etapas/etapa-00.md))*
 
 Lo construido: configuración, `sesion_tenant` con `SET LOCAL`, Alembic con la migración 0001, guardián de RLS, CI con PostgreSQL 18 (11 pruebas).
 

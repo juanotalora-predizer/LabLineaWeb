@@ -29,6 +29,9 @@ Plantilla:
 - **Sprint 0 completado:** `app/core/config.py` (settings desde `.env`), `app/core/db.py` (`sesion_tenant` fija tenant, usuario e IP con `set_config(..., true)`), Alembic asíncrono con la migración `0001` (aplicada en `lablinea_dev` y `lablinea_test`, downgrade probado), CI en GitHub Actions con PostgreSQL 18. 11 pruebas pasan, incluida la que demuestra que el tenant no se filtra al reutilizar una conexión del pool.
 - Se comprobó a mano que el guardián de RLS falla con una tabla sin RLS y con RLS sin `FORCE`.
 
+- **Etapa 0 cerrada** ([informe](etapas/etapa-00.md)): herramientas de calidad y seguridad (ruff, bandit, pip-audit, gitleaks, schemathesis, ZAP 2.17 sobre OpenJDK 21), HTTPS local con mkcert en `*.lablinea.localhost`, cabeceras de seguridad, `scripts/verificar.sh` en local y CI. 45 pruebas, cobertura 100%, ZAP 0 altos/medios/bajos.
+- Hallazgo de seguridad en pruebas manuales: cabecera `Host` ajena reflejada en redirecciones; corregido con `TrustedHostMiddleware` y pruebas de regresión.
+
 **Decisiones**
 - Las decisiones de infraestructura y funcionales se registran en `specs/`, un archivo por decisión.
 - Stack base: FastAPI + Jinja2 con renderizado en servidor ([infraestructura/0001](infraestructura/0001-stack-fastapi-jinja2.md)).

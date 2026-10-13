@@ -6,7 +6,6 @@ Formato: `- [ ] Descripción — prioridad (Alta/Media/Baja) — spec relacionad
 
 ## En curso
 
-- [ ] **Etapa 0 — cerrar compuerta:** ruff, bandit, pip-audit, pytest-cov, hypothesis; gitleaks y mkcert; `scripts/verificar.sh` en local y CI; HTTPS local con subdominios `*.lablinea.localhost`; informe `etapas/etapa-00.md` — Alta — [0011](infraestructura/0011-calidad-pruebas-entorno-local.md)
 - [ ] Etapa 1: tablas globales, roles `lablinea_plataforma` y `lablinea_metricas`, resolución de tenant por subdominio — Alta — [plan](plan-desarrollo.md)
 
 ## Pendiente
@@ -42,7 +41,7 @@ Formato: `- [ ] Descripción — prioridad (Alta/Media/Baja) — spec relacionad
 - [ ] Roles por laboratorio, permisos CRUD por módulo y acciones especiales — Alta — [0008](infraestructura/0008-autenticacion-autorizacion.md)
 - [ ] Usuarios y roles de la plataforma; acceso de soporte autorizado y auditado — Media — [funcional/0005](funcional/0005-plataforma-saas-suscripciones.md), [0005](infraestructura/0005-arquitectura-saas-multitenant.md)
 - [ ] Auditoría: triggers de escritura con antes y después, auditoría de lecturas desde la aplicación, tabla de solo inserción particionada — Alta — [0007](infraestructura/0007-base-de-datos.md)
-- [ ] Cabeceras de seguridad, CSP, `Cache-Control: no-store` y protección CSRF — Alta — [0003](infraestructura/0003-seguridad-hipaa.md)
+- [ ] Protección CSRF (las cabeceras de seguridad, CSP y `no-store` ya se hicieron en la etapa 0) — Alta — [0003](infraestructura/0003-seguridad-hipaa.md)
 
 ### Fase 3 — POS y caja
 
@@ -117,7 +116,8 @@ Formato: `- [ ] Descripción — prioridad (Alta/Media/Baja) — spec relacionad
 
 - [x] Decisiones: dominio `lablinea.cionetworks.com`, sin comisiones, facturación electrónica directa con la DIAN, marca H/L opcional en el PDF, dashboard completo en el MVP — 2026-10-12 — [0009](infraestructura/0009-facturacion-electronica.md), [0010](infraestructura/0010-analitica-bodega-datos.md)
 
-- [x] Etapa 0 (código; compuerta de calidad pendiente): configuración por `.env`, conexión con tenant por transacción (`SET LOCAL`), Alembic con migración 0001 (esquemas `plataforma`, `global`, `lab`; función `lab.tenant_actual()`; permisos por defecto), guardián de RLS y CI con PostgreSQL 18 — 2026-10-12 — [0007](infraestructura/0007-base-de-datos.md)
+- [x] **Etapa 0 cerrada** con compuerta completa: 45 pruebas, cobertura 100%, ZAP sin hallazgos altos/medios/bajos, hallazgo de cabecera `Host` corregido — 2026-10-12 — [informe](etapas/etapa-00.md)
+- [x] Etapa 0 (código inicial): configuración por `.env`, conexión con tenant por transacción (`SET LOCAL`), Alembic con migración 0001 (esquemas `plataforma`, `global`, `lab`; función `lab.tenant_actual()`; permisos por defecto), guardián de RLS y CI con PostgreSQL 18 — 2026-10-12 — [0007](infraestructura/0007-base-de-datos.md)
 - [x] Roles y bases locales creados (PostgreSQL 18.6) — 2026-10-12 — [0007](infraestructura/0007-base-de-datos.md)
 
 - [x] Fuentes de NotebookLM convertidas en specs: funcionales 0002 a 0007 e infraestructura 0007 y 0008; MVP definido — 2026-10-12 — [funcional/0007](funcional/0007-alcance-mvp.md)
