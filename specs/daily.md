@@ -32,6 +32,9 @@ Plantilla:
 - **Etapa 0 cerrada** ([informe](etapas/etapa-00.md)): herramientas de calidad y seguridad (ruff, bandit, pip-audit, gitleaks, schemathesis, ZAP 2.17 sobre OpenJDK 21), HTTPS local con mkcert en `*.lablinea.localhost`, cabeceras de seguridad, `scripts/verificar.sh` en local y CI. 45 pruebas, cobertura 100%, ZAP 0 altos/medios/bajos.
 - Hallazgo de seguridad en pruebas manuales: cabecera `Host` ajena reflejada en redirecciones; corregido con `TrustedHostMiddleware` y pruebas de regresión.
 
+- **Etapa 1 cerrada** ([informe](etapas/etapa-01.md)): rol `lablinea_plataforma`, migración 0002 (monedas, países, tipos de documento, laboratorios, `acceso.resolver_laboratorio`), resolución del laboratorio por subdominio. 122 pruebas, cobertura 100%, ZAP sin hallazgos; 600 peticiones concurrentes entre laboratorios sin cruces.
+- El rol `lablinea_metricas` (con `BYPASSRLS`) se pospone a las etapas 15–16 por mínimo privilegio.
+
 **Decisiones**
 - Las decisiones de infraestructura y funcionales se registran en `specs/`, un archivo por decisión.
 - Stack base: FastAPI + Jinja2 con renderizado en servidor ([infraestructura/0001](infraestructura/0001-stack-fastapi-jinja2.md)).

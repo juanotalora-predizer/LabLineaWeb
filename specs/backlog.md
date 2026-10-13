@@ -6,7 +6,7 @@ Formato: `- [ ] Descripción — prioridad (Alta/Media/Baja) — spec relacionad
 
 ## En curso
 
-- [ ] Etapa 1: tablas globales, roles `lablinea_plataforma` y `lablinea_metricas`, resolución de tenant por subdominio — Alta — [plan](plan-desarrollo.md)
+- [ ] Etapa 2: autenticación y autorización (Argon2id, TOTP, código por correo, sesiones `__Host-`, roles y permisos, CSRF, Playwright) — Alta — [plan](plan-desarrollo.md), [0008](infraestructura/0008-autenticacion-autorizacion.md)
 
 ## Pendiente
 
@@ -22,9 +22,8 @@ Formato: `- [ ] Descripción — prioridad (Alta/Media/Baja) — spec relacionad
 ### Fase 1 — Base multi-tenant
 
 - [ ] RLS en todas las tablas de `lab` con `USING` + `WITH CHECK` + `FORCE`, rol de aplicación sin privilegios, `SET LOCAL` por transacción, y prueba que verifique todas las tablas — Alta — [0007](infraestructura/0007-base-de-datos.md)
-- [ ] Resolución de tenant por subdominio y capa de acceso a datos con tenant obligatorio — Alta — [0005](infraestructura/0005-arquitectura-saas-multitenant.md)
 - [ ] Laboratorios, sedes y estaciones de trabajo — Alta — [funcional/0005](funcional/0005-plataforma-saas-suscripciones.md), [funcional/0003](funcional/0003-muestras-impresion.md)
-- [ ] Configuración por país (tipos de documento, monedas, impuestos, medios de pago, textos legales, idioma, zona horaria) — Alta — [0004](infraestructura/0004-normativa-colombia-latam.md)
+- [ ] Configuración por país: impuestos, medios de pago y textos legales (monedas, tipos de documento, idioma y zona horaria ya están, etapa 1) — Alta — [0004](infraestructura/0004-normativa-colombia-latam.md)
 - [ ] Catálogo de exámenes: secciones, parámetros, unidades, listas de valores, técnica, requisitos de muestra, tarifas, códigos CUPS y alternos — Alta — [funcional/0004](funcional/0004-resultados-validacion-entrega.md), [funcional/0003](funcional/0003-muestras-impresion.md)
 - [ ] Rangos de referencia por sexo y edad en días, con rangos críticos — Alta — [funcional/0004](funcional/0004-resultados-validacion-entrega.md)
 - [ ] Importador del catálogo de Lablinea (Access) con vista previa y marcado de rangos para revisión — Alta — [funcional/0007](funcional/0007-alcance-mvp.md)
@@ -111,6 +110,8 @@ Formato: `- [ ] Descripción — prioridad (Alta/Media/Baja) — spec relacionad
 - [ ] Análisis de riesgos, políticas, oficial de seguridad, capacitación, notificación de brechas — Media — [0003](infraestructura/0003-seguridad-hipaa.md)
 
 ## Hecho
+
+- [x] **Etapa 1 cerrada** — base multi-tenant: rol de plataforma, catálogos globales, laboratorios, resolución por subdominio; 122 pruebas, cobertura 100%, ZAP sin hallazgos, 600 peticiones concurrentes sin cruces — 2026-10-12 — [informe](etapas/etapa-01.md)
 
 - [x] Decisión: construir y probar en local; publicación después. Plan paso a paso con compuerta de calidad por etapa — 2026-10-12 — [0011](infraestructura/0011-calidad-pruebas-entorno-local.md), [plan](plan-desarrollo.md)
 

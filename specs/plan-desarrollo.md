@@ -456,10 +456,10 @@ Pruebas específicas:
 
 **Cierra cuando:** `verificar.sh` en verde local y en la CI, servidor HTTPS local operativo e informe `etapa-00.md`.
 
-#### Etapa 1 — Base multi-tenant
+#### Etapa 1 — Base multi-tenant · *cerrada el 2026-10-12 ([informe](etapas/etapa-01.md))*
 
 Pasos:
-1. Ampliar `crear_bd_local.sql` con los roles `lablinea_plataforma` y `lablinea_metricas`.
+1. Ampliar `crear_bd_local.sql` con el rol `lablinea_plataforma` (`lablinea_metricas` se pospone a las etapas 15–16).
 2. Migración con tablas de `global` (países, monedas, tipos de documento) y de `plataforma` (laboratorios, estado).
 3. Middleware de resolución de laboratorio por subdominio; laboratorio desconocido o suspendido → 404.
 4. Configuración por país (tipos de documento, moneda, zona horaria, textos legales).
@@ -697,7 +697,7 @@ Pruebas específicas:
 #### Etapa 15 — Bodega analítica
 
 Pasos:
-1. El usuario cambia `wal_level` a `logical` en su PostgreSQL local y crea `lablinea_dw`.
+1. El usuario cambia `wal_level` a `logical` en su PostgreSQL local, crea `lablinea_dw` y el rol `lablinea_metricas`.
 2. Publicación con lista de columnas sin datos personales; suscripción en la bodega.
 3. Staging, seudónimos de pacientes y modelo estrella ([infraestructura/0010](infraestructura/0010-analitica-bodega-datos.md)).
 
