@@ -6,7 +6,7 @@ Formato: `- [ ] Descripción — prioridad (Alta/Media/Baja) — spec relacionad
 
 ## En curso
 
-- [ ] Etapa 5: compuerta local en verde; falta commit, push y CI verde para cerrarla — Alta — [informe](etapas/etapa-05.md)
+- [ ] Etapa 6: catálogo de exámenes e importador de Lablinea — Alta — [plan](plan-desarrollo.md)
 
 ## Pendiente
 
@@ -111,7 +111,7 @@ Formato: `- [ ] Descripción — prioridad (Alta/Media/Baja) — spec relacionad
 
 ## Hecho
 
-- [x] Etapa 5 (compuerta local): licencias y suscripciones con vencimiento, suspensión y avisos de renovación; precios, campañas, facturas inmutables con pagos parciales (saldo y estado por trigger, sin sobrepagos ni con concurrencia) que extienden la suscripción; acceso de soporte autorizado por el laboratorio, de solo lectura, con tiquete de un solo uso y cada petición auditada — 2026-10-13 — [informe](etapas/etapa-05.md)
+- [x] **Etapa 5 cerrada** (CI verde, commit `cc0e1d3`): licencias y suscripciones con vencimiento, suspensión y avisos de renovación; precios, campañas, facturas inmutables con pagos parciales (saldo y estado por trigger, sin sobrepagos ni con concurrencia) que extienden la suscripción; acceso de soporte autorizado por el laboratorio, de solo lectura, con tiquete de un solo uso y cada petición auditada — 2026-10-13 — [informe](etapas/etapa-05.md)
 
 - [x] **Etapa 4 cerrada** (CI verde, commit `14bc0d3`): Admin Hub con ingreso propio y TOTP, roles de plataforma, alta atómica de laboratorios con invitación al administrador, planes con módulos y máximo de usuarios, invitar y desactivar usuarios del laboratorio; 435 pruebas, cobertura 99,5%, ZAP sin hallazgos en los dos sitios, 14/14 pruebas manuales — 2026-10-13 — [informe](etapas/etapa-04.md)
 

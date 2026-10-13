@@ -16,7 +16,6 @@ Plantilla:
 -
 
 **Bloqueos / pendientes**
-- Commit, push y CI de la etapa 5 (a la espera de autorización del usuario).
 - Validar el IVA de la suscripción con el asesor tributario.
 -
 -->
@@ -24,7 +23,7 @@ Plantilla:
 ## 2026-10-13
 
 **Avances**
-- **Etapa 5** construida y con la compuerta local en verde ([informe](etapas/etapa-05.md)); falta subirla y que pase la CI.
+- **Etapa 5 cerrada** ([informe](etapas/etapa-05.md)): commit `cc0e1d3`, CI verde.
   - Licencias y suscripciones: el estado efectivo vence en el instante exacto; suspensión, cancelación, renovación automática y avisos de renovación 7 días y 1 día antes.
   - Facturas de la plataforma inmutables, con precios por país y plan, campañas e IVA del país; pagos parciales cuyo saldo y estado calcula la base, sin sobrepagos ni con pagos simultáneos; al pagarse extienden la suscripción.
   - Soporte autorizado por el laboratorio (máximo 72 horas, revocable): tiquete de un solo uso, sesión de solo lectura, cada petición auditada y la autorización verificada en cada petición.

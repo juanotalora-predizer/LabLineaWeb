@@ -530,7 +530,7 @@ Pruebas específicas:
 
 **Cierra cuando:** la compuerta completa está en verde y el informe `etapa-04.md` está escrito.
 
-#### Etapa 5 — Suscripciones, facturación manual y soporte · *compuerta local en verde el 2026-10-13; falta la CI ([informe](etapas/etapa-05.md))*
+#### Etapa 5 — Suscripciones, facturación manual y soporte · *cerrada el 2026-10-13 ([informe](etapas/etapa-05.md))*
 
 Pasos:
 1. Ciclo de suscripción: vencimiento, suspensión y alertas de renovación.

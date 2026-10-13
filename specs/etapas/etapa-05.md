@@ -1,9 +1,9 @@
 # Informe de cierre — Etapa 5: Suscripciones, facturación manual y soporte
 
-- **Fecha de cierre:** 2026-10-13 (pendiente de la CI)
-- **Commit verificado:** pendiente
-- **CI:** pendiente: se ejecuta al subir los cambios
-- **Estado:** Abierta. Toda la compuerta local está en verde; falta que la CI pase después del push (criterio 1)
+- **Fecha de cierre:** 2026-10-13
+- **Commit verificado:** `cc0e1d3`
+- **CI:** ejecución [38484934823](https://github.com/juanotalora-predizer/LabLineaWeb/actions/runs/38484934823), exitosa (incluye las pruebas en Chromium)
+- **Estado:** Cerrada
 
 ## Alcance entregado
 
@@ -29,7 +29,7 @@ Detalle en las secciones "Implementación (etapa 5)" de [funcional/0005](../func
 
 | # | Criterio | Resultado | Evidencia |
 |---|----------|-----------|-----------|
-| 1 | Pruebas en verde (local y CI) | ⏳ local ✅, CI pendiente | 571 pruebas (136 nuevas) con `scripts/verificar.sh` |
+| 1 | Pruebas en verde (local y CI) | ✅ | 571 pruebas (136 nuevas), local y CI |
 | 2 | Cobertura ≥ 85% | ✅ | 99,0% de líneas y ramas |
 | 3 | E2E de flujos nuevos | ✅ | Chromium: el laboratorio autoriza el soporte → el técnico entra desde el Admin Hub → ve la franja de solo lectura → el laboratorio revoca y la sesión termina. Pago completo de una factura desde el Admin Hub. Los 6 flujos anteriores siguen en verde |
 | 4 | Migraciones upgrade/downgrade | ✅ | 0006 sube y baja en limpio, también con datos (usuarios de soporte, facturas y pagos) |
