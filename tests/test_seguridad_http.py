@@ -57,7 +57,7 @@ def test_openapi_oculto_en_produccion(monkeypatch):
         prod = TestClient(modulo.app, base_url="https://lab-a.lablinea.localhost")
         assert prod.get("/openapi.json").status_code == 404
     finally:
-        monkeypatch.delenv("ENTORNO")
+        monkeypatch.undo()  # vuelve a ENTORNO=pruebas
         get_settings.cache_clear()
         importlib.reload(app.main)
 

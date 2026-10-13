@@ -18,13 +18,13 @@ pytest                          # pruebas
 
 Requiere PostgreSQL 16 o superior. Una sola vez:
 
-1. Copiar `.env.example` a `.env` y completar las contraseñas de `DB_OWNER_PASSWORD` y `DB_APP_PASSWORD` (valores aleatorios).
+1. Copiar `.env.example` a `.env` y completar las contraseñas de `DB_OWNER_PASSWORD`, `DB_APP_PASSWORD` y `DB_PLATAFORMA_PASSWORD` (valores aleatorios).
 2. Crear roles y bases con un superusuario (pide su contraseña):
 
 ```bash
 set -a; source .env; set +a
 psql -h localhost -U postgres -d postgres \
-  -v owner_pw="$DB_OWNER_PASSWORD" -v app_pw="$DB_APP_PASSWORD" \
+  -v owner_pw="$DB_OWNER_PASSWORD" -v app_pw="$DB_APP_PASSWORD" -v plataforma_pw="$DB_PLATAFORMA_PASSWORD" \
   -f scripts/crear_bd_local.sql
 ```
 
@@ -49,7 +49,7 @@ Certificados locales (una vez; `mkcert -install` hace que el navegador confíe e
 
 ```bash
 mkcert -cert-file certs/local.pem -key-file certs/local-key.pem \
-  lab-a.lablinea.localhost lab-b.lablinea.localhost admin.lablinea.localhost localhost 127.0.0.1 ::1
+  "*.lablinea.localhost" lablinea.localhost localhost 127.0.0.1 ::1
 ```
 
 Las decisiones del proyecto se documentan en [specs/](specs/).

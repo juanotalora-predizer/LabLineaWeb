@@ -49,13 +49,14 @@ jobs:
         run: |
           echo "DB_OWNER_PASSWORD=$(openssl rand -hex 24)" >> "$GITHUB_ENV"
           echo "DB_APP_PASSWORD=$(openssl rand -hex 24)" >> "$GITHUB_ENV"
+          echo "DB_PLATAFORMA_PASSWORD=$(openssl rand -hex 24)" >> "$GITHUB_ENV"
 
       - name: Crear roles y bases
         env:
           PGPASSWORD: postgres
         run: |
           psql -h localhost -U postgres -d postgres \
-            -v owner_pw="$DB_OWNER_PASSWORD" -v app_pw="$DB_APP_PASSWORD" \
+            -v owner_pw="$DB_OWNER_PASSWORD" -v app_pw="$DB_APP_PASSWORD" -v plataforma_pw="$DB_PLATAFORMA_PASSWORD" \
             -f scripts/crear_bd_local.sql
 
       - name: Instalar gitleaks (versión fija, verificada por checksum)

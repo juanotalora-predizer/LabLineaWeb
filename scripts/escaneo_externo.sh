@@ -15,6 +15,9 @@ ZAP_HOME_TMP="$(mktemp -d)"   # perfil de ZAP limpio en cada corrida
 mkdir -p "$ZAP_REPORTES"
 rm -f "$ZAP_REPORTES"/zap-reporte.*
 
+.venv/bin/alembic upgrade head > /dev/null
+.venv/bin/python scripts/sembrar_desarrollo.py
+
 scripts/servidor_https.sh > "$ZAP_REPORTES/servidor.log" 2>&1 &
 PID_SERVIDOR=$!
 trap 'kill $PID_SERVIDOR 2>/dev/null || true; rm -rf "$ZAP_HOME_TMP"' EXIT

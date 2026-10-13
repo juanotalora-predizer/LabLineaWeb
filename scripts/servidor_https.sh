@@ -9,7 +9,7 @@ PUERTO="${PUERTO:-8443}"
 
 if [[ ! -f certs/local.pem || ! -f certs/local-key.pem ]]; then
   echo "Faltan los certificados. Generarlos con:" >&2
-  echo "  mkcert -cert-file certs/local.pem -key-file certs/local-key.pem lab-a.lablinea.localhost lab-b.lablinea.localhost admin.lablinea.localhost localhost 127.0.0.1 ::1" >&2
+  echo "  mkcert -cert-file certs/local.pem -key-file certs/local-key.pem \"*.lablinea.localhost\" lablinea.localhost localhost 127.0.0.1 ::1" >&2
   exit 1
 fi
 

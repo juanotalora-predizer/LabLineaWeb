@@ -11,6 +11,7 @@ from contextlib import asynccontextmanager
 
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.pool import NullPool
 
 from app.core.config import get_settings
 
@@ -27,7 +28,12 @@ def configurar(engine: AsyncEngine) -> None:
 
 def engine_app() -> AsyncEngine:
     if _engine is None:
-        configurar(create_async_engine(get_settings().url_app(), pool_pre_ping=True))
+        settings = get_settings()
+        # En pruebas cada TestClient corre en su propio bucle de eventos y las conexiones de
+        # asyncpg no pueden pasar de un bucle a otro: sin pool. La reutilización de conexiones
+        # (y que el tenant no se filtre entre peticiones) se prueba aparte en tests/test_db.py.
+        opciones = {"poolclass": NullPool} if settings.entorno == "pruebas" else {"pool_pre_ping": True}
+        configurar(create_async_engine(settings.url_app(), **opciones))
     return _engine
 
 

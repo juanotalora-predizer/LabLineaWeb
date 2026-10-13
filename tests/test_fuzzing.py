@@ -9,7 +9,8 @@ import schemathesis
 from app.core.seguridad import CABECERAS
 from app.main import app
 
-esquema = schemathesis.openapi.from_asgi("/openapi.json", app, headers={"host": "lab-a.lablinea.localhost"})
+# El esquema se carga desde el dominio base: se lee al recolectar, antes de sembrar los laboratorios.
+esquema = schemathesis.openapi.from_asgi("/openapi.json", app, headers={"host": "lablinea.localhost"})
 
 
 @esquema.parametrize()

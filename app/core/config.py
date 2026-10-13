@@ -31,6 +31,15 @@ class Settings(BaseSettings):
     db_app_user: str = "lablinea_app"
     db_app_password: SecretStr
 
+    # Rol del Admin Hub: solo el esquema plataforma, sin acceso a lab.
+    db_plataforma_user: str = "lablinea_plataforma"
+    db_plataforma_password: SecretStr
+
+    @property
+    def base_aplicacion(self) -> str:
+        """Base que usa la aplicación: la de prueba cuando corre la suite de pruebas."""
+        return self.db_name_test if self.entorno == "pruebas" else self.db_name
+
     def _url(self, usuario: str, clave: SecretStr, base: str) -> URL:
         return URL.create(
             "postgresql+asyncpg",
@@ -42,10 +51,13 @@ class Settings(BaseSettings):
         )
 
     def url_app(self, base: str | None = None) -> URL:
-        return self._url(self.db_app_user, self.db_app_password, base or self.db_name)
+        return self._url(self.db_app_user, self.db_app_password, base or self.base_aplicacion)
 
     def url_owner(self, base: str | None = None) -> URL:
         return self._url(self.db_owner_user, self.db_owner_password, base or self.db_name)
+
+    def url_plataforma(self, base: str | None = None) -> URL:
+        return self._url(self.db_plataforma_user, self.db_plataforma_password, base or self.base_aplicacion)
 
 
 @lru_cache
