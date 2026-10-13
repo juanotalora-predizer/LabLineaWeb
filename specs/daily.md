@@ -35,6 +35,9 @@ Plantilla:
 - **Etapa 1 cerrada** ([informe](etapas/etapa-01.md)): rol `lablinea_plataforma`, migración 0002 (monedas, países, tipos de documento, laboratorios, `acceso.resolver_laboratorio`), resolución del laboratorio por subdominio. 122 pruebas, cobertura 100%, ZAP sin hallazgos; 600 peticiones concurrentes entre laboratorios sin cruces.
 - El rol `lablinea_metricas` (con `BYPASSRLS`) se pospone a las etapas 15–16 por mínimo privilegio.
 
+- **Etapa 2 cerrada** ([informe](etapas/etapa-02.md)): autenticación en dos pasos (Argon2id + TOTP o código por correo), sesiones `__Host-` con rotación y vencimientos, CSRF de doble envío, bloqueos sin enumeración, roles y permisos. 226 pruebas (5 en Chromium), cobertura 99%, ZAP autenticado 0 altos/medios/bajos, 11/11 pruebas manuales.
+- Las pruebas encontraron 3 errores, ya corregidos: `Referrer-Policy: no-referrer` bloqueaba todos los formularios en el navegador; el carácter nulo daba 500; un fallo del correo daba 500. También se detectó que el primer escaneo ZAP no estaba realmente autenticado.
+
 **Decisiones**
 - Las decisiones de infraestructura y funcionales se registran en `specs/`, un archivo por decisión.
 - Stack base: FastAPI + Jinja2 con renderizado en servidor ([infraestructura/0001](infraestructura/0001-stack-fastapi-jinja2.md)).

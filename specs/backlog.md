@@ -6,7 +6,7 @@ Formato: `- [ ] Descripción — prioridad (Alta/Media/Baja) — spec relacionad
 
 ## En curso
 
-- [ ] Etapa 2: autenticación y autorización (Argon2id, TOTP, código por correo, sesiones `__Host-`, roles y permisos, CSRF, Playwright) — Alta — [plan](plan-desarrollo.md), [0008](infraestructura/0008-autenticacion-autorizacion.md)
+- [ ] Etapa 3: auditoría de datos (triggers con antes y después, lecturas), cola de tareas, i18n y generador de datos sintéticos — Alta — [plan](plan-desarrollo.md)
 
 ## Pendiente
 
@@ -35,12 +35,12 @@ Formato: `- [ ] Descripción — prioridad (Alta/Media/Baja) — spec relacionad
 
 ### Fase 2 — Seguridad
 
-- [ ] Inicio de sesión con Argon2id + segundo factor (TOTP para personal, código por correo para pacientes), bloqueo y límites de envío — Alta — [0008](infraestructura/0008-autenticacion-autorizacion.md)
-- [ ] Sesión en servidor con cookie segura, 15 min de inactividad y ligada al tenant — Alta — [0008](infraestructura/0008-autenticacion-autorizacion.md)
-- [ ] Roles por laboratorio, permisos CRUD por módulo y acciones especiales — Alta — [0008](infraestructura/0008-autenticacion-autorizacion.md)
+- [ ] Recuperación de contraseña por enlace de un solo uso — Media — [0008](infraestructura/0008-autenticacion-autorizacion.md)
+- [ ] Código QR para inscribir la app autenticadora — Baja — [0008](infraestructura/0008-autenticacion-autorizacion.md)
+- [ ] Administración de usuarios y roles desde la interfaz del laboratorio — Media — [0008](infraestructura/0008-autenticacion-autorizacion.md)
+
 - [ ] Usuarios y roles de la plataforma; acceso de soporte autorizado y auditado — Media — [funcional/0005](funcional/0005-plataforma-saas-suscripciones.md), [0005](infraestructura/0005-arquitectura-saas-multitenant.md)
 - [ ] Auditoría: triggers de escritura con antes y después, auditoría de lecturas desde la aplicación, tabla de solo inserción particionada — Alta — [0007](infraestructura/0007-base-de-datos.md)
-- [ ] Protección CSRF (las cabeceras de seguridad, CSP y `no-store` ya se hicieron en la etapa 0) — Alta — [0003](infraestructura/0003-seguridad-hipaa.md)
 
 ### Fase 3 — POS y caja
 
@@ -110,6 +110,8 @@ Formato: `- [ ] Descripción — prioridad (Alta/Media/Baja) — spec relacionad
 - [ ] Análisis de riesgos, políticas, oficial de seguridad, capacitación, notificación de brechas — Media — [0003](infraestructura/0003-seguridad-hipaa.md)
 
 ## Hecho
+
+- [x] **Etapa 2 cerrada** — autenticación y autorización: Argon2id, TOTP y código por correo, sesiones `__Host-`, CSRF, bloqueos, roles y permisos; 226 pruebas (5 en Chromium), cobertura 99%, ZAP autenticado sin hallazgos, 3 errores encontrados por las pruebas y corregidos — 2026-10-12 — [informe](etapas/etapa-02.md)
 
 - [x] **Etapa 1 cerrada** — base multi-tenant: rol de plataforma, catálogos globales, laboratorios, resolución por subdominio; 122 pruebas, cobertura 100%, ZAP sin hallazgos, 600 peticiones concurrentes sin cruces — 2026-10-12 — [informe](etapas/etapa-01.md)
 

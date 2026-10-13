@@ -473,7 +473,7 @@ Pruebas específicas:
 
 **Cierra cuando:** la compuerta completa está en verde y el informe `etapa-01.md` está escrito.
 
-#### Etapa 2 — Autenticación y autorización
+#### Etapa 2 — Autenticación y autorización · *cerrada el 2026-10-12 ([informe](etapas/etapa-02.md))*
 
 Pasos:
 1. Usuarios, roles, permisos CRUD por módulo y acciones especiales ([infraestructura/0008](infraestructura/0008-autenticacion-autorizacion.md)).
