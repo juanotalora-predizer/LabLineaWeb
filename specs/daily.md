@@ -22,7 +22,7 @@ Plantilla:
 ## 2026-10-13
 
 **Avances**
-- **Etapa 3** construida y con la compuerta local en verde ([informe](etapas/etapa-03.md)); falta subirla y que pase la CI para cerrarla.
+- **Etapa 3 cerrada** ([informe](etapas/etapa-03.md)): commit `77a82ea`, CI verde.
 - Migración `0004`: auditoría `lab.auditoria` particionada por mes, de solo inserción, con trigger genérico (antes y después, usuario, IP, secretos protegidos) y registro de lecturas y accesos denegados desde la aplicación. Esquema `cola` para tareas.
 - Cola de tareas propia (`app/core/tareas.py`, `trabajador.py`): reintentos con espera exponencial, ejecución única aunque un trabajador muera (probado con `SIGKILL`), cada tarea con el laboratorio con que se encoló.
 - Textos externalizados en `app/locales/es-CO.toml` con `t()`; zona horaria del país al mostrar fechas; conexión a la base en UTC.
@@ -36,7 +36,6 @@ Plantilla:
 
 **Bloqueos / pendientes**
 - Hallazgo: la configuración de logs de Alembic deshabilitaba los loggers de la aplicación durante las pruebas, así que las pruebas de logs de la etapa 2 no veían nada. Corregido; ahora las pruebas exigen que haya registros.
-- Commit, push y CI de la etapa 3 (a la espera de autorización del usuario).
 
 ## 2026-10-12
 

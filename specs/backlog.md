@@ -6,7 +6,7 @@ Formato: `- [ ] Descripción — prioridad (Alta/Media/Baja) — spec relacionad
 
 ## En curso
 
-- [ ] Etapa 3: compuerta local en verde; falta commit, push y CI verde para cerrarla — Alta — [informe](etapas/etapa-03.md)
+- [ ] Etapa 4: Admin Hub (alta de laboratorios, planes y licencias) — Alta — [plan](plan-desarrollo.md)
 
 ## Pendiente
 
@@ -110,7 +110,7 @@ Formato: `- [ ] Descripción — prioridad (Alta/Media/Baja) — spec relacionad
 
 ## Hecho
 
-- [x] Etapa 3 (compuerta local): auditoría particionada de solo inserción con antes y después, lecturas y accesos denegados auditados; cola de tareas propia sobre PostgreSQL con reintentos y ejecución única; textos externalizados `es-CO` y fechas en UTC; generador de datos sintéticos; 305 pruebas, cobertura 99,3%, ZAP sin hallazgos, 11/11 pruebas manuales — 2026-10-13 — [informe](etapas/etapa-03.md), [0012](infraestructura/0012-cola-de-tareas.md), [0013](infraestructura/0013-textos-externalizados-i18n.md)
+- [x] **Etapa 3 cerrada** (CI verde, commit `77a82ea`): auditoría particionada de solo inserción con antes y después, lecturas y accesos denegados auditados; cola de tareas propia sobre PostgreSQL con reintentos y ejecución única; textos externalizados `es-CO` y fechas en UTC; generador de datos sintéticos; 305 pruebas, cobertura 99,3%, ZAP sin hallazgos, 11/11 pruebas manuales — 2026-10-13 — [informe](etapas/etapa-03.md), [0012](infraestructura/0012-cola-de-tareas.md), [0013](infraestructura/0013-textos-externalizados-i18n.md)
 
 - [x] **Etapa 2 cerrada** — autenticación y autorización: Argon2id, TOTP y código por correo, sesiones `__Host-`, CSRF, bloqueos, roles y permisos; 226 pruebas (5 en Chromium), cobertura 99%, ZAP autenticado sin hallazgos, 3 errores encontrados por las pruebas y corregidos — 2026-10-12 — [informe](etapas/etapa-02.md)
 

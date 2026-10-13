@@ -1,9 +1,9 @@
 # Informe de cierre — Etapa 3: Auditoría, tareas en segundo plano e i18n
 
-- **Fecha de cierre:** 2026-10-13 (pendiente de la CI)
-- **Commit verificado:** pendiente
-- **CI:** pendiente: se ejecuta al subir los cambios
-- **Estado:** Abierta. Toda la compuerta local está en verde. Solo falta que la CI pase después del push (criterio 1)
+- **Fecha de cierre:** 2026-10-13
+- **Commit verificado:** `77a82ea`
+- **CI:** ejecución [38462012691](https://github.com/juanotalora-predizer/LabLineaWeb/actions/runs/38462012691), exitosa (incluye las pruebas en Chromium)
+- **Estado:** Cerrada
 
 ## Alcance entregado
 
@@ -45,7 +45,7 @@
 
 | # | Criterio | Resultado | Evidencia |
 |---|----------|-----------|-----------|
-| 1 | Pruebas en verde (local y CI) | ⏳ local ✅, CI pendiente | 305 pruebas (79 nuevas) con `scripts/verificar.sh` |
+| 1 | Pruebas en verde (local y CI) | ✅ | 305 pruebas (79 nuevas), local y CI |
 | 2 | Cobertura ≥ 85% | ✅ | 99,3% de líneas y ramas |
 | 3 | E2E de flujos nuevos | ✅ | La etapa no agrega flujos de usuario. Los 5 flujos E2E existentes pasan con las plantillas externalizadas, sin errores de CSP |
 | 4 | Migraciones upgrade/downgrade | ✅ | 0004 baja y sube en limpio (`verificar.sh` baja todo y vuelve a subir) |

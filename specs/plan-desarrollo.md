@@ -493,7 +493,7 @@ Pruebas específicas:
 
 **Cierra cuando:** la compuerta completa está en verde y el informe `etapa-02.md` está escrito.
 
-#### Etapa 3 — Auditoría, tareas en segundo plano e i18n · *compuerta local en verde el 2026-10-13; falta la CI ([informe](etapas/etapa-03.md))*
+#### Etapa 3 — Auditoría, tareas en segundo plano e i18n · *cerrada el 2026-10-13 ([informe](etapas/etapa-03.md))*
 
 Pasos:
 1. Spec de la librería de cola de tareas; implementación con reintentos.
