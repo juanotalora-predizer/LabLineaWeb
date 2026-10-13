@@ -7,6 +7,7 @@ Registro de decisiones del proyecto LabLineaWeb.
 - [infraestructura/](infraestructura/): hosting, base de datos, despliegue, seguridad, servicios externos.
 - [funcional/](funcional/): funcionalidades, flujos de usuario, reglas de negocio.
 - [fuentes/](fuentes/): documentos originales de la descripción funcional (exportados de NotebookLM).
+- [plan-desarrollo.md](plan-desarrollo.md): arquitectura, esquema de base de datos, estructura del proyecto y hoja de ruta por sprints.
 - [backlog.md](backlog.md): tareas en curso, pendientes y hechas.
 - [daily.md](daily.md): bitácora diaria de avances y decisiones.
 

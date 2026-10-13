@@ -6,9 +6,16 @@ Formato: `- [ ] Descripción — prioridad (Alta/Media/Baja) — spec relacionad
 
 ## En curso
 
+- [ ] Sprint 1: tablas globales, roles `lablinea_plataforma` y `lablinea_metricas`, resolución de tenant por subdominio — Alta — [plan](plan-desarrollo.md)
+
 ## Pendiente
 
 ### Decisiones por tomar
+
+- [ ] ¿Indicadores de estado o resaltado de valores fuera de rango en el PDF del paciente? (contradice funcional/0004) — Alta — [plan](plan-desarrollo.md)
+- [ ] ¿Dashboard operativo básico del laboratorio dentro del MVP? (funcional/0007 lo excluye) — Media — [plan](plan-desarrollo.md)
+- [ ] Definir qué es la "distribución de comisiones" del Admin Hub — Media — [plan](plan-desarrollo.md)
+- [ ] Elegir librería de cola de trabajos sobre PostgreSQL (spec antes del Sprint 3) — Media — [plan](plan-desarrollo.md)
 
 - [ ] Facturación electrónica DIAN de las ventas del POS: ¿la emite el LIS o el sistema propio del laboratorio? — Alta — [funcional/0002](funcional/0002-pos-ordenes-caja.md)
 - [ ] Definir hosting (PostgreSQL 16+ administrado, almacenamiento de objetos, correo; todos con cifrado y BAA; celdas regionales; país adecuado según la SIC) — Alta — [0003](infraestructura/0003-seguridad-hipaa.md), [0004](infraestructura/0004-normativa-colombia-latam.md), [0005](infraestructura/0005-arquitectura-saas-multitenant.md), [0007](infraestructura/0007-base-de-datos.md)
@@ -18,7 +25,6 @@ Formato: `- [ ] Descripción — prioridad (Alta/Media/Baja) — spec relacionad
 
 ### Fase 1 — Base multi-tenant
 
-- [ ] PostgreSQL + SQLAlchemy async + Alembic; esquemas `plataforma`, `global` y `lab` — Alta — [0007](infraestructura/0007-base-de-datos.md)
 - [ ] RLS en todas las tablas de `lab` con `USING` + `WITH CHECK` + `FORCE`, rol de aplicación sin privilegios, `SET LOCAL` por transacción, y prueba que verifique todas las tablas — Alta — [0007](infraestructura/0007-base-de-datos.md)
 - [ ] Resolución de tenant por subdominio y capa de acceso a datos con tenant obligatorio — Alta — [0005](infraestructura/0005-arquitectura-saas-multitenant.md)
 - [ ] Laboratorios, sedes y estaciones de trabajo — Alta — [funcional/0005](funcional/0005-plataforma-saas-suscripciones.md), [funcional/0003](funcional/0003-muestras-impresion.md)
@@ -93,6 +99,9 @@ Formato: `- [ ] Descripción — prioridad (Alta/Media/Baja) — spec relacionad
 - [ ] Análisis de riesgos, políticas, oficial de seguridad, capacitación, notificación de brechas — Media — [0003](infraestructura/0003-seguridad-hipaa.md)
 
 ## Hecho
+
+- [x] Sprint 0: configuración por `.env`, conexión con tenant por transacción (`SET LOCAL`), Alembic con migración 0001 (esquemas `plataforma`, `global`, `lab`; función `lab.tenant_actual()`; permisos por defecto), guardián de RLS y CI con PostgreSQL 18 — 2026-10-12 — [0007](infraestructura/0007-base-de-datos.md)
+- [x] Roles y bases locales creados (PostgreSQL 18.6) — 2026-10-12 — [0007](infraestructura/0007-base-de-datos.md)
 
 - [x] Fuentes de NotebookLM convertidas en specs: funcionales 0002 a 0007 e infraestructura 0007 y 0008; MVP definido — 2026-10-12 — [funcional/0007](funcional/0007-alcance-mvp.md)
 - [x] Copiar las fuentes de los cuadernos de NotebookLM a `specs/fuentes/` — 2026-10-12

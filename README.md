@@ -14,4 +14,25 @@ uvicorn app.main:app --reload   # http://127.0.0.1:8000
 pytest                          # pruebas
 ```
 
+### Base de datos local
+
+Requiere PostgreSQL 16 o superior. Una sola vez:
+
+1. Copiar `.env.example` a `.env` y completar las contraseñas de `DB_OWNER_PASSWORD` y `DB_APP_PASSWORD` (valores aleatorios).
+2. Crear roles y bases con un superusuario (pide su contraseña):
+
+```bash
+set -a; source .env; set +a
+psql -h localhost -U postgres -d postgres \
+  -v owner_pw="$DB_OWNER_PASSWORD" -v app_pw="$DB_APP_PASSWORD" \
+  -f scripts/crear_bd_local.sql
+```
+
+3. Aplicar las migraciones (siempre con el rol dueño, lo toma del `.env`):
+
+```bash
+alembic upgrade head                          # base de desarrollo
+alembic -x base=lablinea_test upgrade head    # base de prueba (pytest lo hace solo)
+```
+
 Las decisiones del proyecto se documentan en [specs/](specs/).

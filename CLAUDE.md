@@ -99,8 +99,13 @@ Todo endpoint FHIR incluye una prueba que valide el JSON contra el recurso R4 co
 source .venv/bin/activate
 pip install -r requirements-dev.txt
 uvicorn app.main:app --reload   # servidor local
-pytest                          # pruebas
+pytest                          # pruebas (migra solo la base lablinea_test)
+alembic upgrade head            # migrar la base de desarrollo
 ```
+
+- Acceso a datos de un laboratorio **siempre** con `app.core.db.sesion_tenant(tenant_id)`; nunca abrir sesiones sin tenant sobre `lab`.
+- Migraciones escritas a mano en `migrations/versions/` (sin autogenerate), con `upgrade` y `downgrade`. Toda tabla nueva en `lab` incluye `tenant_id`, RLS habilitado y forzado, y política con `USING` y `WITH CHECK`; `tests/test_db.py::test_toda_tabla_de_lab_cumple_rls` lo verifica.
+- La CI (`.github/workflows/ci.yml`) corre las pruebas contra PostgreSQL 18 en cada push y pull request.
 
 ## Reglas de desarrollo
 

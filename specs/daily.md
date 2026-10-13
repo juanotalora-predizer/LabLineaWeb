@@ -26,6 +26,9 @@ Plantilla:
 - Creada la carpeta `specs/` con subcarpetas `infraestructura/` y `funcional/`, plantilla de decisiones, `backlog.md` y `daily.md`.
 - Estructura base de la aplicación: `app/main.py`, plantillas `base.html` e `index.html`, CSS, endpoint `/health` y 3 pruebas con pytest (pasan).
 
+- **Sprint 0 completado:** `app/core/config.py` (settings desde `.env`), `app/core/db.py` (`sesion_tenant` fija tenant, usuario e IP con `set_config(..., true)`), Alembic asíncrono con la migración `0001` (aplicada en `lablinea_dev` y `lablinea_test`, downgrade probado), CI en GitHub Actions con PostgreSQL 18. 11 pruebas pasan, incluida la que demuestra que el tenant no se filtra al reutilizar una conexión del pool.
+- Se comprobó a mano que el guardián de RLS falla con una tabla sin RLS y con RLS sin `FORCE`.
+
 **Decisiones**
 - Las decisiones de infraestructura y funcionales se registran en `specs/`, un archivo por decisión.
 - Stack base: FastAPI + Jinja2 con renderizado en servidor ([infraestructura/0001](infraestructura/0001-stack-fastapi-jinja2.md)).
@@ -49,7 +52,11 @@ Plantilla:
 - **MVP = fases 1 a 5** del plan de desarrollo + cumplimiento; inventarios, costeo y dashboard después ([funcional/0007](funcional/0007-alcance-mvp.md)).
 - Ajustes técnicos a las fuentes: RLS con `FORCE`, `WITH CHECK` y `SET LOCAL`; UUID públicos; auditoría con antes y después protegida como dato clínico; agrupación de tubos también por tipo de tubo; impresión con QZ Tray (no por IP desde la nube); valores críticos comunicados aunque haya saldo pendiente.
 
+- Plan de desarrollo ([plan-desarrollo.md](plan-desarrollo.md)): Tenant App y Admin Hub como dos sub-aplicaciones por host en un solo despliegue; 4 roles de base de datos; métricas del Admin Hub por agregados sin datos clínicos; 15 sprints en 4 fases; arquitectura de plantillas PDF.
+- Preparado `scripts/crear_bd_local.sql`, `.env.example` y `.env` local para PostgreSQL 18 (EDB).
+
 **Bloqueos / pendientes**
 - Decidir facturación electrónica DIAN de las ventas del POS.
+- Decidir: banderas en el PDF, dashboard en el MVP, comisiones del Admin Hub.
 - Definir hosting.
 - Validar la spec 0004 con asesoría legal.
