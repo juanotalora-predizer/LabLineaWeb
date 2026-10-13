@@ -302,3 +302,60 @@ async def test_registrar_acceso_no_escribe_en_otro_laboratorio(engine_app):
     async with sesion_tenant("lab_b") as sesion:
         en_b = await sesion.scalar(text("SELECT count(*) FROM lab.auditoria WHERE usuario_id = 'intruso'"))
     assert en_a == 0 and en_b >= 1
+
+
+# --- Plataforma (etapa 4) ---
+
+SIN_TRIGGER_PLATAFORMA = {
+    "auditoria": "es la propia auditoría",
+    "eventos_seguridad": "bitácora de seguridad de solo inserción",
+    "sesiones": "operativa: se actualiza en cada petición",
+    "codigos_verificacion": "operativa: solo HMAC de códigos de un solo uso",
+    "limites": "operativa: contadores de intentos",
+    "modulos": "catálogo fijo de la migración; la plataforma no lo modifica",
+    "acciones": "catálogo fijo de la migración; la plataforma no lo modifica",
+}
+
+
+async def test_toda_tabla_de_plataforma_esta_auditada_o_justificada(engine_owner):
+    async with engine_owner.connect() as conexion:
+        tablas = set(
+            (
+                await conexion.execute(
+                    text(
+                        "SELECT c.relname FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace"
+                        " WHERE n.nspname = 'plataforma' AND c.relkind IN ('r', 'p')"
+                    )
+                )
+            ).scalars()
+        )
+        auditadas = set(
+            (
+                await conexion.execute(
+                    text(
+                        "SELECT c.relname FROM pg_trigger t JOIN pg_class c ON c.oid = t.tgrelid"
+                        " JOIN pg_namespace n ON n.oid = c.relnamespace"
+                        " WHERE n.nspname = 'plataforma' AND t.tgfoid = 'plataforma.auditar'::regproc"
+                    )
+                )
+            ).scalars()
+        )
+    assert tablas - auditadas == set(SIN_TRIGGER_PLATAFORMA), "Tablas de plataforma sin auditoría ni justificación"
+
+
+async def test_secretos_de_la_plataforma_protegidos_en_su_auditoria(engine_owner):
+    async with engine_owner.connect() as conexion:
+        filas = (
+            (
+                await conexion.execute(
+                    text(
+                        "SELECT despues FROM plataforma.auditoria"
+                        " WHERE tabla = 'usuarios' AND operacion = 'INSERT' LIMIT 3"
+                    )
+                )
+            )
+            .scalars()
+            .all()
+        )
+    assert filas
+    assert all(f["password_hash"] == "[protegido]" and f["totp_secreto_cifrado"] == "[protegido]" for f in filas)

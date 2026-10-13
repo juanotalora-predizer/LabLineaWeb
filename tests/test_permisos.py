@@ -85,10 +85,10 @@ def _peticion() -> Request:
 async def test_validar_resultados_exige_accion_y_tarjeta_profesional(activa, permitido):
     dependencia = requiere_accion("VALIDAR_RESULTADOS")
     if permitido:
-        assert await dependencia(_peticion(), activa) is activa
+        assert await dependencia(_peticion(), LAB_A, activa) is activa
     else:
         with pytest.raises(HTTPException) as error:
-            await dependencia(_peticion(), activa)
+            await dependencia(_peticion(), LAB_A, activa)
         assert error.value.status_code == 403
 
 
@@ -98,17 +98,17 @@ async def test_requiere_permiso_por_operacion(operacion):
     activa = _activa(modulos={"pacientes": frozenset({"consultar"})})
     dependencia = requiere_permiso("pacientes", operacion)
     if operacion == "consultar":
-        assert await dependencia(_peticion(), activa) is activa
+        assert await dependencia(_peticion(), LAB_A, activa) is activa
     else:
         with pytest.raises(HTTPException):
-            await dependencia(_peticion(), activa)
+            await dependencia(_peticion(), LAB_A, activa)
 
 
 @pytest.mark.anyio
 async def test_otros_modulos_no_heredan_permisos():
     activa = _activa(modulos={"pacientes": frozenset({"consultar", "crear", "modificar", "eliminar"})})
     with pytest.raises(HTTPException):
-        await requiere_permiso("resultados", "consultar")(_peticion(), activa)
+        await requiere_permiso("resultados", "consultar")(_peticion(), LAB_A, activa)
 
 
 # --- Eventos de seguridad: solo inserción ---

@@ -56,3 +56,14 @@ Si un cliente grande o una ley local lo exige, el tenant puede moverse a una **b
 - Las pruebas de cada funcionalidad incluyen un caso de aislamiento: un usuario del tenant A no puede leer, modificar ni inferir datos del tenant B.
 - El registro de auditoría incluye el tenant.
 - Hay que construir el módulo de alta de laboratorios y la resolución de tenant por subdominio antes que cualquier funcionalidad clínica.
+
+## Implementación de la separación de sitios (etapa 4, 2026-10-13)
+
+- Un solo despliegue y un solo esquema OpenAPI. Cada ruta declara su sitio con una dependencia:
+  - `laboratorio_actual`: solo en el subdominio de un laboratorio.
+  - `sitio_admin`: solo en `admin.<dominio>`; el router completo del Admin Hub la exige.
+  - `sitio_actual`: ingreso y panel, comunes a los dos.
+  - En cualquier otro host, la ruta responde 404.
+- `tests/test_admin.py::test_toda_ruta_declara_su_sitio` falla si una ruta nueva no declara su sitio.
+- Se prefirió esto a montar dos sub-aplicaciones por host porque deja una sola fuente de rutas para el fuzzing (schemathesis) y el escaneo, y comparte el ingreso sin duplicarlo.
+- **Base de datos:** cada transacción fija su `search_path` (`lab` o `plataforma`), y el código de autenticación usa nombres de tabla sin esquema. Como cada rol solo puede usar su esquema, un error de `search_path` falla con *permission denied* en lugar de mezclar datos.

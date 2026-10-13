@@ -22,6 +22,7 @@ from sqlalchemy.ext.asyncio import (
 )
 from sqlalchemy.pool import NullPool  # noqa: E402
 
+from app.admin.roles import crear_roles_plataforma  # noqa: E402
 from app.auth import repositorio  # noqa: E402
 from app.auth.roles_sistema import ROLES, crear_roles_sistema  # noqa: E402
 from app.core import correo, db  # noqa: E402
@@ -50,9 +51,10 @@ async def _sembrar_laboratorios() -> None:
             await conexion.execute(
                 text(
                     "INSERT INTO plataforma.laboratorios"
-                    " (tenant_id, subdominio, nombre_comercial, identificador_fiscal, pais, estado)"
-                    " VALUES (:t, :s, :n, :nit, 'COL', :e)"
-                    " ON CONFLICT (tenant_id) DO UPDATE SET estado = EXCLUDED.estado"
+                    " (tenant_id, subdominio, nombre_comercial, identificador_fiscal, pais, estado, plan_id)"
+                    " VALUES (:t, :s, :n, :nit, 'COL', :e,"
+                    "         (SELECT id FROM plataforma.planes WHERE codigo = 'COMPLETO'))"
+                    " ON CONFLICT (tenant_id) DO UPDATE SET estado = EXCLUDED.estado, plan_id = EXCLUDED.plan_id"
                 ),
                 {"t": tenant_id, "s": subdominio, "n": nombre, "nit": nit, "e": estado},
             )
@@ -84,9 +86,22 @@ PACIENTES_SINTETICOS = generar_personas(6, semilla=2026, tipos_documento=("CC", 
 SECRETOS_TOTP = {(lab, email): pyotp.random_base32() for lab, email, *_, totp in USUARIOS if totp}
 
 TABLAS_AUTH = (
-    "lab.eventos_seguridad, lab.limites, lab.codigos_verificacion, lab.sesiones,"
+    "lab.eventos_seguridad, lab.limites, lab.codigos_verificacion, lab.sesiones, lab.invitaciones, lab.sedes,"
     " lab.rol_acciones, lab.rol_permisos, lab.usuario_roles, lab.roles, lab.usuarios"
 )
+# plataforma.eventos_seguridad y plataforma.auditoria no se vacían: un trigger lo impide (solo inserción).
+TABLAS_AUTH_PLATAFORMA = (
+    "plataforma.limites, plataforma.codigos_verificacion, plataforma.sesiones,"
+    " plataforma.rol_acciones, plataforma.rol_permisos, plataforma.usuario_roles, plataforma.roles, plataforma.usuarios"
+)
+
+# Personal sintético de la plataforma: (email, nombre, roles). Todos con app autenticadora.
+USUARIOS_PLATAFORMA = [
+    ("maestro@plataforma.test", "Admin Maestro", ("ADMIN_MAESTRO",)),
+    ("comercial@plataforma.test", "Gerente Comercial", ("GERENTE_COMERCIAL",)),
+    ("financiero@plataforma.test", "Soporte Financiero", ("SOPORTE_FINANCIERO",)),
+]
+SECRETOS_TOTP.update({("plataforma", email): pyotp.random_base32() for email, *_ in USUARIOS_PLATAFORMA})
 
 
 def engine_de(rol: str):
@@ -100,7 +115,23 @@ async def ejecutar_en_tenant(rol: str, tenant_id: str, funcion) -> object:
     engine = engine_de(rol)
     try:
         async with AsyncSession(engine) as sesion, sesion.begin():
-            await sesion.execute(text("SELECT set_config('app.current_tenant', :t, true)"), {"t": tenant_id})
+            await sesion.execute(
+                text(
+                    "SELECT set_config('app.current_tenant', :t, true), set_config('search_path', 'lab, public', true)"
+                ),
+                {"t": tenant_id},
+            )
+            return await funcion(sesion)
+    finally:
+        await engine.dispose()
+
+
+async def ejecutar_en_plataforma(funcion) -> object:
+    """Ejecuta `funcion(sesion)` con el rol y el search_path del Admin Hub (como lo hace la app)."""
+    engine = engine_de("plataforma")
+    try:
+        async with AsyncSession(engine) as sesion, sesion.begin():
+            await sesion.execute(text("SELECT set_config('search_path', 'plataforma, public', true)"))
             return await funcion(sesion)
     finally:
         await engine.dispose()
@@ -111,7 +142,20 @@ async def _sembrar_usuarios() -> None:
     async with owner.begin() as conexion:
         # TRUNCATE no pasa por RLS ni por los triggers de fila: deja la base limpia en cada corrida.
         await conexion.execute(text(f"TRUNCATE {TABLAS_AUTH}"))
+        await conexion.execute(text(f"TRUNCATE {TABLAS_AUTH_PLATAFORMA}"))
     await owner.dispose()
+
+    async def sembrar_plataforma(sesion):
+        await crear_roles_plataforma(sesion)
+        for email, nombre, roles in USUARIOS_PLATAFORMA:
+            usuario_id = await repositorio.crear_usuario(
+                sesion, email=email, nombre=nombre, tipo="PERSONAL", clave=CLAVE, roles=roles
+            )
+            usuario = await repositorio.buscar_usuario(sesion, usuario_id)
+            await repositorio.guardar_totp(sesion, usuario, SECRETOS_TOTP[("plataforma", email)])
+            await repositorio.confirmar_totp(sesion, usuario_id, 0)
+
+    await ejecutar_en_plataforma(sembrar_plataforma)
 
     for tenant_id in ("lab_a", "lab_b"):
 
@@ -151,6 +195,12 @@ async def _limpiar_estado_de_autenticacion() -> None:
     owner = engine_de("owner")
     async with owner.begin() as conexion:
         await conexion.execute(text("TRUNCATE lab.limites, lab.codigos_verificacion, lab.sesiones"))
+        await conexion.execute(
+            text("TRUNCATE plataforma.limites, plataforma.codigos_verificacion, plataforma.sesiones")
+        )
+        await conexion.execute(
+            text("UPDATE plataforma.usuarios SET bloqueado_hasta = NULL, totp_ultimo_contador = 0, estado = 'ACTIVO'")
+        )
         # FORCE RLS aplica también al dueño: se fija cada laboratorio para reiniciar los contadores TOTP.
         for tenant_id in ("lab_a", "lab_b"):
             await conexion.execute(text("SELECT set_config('app.current_tenant', :t, true)"), {"t": tenant_id})

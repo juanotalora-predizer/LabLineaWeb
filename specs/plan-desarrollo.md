@@ -513,7 +513,9 @@ Pruebas específicas:
 
 ### Bloque B — Admin Hub
 
-#### Etapa 4 — Alta de laboratorios y planes
+#### Etapa 4 — Alta de laboratorios y planes · *compuerta local en verde el 2026-10-13; falta la CI ([informe](etapas/etapa-04.md))*
+
+> Implementado con rutas que declaran su sitio (dependencia por host y guardián) en lugar de dos sub-aplicaciones montadas, para tener un solo esquema OpenAPI y un solo código de ingreso ([infraestructura/0005](infraestructura/0005-arquitectura-saas-multitenant.md)).
 
 Pasos:
 1. Sub-aplicación `admin` por host; usuarios y roles de plataforma.

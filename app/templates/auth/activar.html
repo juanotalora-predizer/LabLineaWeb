@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t("activar.titulo") }} · {{ sitio.nombre_comercial }}{% endblock %}
+
+{% block content %}
+<section class="tarjeta">
+    <h1>{{ t("activar.titulo") }}</h1>
+    {% if invalido %}
+    <p class="error" role="alert">{{ t("activar.invalido") }}</p>
+    {% else %}
+    {% if errores %}<ul class="error" role="alert">{% for e in errores %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+    <p>{{ t("activar.instruccion") }}</p>
+    <form method="post" action="/activar/{{ token }}">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+        <label for="clave">{{ t("activar.clave") }}</label>
+        <input id="clave" name="clave" type="password" required minlength="12" maxlength="128" autocomplete="new-password">
+        <label for="confirmacion">{{ t("activar.confirmacion") }}</label>
+        <input id="confirmacion" name="confirmacion" type="password" required minlength="12" maxlength="128" autocomplete="new-password">
+        <button type="submit">{{ t("activar.boton") }}</button>
+    </form>
+    {% endif %}
+</section>
+{% endblock %}

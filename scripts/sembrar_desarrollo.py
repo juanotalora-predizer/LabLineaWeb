@@ -4,6 +4,7 @@
 - Roles del sistema y usuarios de prueba en cada laboratorio (rol de la aplicación, con RLS).
   Contraseña y secreto TOTP salen de DEV_CLAVE_USUARIOS y DEV_TOTP_SECRETO del .env.
 - Pacientes sintéticos (scripts/sinteticos.py) como usuarios del portal en cada laboratorio.
+- Admin Hub: roles de la plataforma y admin@admin.test (ADMIN_MAESTRO), con la misma clave y TOTP.
 
     .venv/bin/python scripts/sembrar_desarrollo.py
 """
@@ -18,6 +19,7 @@ from sqlalchemy import text  # noqa: E402
 from sqlalchemy.ext.asyncio import create_async_engine  # noqa: E402
 from sqlalchemy.pool import NullPool  # noqa: E402
 
+from app.admin.roles import crear_roles_plataforma  # noqa: E402
 from app.auth import repositorio  # noqa: E402
 from app.auth.roles_sistema import crear_roles_sistema  # noqa: E402
 from app.core import db  # noqa: E402
@@ -40,6 +42,13 @@ USUARIOS = [
 PACIENTES_POR_LABORATORIO = 10
 
 
+async def _existe_y_reactivar(sesion, email: str) -> bool:
+    """Idempotencia: el usuario ya existe (activo o no). Un escaneo activo de ZAP puede haberlo desactivado."""
+    return (
+        await sesion.scalar(text("UPDATE usuarios SET estado = 'ACTIVO' WHERE email = :e RETURNING true"), {"e": email})
+    ) is not None
+
+
 async def sembrar() -> None:
     settings = get_settings()
     if settings.entorno == "produccion":
@@ -53,8 +62,10 @@ async def sembrar() -> None:
             await conexion.execute(
                 text(
                     "INSERT INTO plataforma.laboratorios"
-                    " (tenant_id, subdominio, nombre_comercial, identificador_fiscal, pais)"
-                    " VALUES (:t, :s, :n, :nit, 'COL') ON CONFLICT (tenant_id) DO NOTHING"
+                    " (tenant_id, subdominio, nombre_comercial, identificador_fiscal, pais, plan_id)"
+                    " VALUES (:t, :s, :n, :nit, 'COL', (SELECT id FROM plataforma.planes WHERE codigo = 'COMPLETO'))"
+                    # Un escaneo activo pudo cambiarle el plan: vuelve al completo.
+                    " ON CONFLICT (tenant_id) DO UPDATE SET plan_id = EXCLUDED.plan_id"
                 ),
                 {"t": tenant_id, "s": subdominio, "n": nombre, "nit": nit},
             )
@@ -67,7 +78,7 @@ async def sembrar() -> None:
             await crear_roles_sistema(sesion)
             for local, nombre, tipo, roles, totp in USUARIOS:
                 email = f"{local}@{subdominio}.test"
-                if await repositorio.buscar_usuario_por_email(sesion, email):
+                if await _existe_y_reactivar(sesion, email):
                     continue
                 usuario_id = await repositorio.crear_usuario(
                     sesion, email=email, nombre=nombre, tipo=tipo, clave=clave, roles=roles
@@ -89,10 +100,24 @@ async def sembrar() -> None:
             )
             semilla = sum(map(ord, tenant_id))
             for persona in generar_personas(PACIENTES_POR_LABORATORIO, semilla=semilla, tipos_documento=tipos):
-                if not await repositorio.buscar_usuario_por_email(sesion, persona.email):
+                if not await _existe_y_reactivar(sesion, persona.email):
                     await repositorio.crear_usuario(
                         sesion, email=persona.email, nombre=persona.nombre_completo, tipo="PACIENTE", clave=clave
                     )
+    async with db.sesion_plataforma() as sesion:
+        await crear_roles_plataforma(sesion)
+        if not await _existe_y_reactivar(sesion, "admin@admin.test"):
+            usuario_id = await repositorio.crear_usuario(
+                sesion,
+                email="admin@admin.test",
+                nombre="Administración Sintética",
+                tipo="PERSONAL",
+                clave=clave,
+                roles=("ADMIN_MAESTRO",),
+            )
+            usuario = await repositorio.buscar_usuario(sesion, usuario_id)
+            await repositorio.guardar_totp(sesion, usuario, secreto)
+            await repositorio.confirmar_totp(sesion, usuario_id, 0)
     await db.cerrar()
     print("Datos sintéticos en", settings.db_name, "· usuarios:", ", ".join(f"{u[0]}@<lab>.test" for u in USUARIOS))
 

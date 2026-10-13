@@ -1,5 +1,8 @@
 """Auditoría de accesos desde la aplicación (spec infraestructura/0007, sección 5).
 
+Sirve a los dos sitios: según el search_path de la sesión escribe en lab.auditoria (laboratorio)
+o en plataforma.auditoria (Admin Hub).
+
 Las escrituras las registran los triggers de la base (lab.auditar). Aquí se registra lo que un
 trigger no ve: lecturas y exportaciones de datos personales o de salud, y accesos denegados.
 El usuario y la IP salen de la transacción (`sesion_tenant`), no de los argumentos.
@@ -15,7 +18,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 Operacion = Literal["READ", "EXPORT", "ACCESO"]
 
-_SQL_REGISTRAR = text("SELECT lab.registrar_acceso(:tabla, :operacion, :registro, :resultado, CAST(:detalle AS jsonb))")
+_SQL_REGISTRAR = text("SELECT registrar_acceso(:tabla, :operacion, :registro, :resultado, CAST(:detalle AS jsonb))")
 
 
 async def registrar_acceso(

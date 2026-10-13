@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t("planes.titulo") }} · {{ sitio.nombre_comercial }}{% endblock %}
+
+{% block content %}
+<section class="tarjeta ancha">
+    <h1>{% if plan and plan.uuid %}{{ plan.codigo }}{% else %}{{ t("planes.nuevo") }}{% endif %}</h1>
+    {% if errores %}<ul class="error" role="alert">{% for e in errores %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+    {% set editable = activa.permisos.puede("planes", "modificar" if plan and plan.uuid else "crear") %}
+    <form method="post" action="{% if plan and plan.uuid %}/planes/{{ plan.uuid }}{% else %}/planes/nuevo{% endif %}">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+        {% if not (plan and plan.uuid) %}
+        <label for="codigo">{{ t("planes.codigo") }}</label>
+        <input id="codigo" name="codigo" required pattern="[A-Za-z][A-Za-z0-9_]{1,39}" maxlength="40" value="{{ plan.codigo if plan else '' }}">
+        {% endif %}
+        <label for="nombre">{{ t("planes.nombre") }}</label>
+        <input id="nombre" name="nombre" required minlength="2" maxlength="120" value="{{ plan.nombre if plan else '' }}">
+        <label for="max_usuarios">{{ t("planes.max_usuarios") }}</label>
+        <input id="max_usuarios" name="max_usuarios" inputmode="numeric" pattern="[0-9]*" maxlength="6" value="{{ plan.max_usuarios if plan else '' }}">
+        <p class="nota">{{ t("planes.ayuda_max_usuarios") }}</p>
+        {% if plan and plan.uuid %}
+        <label class="opcion"><input type="checkbox" name="activo" value="si" {% if plan.activo %}checked{% endif %}> {{ t("planes.activo") }}</label>
+        {% endif %}
+        <fieldset>
+            <legend>{{ t("planes.modulos") }}</legend>
+            <p class="nota">{{ t("planes.ayuda_modulos") }}</p>
+            {% for m in modulos %}
+            <label class="opcion"><input type="checkbox" name="modulos" value="{{ m.codigo }}" {% if plan and m.codigo in plan.modulos %}checked{% endif %}> {{ m.nombre }}</label>
+            {% endfor %}
+        </fieldset>
+        {% if editable %}<button type="submit">{{ t("planes.guardar") }}</button>{% endif %}
+    </form>
+</section>
+{% endblock %}

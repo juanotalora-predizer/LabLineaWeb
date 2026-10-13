@@ -5,6 +5,8 @@ import secrets
 from argon2 import PasswordHasher
 from argon2.exceptions import InvalidHashError, VerificationError, VerifyMismatchError
 
+from app.core.i18n import t
+
 # Parámetros por defecto de argon2-cffi: perfil "low memory" de RFC 9106 (Argon2id, t=3, m=64 MiB, p=4).
 _hasher = PasswordHasher()
 
@@ -16,17 +18,18 @@ LONGITUD_MAXIMA = 128  # limita el costo de calcular el hash de entradas enormes
 _HASH_FICTICIO = _hasher.hash(secrets.token_urlsafe(16))
 
 
-def validar_politica(clave: str, email: str = "") -> list[str]:
+def validar_politica(clave: str, email: str = "", idioma: str | None = None) -> list[str]:
+    """Mensajes (en el idioma del sitio) de las reglas que la contraseña no cumple."""
     errores = []
     if len(clave) < LONGITUD_MINIMA:
-        errores.append(f"Debe tener al menos {LONGITUD_MINIMA} caracteres.")
+        errores.append(t("contrasena.corta", idioma, minimo=LONGITUD_MINIMA))
     if len(clave) > LONGITUD_MAXIMA:
-        errores.append(f"Debe tener como máximo {LONGITUD_MAXIMA} caracteres.")
+        errores.append(t("contrasena.larga", idioma, maximo=LONGITUD_MAXIMA))
     if len(set(clave)) < 5:
-        errores.append("Debe tener más variedad de caracteres.")
+        errores.append(t("contrasena.variedad", idioma))
     usuario = email.split("@", 1)[0].lower()
     if len(usuario) >= 4 and usuario in clave.lower():
-        errores.append("No debe contener el correo.")
+        errores.append(t("contrasena.correo", idioma))
     return errores
 
 

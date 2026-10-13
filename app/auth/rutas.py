@@ -1,4 +1,4 @@
-"""Rutas de autenticación del laboratorio (spec infraestructura/0008).
+"""Rutas de autenticación, comunes a los laboratorios y al Admin Hub (spec infraestructura/0008).
 
 Flujo: /ingresar (correo + contraseña) → /verificar (TOTP o código por correo) → /panel.
 El personal sin app autenticadora la inscribe en /seguridad/totp antes de continuar.
@@ -11,14 +11,13 @@ from typing import Annotated
 import pyotp
 from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import HTMLResponse
-from sqlalchemy import text
 
 from app.auth import contrasenas, repositorio
 from app.auth.web import (
     COOKIE_SESION,
     Csrf,
-    LaboratorioActual,
     SesionActiva,
+    SitioActual,
     TextoSeguro,
     UsuarioActual,
     _cargar_sesion,
@@ -27,15 +26,13 @@ from app.auth.web import (
     poner_cookie_sesion,
     redirigir,
     render,
-    requiere_permiso,
     rotar_csrf,
     sesion_completa,
+    sesion_del_sitio,
     sesion_pendiente,
 )
 from app.core import correo, cripto
-from app.core.auditoria import registrar_acceso
 from app.core.config import get_settings
-from app.core.db import sesion_tenant
 from app.core.i18n import t
 
 # Todas las rutas responden HTML (o redirecciones).
@@ -53,25 +50,25 @@ def _clave_limite(tipo: str, valor: str) -> str:
     return f"{tipo}:{cripto.hmac_valor(valor, 'limite:' + tipo).hex()}"
 
 
-async def _enviar_codigo(laboratorio, usuario, codigo: str) -> bool:
+async def _enviar_codigo(sitio, usuario, codigo: str) -> bool:
     """Envía el código; si el correo falla devuelve False (nunca un error 500). El log no lleva el código."""
     try:
-        await _enviar(laboratorio, usuario, codigo)
+        await _enviar(sitio, usuario, codigo)
     except OSError:
-        log.warning("Fallo al enviar código de verificación (laboratorio %s)", laboratorio.tenant_id)
+        log.warning("Fallo al enviar código de verificación (%s)", sitio.tenant_id or "plataforma")
         return False
     return True
 
 
-async def _enviar(laboratorio, usuario, codigo: str) -> None:
-    idioma = laboratorio.idioma
+async def _enviar(sitio, usuario, codigo: str) -> None:
+    idioma = sitio.idioma
     await correo.enviar(
         usuario.email,
         t("auth.correo_codigo.asunto", idioma),
         t(
             "auth.correo_codigo.cuerpo",
             idioma,
-            laboratorio=laboratorio.nombre_comercial,
+            laboratorio=sitio.nombre_comercial,
             codigo=codigo,
             minutos=repositorio.CODIGO_VIGENCIA_MIN,
         ),
@@ -95,14 +92,14 @@ def _verificar_totp(usuario, codigo: str) -> int | None:
 
 
 @router.get("/ingresar")
-async def ingresar_formulario(request: Request, laboratorio: LaboratorioActual):
-    return render(request, "auth/ingresar.html", {"laboratorio": laboratorio})
+async def ingresar_formulario(request: Request, sitio: SitioActual):
+    return render(request, "auth/ingresar.html", {"sitio": sitio})
 
 
 @router.post("/ingresar")
 async def ingresar(
     request: Request,
-    laboratorio: LaboratorioActual,
+    sitio: SitioActual,
     _csrf: Csrf,
     email: Annotated[TextoSeguro, Form(max_length=254)] = "",
     clave: Annotated[TextoSeguro, Form(max_length=1024)] = "",
@@ -112,12 +109,12 @@ async def ingresar(
     email = email.strip().lower()
     error, estado, token, codigo, usuario = None, 400, None, None, None
 
-    async with sesion_tenant(laboratorio.tenant_id, ip=ip) as sesion:
+    async with sesion_del_sitio(sitio, ip=ip) as sesion:
         if await repositorio.limite_sumar(sesion, _clave_limite("ingreso-ip", ip or ""), VENTANA_MIN) > (
             MAX_INTENTOS_POR_IP
         ):
             await repositorio.registrar_evento(sesion, "INGRESO_LIMITADO_IP", email=email or None, ip=ip)
-            error, estado = t("auth.error_demasiados", laboratorio.idioma), 429
+            error, estado = t("auth.error_demasiados", sitio.idioma), 429
         else:
             clave_correo = _clave_limite("ingreso-correo", email)
             bloqueado = await repositorio.limite_contar(sesion, clave_correo, VENTANA_MIN) >= MAX_FALLOS_POR_CORREO
@@ -133,7 +130,7 @@ async def ingresar(
                     await repositorio.marcar_bloqueo(sesion, usuario.id, VENTANA_MIN)
                     await repositorio.registrar_evento(sesion, "CUENTA_BLOQUEADA", usuario_id=usuario.id, ip=ip)
                 # Mismo mensaje si el correo no existe, la contraseña falla o la cuenta está bloqueada.
-                error = t("auth.error_credenciales", laboratorio.idioma)
+                error = t("auth.error_credenciales", sitio.idioma)
             else:
                 await repositorio.limite_reiniciar(sesion, clave_correo)
                 if contrasenas.necesita_rehash(usuario.password_hash):
@@ -151,11 +148,9 @@ async def ingresar(
                 await repositorio.registrar_evento(sesion, "CONTRASENA_CORRECTA", usuario_id=usuario.id, ip=ip)
 
     if error:
-        return render(
-            request, "auth/ingresar.html", {"laboratorio": laboratorio, "error": error, "email": email}, estado
-        )
+        return render(request, "auth/ingresar.html", {"sitio": sitio, "error": error, "email": email}, estado)
     if codigo:
-        await _enviar_codigo(laboratorio, usuario, codigo)
+        await _enviar_codigo(sitio, usuario, codigo)
     rotar_csrf(request)
     respuesta = redirigir(request, "/verificar")
     poner_cookie_sesion(respuesta, token)
@@ -165,9 +160,9 @@ async def ingresar(
 # --- Segundo factor ---
 
 
-def _contexto_verificar(laboratorio, usuario) -> dict:
+def _contexto_verificar(sitio, usuario) -> dict:
     return {
-        "laboratorio": laboratorio,
+        "sitio": sitio,
         "usa_totp": usuario.usa_totp,
         "vigencia_min": repositorio.CODIGO_VIGENCIA_MIN,
     }
@@ -175,15 +170,15 @@ def _contexto_verificar(laboratorio, usuario) -> dict:
 
 @router.get("/verificar")
 async def verificar_formulario(
-    request: Request, laboratorio: LaboratorioActual, pendiente: Annotated[SesionActiva, Depends(sesion_pendiente)]
+    request: Request, sitio: SitioActual, pendiente: Annotated[SesionActiva, Depends(sesion_pendiente)]
 ):
-    return render(request, "auth/verificar.html", _contexto_verificar(laboratorio, pendiente.usuario))
+    return render(request, "auth/verificar.html", _contexto_verificar(sitio, pendiente.usuario))
 
 
 @router.post("/verificar")
 async def verificar(
     request: Request,
-    laboratorio: LaboratorioActual,
+    sitio: SitioActual,
     _csrf: Csrf,
     pendiente: Annotated[SesionActiva, Depends(sesion_pendiente)],
     codigo: Annotated[TextoSeguro, Form(max_length=12)] = "",
@@ -192,13 +187,13 @@ async def verificar(
     ip = ip_cliente(request)
     usuario = pendiente.usuario
     codigo = codigo.strip()
-    token, error, estado = None, t("auth.error_codigo", laboratorio.idioma), 400
+    token, error, estado = None, t("auth.error_codigo", sitio.idioma), 400
 
-    async with sesion_tenant(laboratorio.tenant_id, usuario_id=usuario.uuid, ip=ip) as sesion:
+    async with sesion_del_sitio(sitio, usuario_id=usuario.uuid, ip=ip) as sesion:
         intentos = await repositorio.limite_sumar(sesion, f"segundo-factor:{usuario.id}", VENTANA_MIN)
         correcto = False
         if intentos > MAX_FALLOS_SEGUNDO_FACTOR:
-            error, estado = t("auth.error_demasiados", laboratorio.idioma), 429
+            error, estado = t("auth.error_demasiados", sitio.idioma), 429
         else:
             contador = _verificar_totp(usuario, codigo) if usuario.usa_totp else None
             if contador is not None:
@@ -223,7 +218,7 @@ async def verificar(
             await repositorio.registrar_evento(sesion, "SEGUNDO_FACTOR_FALLIDO", usuario_id=usuario.id, ip=ip)
 
     if token is None:
-        contexto = {**_contexto_verificar(laboratorio, usuario), "error": error}
+        contexto = {**_contexto_verificar(sitio, usuario), "error": error}
         return render(request, "auth/verificar.html", contexto, estado)
     rotar_csrf(request)
     respuesta = redirigir(request, "/seguridad/totp" if usuario.debe_inscribir_totp else "/panel")
@@ -234,17 +229,17 @@ async def verificar(
 @router.post("/verificar/reenviar")
 async def reenviar_codigo(
     request: Request,
-    laboratorio: LaboratorioActual,
+    sitio: SitioActual,
     _csrf: Csrf,
     pendiente: Annotated[SesionActiva, Depends(sesion_pendiente)],
 ):
-    async with sesion_tenant(laboratorio.tenant_id, usuario_id=pendiente.usuario.uuid) as sesion:
+    async with sesion_del_sitio(sitio, usuario_id=pendiente.usuario.uuid) as sesion:
         codigo = await repositorio.crear_codigo(sesion, pendiente.usuario)
-    contexto = _contexto_verificar(laboratorio, pendiente.usuario)
-    idioma = laboratorio.idioma
+    contexto = _contexto_verificar(sitio, pendiente.usuario)
+    idioma = sitio.idioma
     if codigo is None:
         return render(request, "auth/verificar.html", {**contexto, "error": t("auth.error_demasiados", idioma)}, 429)
-    if not await _enviar_codigo(laboratorio, pendiente.usuario, codigo):
+    if not await _enviar_codigo(sitio, pendiente.usuario, codigo):
         return render(request, "auth/verificar.html", {**contexto, "error": t("auth.error_correo", idioma)}, 503)
     return render(request, "auth/verificar.html", {**contexto, "aviso": t("auth.aviso_codigo_nuevo", idioma)})
 
@@ -254,7 +249,7 @@ async def reenviar_codigo(
 
 @router.get("/seguridad/totp")
 async def totp_formulario(
-    request: Request, laboratorio: LaboratorioActual, activa: Annotated[SesionActiva, Depends(sesion_completa)]
+    request: Request, sitio: SitioActual, activa: Annotated[SesionActiva, Depends(sesion_completa)]
 ):
     usuario = activa.usuario
     if usuario.totp_confirmado:
@@ -263,24 +258,22 @@ async def totp_formulario(
         secreto = cripto.descifrar(bytes(usuario.totp_secreto_cifrado), usuario.contexto_totp()).decode()
     else:
         secreto = pyotp.random_base32()
-        async with sesion_tenant(laboratorio.tenant_id, usuario_id=usuario.uuid) as sesion:
+        async with sesion_del_sitio(sitio, usuario_id=usuario.uuid) as sesion:
             await repositorio.guardar_totp(sesion, usuario, secreto)
-    uri = pyotp.TOTP(secreto).provisioning_uri(
-        name=usuario.email, issuer_name=f"LabLineaWeb {laboratorio.nombre_comercial}"
-    )
-    return render(request, "auth/totp.html", {"laboratorio": laboratorio, "secreto": secreto, "uri": uri})
+    uri = pyotp.TOTP(secreto).provisioning_uri(name=usuario.email, issuer_name=f"LabLineaWeb {sitio.nombre_comercial}")
+    return render(request, "auth/totp.html", {"sitio": sitio, "secreto": secreto, "uri": uri})
 
 
 @router.post("/seguridad/totp")
 async def totp_confirmar(
     request: Request,
-    laboratorio: LaboratorioActual,
+    sitio: SitioActual,
     _csrf: Csrf,
     activa: Annotated[SesionActiva, Depends(sesion_completa)],
     codigo: Annotated[TextoSeguro, Form(max_length=12)] = "",
 ):
     # La sesión cargada al inicio de la petición puede no tener aún el secreto recién guardado.
-    async with sesion_tenant(laboratorio.tenant_id, usuario_id=activa.usuario.uuid) as sesion:
+    async with sesion_del_sitio(sitio, usuario_id=activa.usuario.uuid) as sesion:
         usuario = await repositorio.buscar_usuario(sesion, activa.usuario.id)
         contador = _verificar_totp(usuario, codigo.strip()) if usuario and not usuario.totp_confirmado else None
         if contador is not None:
@@ -295,10 +288,10 @@ async def totp_confirmar(
 
 
 @router.post("/salir")
-async def salir(request: Request, laboratorio: LaboratorioActual, _csrf: Csrf):
-    activa = await _cargar_sesion(request, laboratorio)
+async def salir(request: Request, sitio: SitioActual, _csrf: Csrf):
+    activa = await _cargar_sesion(request, sitio)
     if activa:
-        async with sesion_tenant(laboratorio.tenant_id, usuario_id=activa.usuario.uuid) as sesion:
+        async with sesion_del_sitio(sitio, usuario_id=activa.usuario.uuid) as sesion:
             await repositorio.revocar_sesion(sesion, activa.sesion_id)
             await repositorio.registrar_evento(sesion, "SALIDA", usuario_id=activa.usuario.id, ip=ip_cliente(request))
     rotar_csrf(request)
@@ -311,36 +304,8 @@ async def salir(request: Request, laboratorio: LaboratorioActual, _csrf: Csrf):
 
 
 @router.get("/panel")
-async def panel(request: Request, laboratorio: LaboratorioActual, activa: UsuarioActual):
-    return render(request, "panel/panel.html", {"laboratorio": laboratorio, "activa": activa})
-
-
-@router.get("/configuracion/usuarios")
-async def lista_usuarios(
-    request: Request,
-    laboratorio: LaboratorioActual,
-    activa: Annotated[SesionActiva, Depends(requiere_permiso("usuarios", "consultar"))],
-):
-    async with sesion_tenant(laboratorio.tenant_id, usuario_id=activa.usuario.uuid, ip=ip_cliente(request)) as sesion:
-        usuarios = (
-            (
-                await sesion.execute(
-                    text(
-                        "SELECT u.nombre, u.email::text AS email, u.tipo, u.estado,"
-                        " coalesce(string_agg(r.codigo, ', ' ORDER BY r.codigo), '') AS roles"
-                        " FROM lab.usuarios u LEFT JOIN lab.usuario_roles ur ON ur.usuario_id = u.id"
-                        " LEFT JOIN lab.roles r ON r.id = ur.rol_id"
-                        " GROUP BY u.id ORDER BY u.nombre"
-                    )
-                )
-            )
-            .mappings()
-            .all()
-        )
-        # Datos personales del personal y de pacientes: la consulta queda auditada.
-        await registrar_acceso(sesion, "usuarios", detalle={"vista": "lista_usuarios", "filas": len(usuarios)})
-    contexto = {"laboratorio": laboratorio, "activa": activa, "usuarios": usuarios}
-    return render(request, "panel/usuarios.html", contexto)
+async def panel(request: Request, sitio: SitioActual, activa: UsuarioActual):
+    return render(request, "panel/panel.html", {"sitio": sitio, "activa": activa})
 
 
 __all__ = ["COOKIE_SESION", "router"]

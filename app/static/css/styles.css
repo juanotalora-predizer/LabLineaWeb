@@ -38,3 +38,11 @@ button.secundario { background: transparent; color: #1f6feb; padding-left: 0; }
 .secreto { display: block; margin: 0.5rem 0; font-size: 1.1rem; letter-spacing: 0.1em; word-break: break-all; }
 table { width: 100%; border-collapse: collapse; }
 th, td { text-align: left; padding: 0.4rem; border-bottom: 1px solid #d9e2ec; }
+form select { width: 100%; box-sizing: border-box; padding: 0.5rem; margin-top: 0.25rem; font-size: 1rem; }
+fieldset { margin-top: 0.75rem; border: 1px solid #d9e2ec; border-radius: 6px; }
+label.opcion { font-weight: 400; margin-top: 0.25rem; }
+label.opcion input { width: auto; margin-right: 0.4rem; }
+.tarjeta.ancha { max-width: 640px; }
+.ficha { display: grid; grid-template-columns: max-content 1fr; gap: 0.3rem 1rem; }
+.ficha dt { font-weight: 600; }
+.ficha dd { margin: 0; }

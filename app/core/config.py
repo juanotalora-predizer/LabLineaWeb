@@ -17,6 +17,10 @@ class Settings(BaseSettings):
     # Dominio bajo el que viven los laboratorios (<lab>.<dominio>) y el Admin Hub (admin.<dominio>).
     # Cualquier otra cabecera Host se rechaza (spec infraestructura/0005). Producción: lablinea.cionetworks.com
     dominio_base: str = "lablinea.localhost"
+    # Puerto público cuando no es el 443 (desarrollo: 8443). Lo usan los enlaces de los correos.
+    puerto_publico: int | None = None
+    # Zona en la que se muestran las fechas del Admin Hub.
+    zona_horaria_plataforma: str = "UTC"
 
     db_host: str = "localhost"
     db_port: int = 5432
@@ -51,6 +55,10 @@ class Settings(BaseSettings):
     sesion_inactividad_min: int = 15
     sesion_maxima_horas: int = 12
     sesion_pendiente_min: int = 5  # contraseña correcta, segundo factor pendiente
+
+    def url_sitio(self, subdominio: str) -> str:
+        puerto = f":{self.puerto_publico}" if self.puerto_publico and self.puerto_publico != 443 else ""
+        return f"https://{subdominio}.{self.dominio_base}{puerto}"
 
     @property
     def base_aplicacion(self) -> str:

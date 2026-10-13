@@ -1,5 +1,8 @@
-"""Acceso a datos de autenticación. Todas las funciones reciben una sesión abierta con
-`sesion_tenant`, así que el RLS limita cada consulta al laboratorio de la petición."""
+"""Acceso a datos de autenticación de los dos sitios: laboratorios y Admin Hub.
+
+Todas las funciones reciben una sesión abierta con `sesion_tenant` (esquema lab, bajo RLS: cada
+consulta queda limitada al laboratorio de la petición) o con `sesion_plataforma` (esquema plataforma).
+Los nombres de tabla van sin esquema: los resuelve el search_path que fija la sesión."""
 
 import secrets
 from dataclasses import dataclass, field
@@ -19,7 +22,7 @@ CODIGOS_POR_HORA = 5
 class Usuario:
     id: int
     uuid: str
-    tenant_id: str
+    ambito: str  # laboratorio (tenant_id) o 'plataforma'
     email: str
     nombre: str
     tipo: str
@@ -38,7 +41,7 @@ class Usuario:
         return self.tipo == "PERSONAL" and not self.totp_confirmado
 
     def contexto_totp(self) -> str:
-        return f"{self.tenant_id}:{self.uuid}:totp"
+        return f"{self.ambito}:{self.uuid}:totp"
 
 
 @dataclass(frozen=True)
@@ -53,14 +56,14 @@ class Permisos:
 
 # SQL literal completo (sin interpolar): el analizador de seguridad no admite consultas armadas con f-strings.
 _SQL_USUARIO_POR_EMAIL = text(
-    "SELECT id, uuid::text AS uuid, tenant_id, email::text AS email, nombre, tipo, password_hash,"
+    "SELECT id, uuid::text AS uuid, ambito_actual() AS ambito, email::text AS email, nombre, tipo, password_hash,"
     " totp_secreto_cifrado, totp_confirmado, totp_ultimo_contador, tarjeta_profesional"
-    " FROM lab.usuarios WHERE email = :e AND estado = 'ACTIVO'"
+    " FROM usuarios WHERE email = :e AND estado = 'ACTIVO'"
 )
 _SQL_USUARIO_POR_ID = text(
-    "SELECT id, uuid::text AS uuid, tenant_id, email::text AS email, nombre, tipo, password_hash,"
+    "SELECT id, uuid::text AS uuid, ambito_actual() AS ambito, email::text AS email, nombre, tipo, password_hash,"
     " totp_secreto_cifrado, totp_confirmado, totp_ultimo_contador, tarjeta_profesional"
-    " FROM lab.usuarios WHERE id = :i AND estado = 'ACTIVO'"
+    " FROM usuarios WHERE id = :i AND estado = 'ACTIVO'"
 )
 
 
@@ -80,23 +83,27 @@ async def crear_usuario(
     email: str,
     nombre: str,
     tipo: str,
-    clave: str,
+    clave: str | None,
     roles: tuple[str, ...] = (),
     tarjeta_profesional: str | None = None,
 ) -> int:
     usuario_id = await sesion.scalar(
         text(
-            "INSERT INTO lab.usuarios (tenant_id, email, nombre, tipo, password_hash, tarjeta_profesional)"
-            " VALUES (lab.tenant_actual(), :e, :n, :t, :h, :tp) RETURNING id"
+            "INSERT INTO usuarios (email, nombre, tipo, password_hash, tarjeta_profesional)"
+            " VALUES (:e, :n, :t, :h, :tp) RETURNING id"
         ),
-        {"e": email, "n": nombre, "t": tipo, "h": contrasenas.hashear(clave, email), "tp": tarjeta_profesional},
+        {
+            "e": email,
+            "n": nombre,
+            "t": tipo,
+            # Sin contraseña: la crea el propio usuario con su invitación (app/auth/invitaciones.py).
+            "h": contrasenas.hashear(clave, email) if clave is not None else None,
+            "tp": tarjeta_profesional,
+        },
     )
     for codigo in roles:
         await sesion.execute(
-            text(
-                "INSERT INTO lab.usuario_roles (tenant_id, usuario_id, rol_id)"
-                " SELECT lab.tenant_actual(), :u, id FROM lab.roles WHERE codigo = :c"
-            ),
+            text("INSERT INTO usuario_roles (usuario_id, rol_id) SELECT :u, id FROM roles WHERE codigo = :c"),
             {"u": usuario_id, "c": codigo},
         )
     return usuario_id
@@ -104,13 +111,13 @@ async def crear_usuario(
 
 async def actualizar_hash(sesion: AsyncSession, usuario_id: int, nuevo_hash: str) -> None:
     await sesion.execute(
-        text("UPDATE lab.usuarios SET password_hash = :h WHERE id = :i"), {"h": nuevo_hash, "i": usuario_id}
+        text("UPDATE usuarios SET password_hash = :h WHERE id = :i"), {"h": nuevo_hash, "i": usuario_id}
     )
 
 
 async def marcar_bloqueo(sesion: AsyncSession, usuario_id: int, minutos: int) -> None:
     await sesion.execute(
-        text("UPDATE lab.usuarios SET bloqueado_hasta = now() + make_interval(mins => :m) WHERE id = :i"),
+        text("UPDATE usuarios SET bloqueado_hasta = now() + make_interval(mins => :m) WHERE id = :i"),
         {"m": minutos, "i": usuario_id},
     )
 
@@ -122,10 +129,7 @@ async def registrar_evento(
     sesion: AsyncSession, tipo: str, *, usuario_id: int | None = None, email: str | None = None, ip: str | None = None
 ) -> None:
     await sesion.execute(
-        text(
-            "INSERT INTO lab.eventos_seguridad (tenant_id, tipo, usuario_id, email, ip)"
-            " VALUES (lab.tenant_actual(), :t, :u, :e, CAST(:ip AS inet))"
-        ),
+        text("INSERT INTO eventos_seguridad (tipo, usuario_id, email, ip) VALUES (:t, :u, :e, CAST(:ip AS inet))"),
         {"t": tipo, "u": usuario_id, "e": email, "ip": ip},
     )
 
@@ -135,7 +139,7 @@ async def registrar_evento(
 
 async def limite_contar(sesion: AsyncSession, clave: str, ventana_min: int) -> int:
     valor = await sesion.scalar(
-        text("SELECT contador FROM lab.limites WHERE clave = :c AND ventana_desde > now() - make_interval(mins => :v)"),
+        text("SELECT contador FROM limites WHERE clave = :c AND ventana_desde > now() - make_interval(mins => :v)"),
         {"c": clave, "v": ventana_min},
     )
     return valor or 0
@@ -145,13 +149,12 @@ async def limite_sumar(sesion: AsyncSession, clave: str, ventana_min: int) -> in
     """Suma uno al contador de la ventana vigente (o abre una nueva) y devuelve el total."""
     return await sesion.scalar(
         text(
-            "INSERT INTO lab.limites (tenant_id, clave, ventana_desde, contador)"
-            " VALUES (lab.tenant_actual(), :c, now(), 1)"
-            " ON CONFLICT (tenant_id, clave) DO UPDATE SET"
-            "  contador = CASE WHEN lab.limites.ventana_desde <= now() - make_interval(mins => :v)"
-            "             THEN 1 ELSE lab.limites.contador + 1 END,"
-            "  ventana_desde = CASE WHEN lab.limites.ventana_desde <= now() - make_interval(mins => :v)"
-            "                  THEN now() ELSE lab.limites.ventana_desde END"
+            "INSERT INTO limites (clave, ventana_desde, contador) VALUES (:c, now(), 1)"
+            " ON CONFLICT ON CONSTRAINT limites_pkey DO UPDATE SET"
+            "  contador = CASE WHEN limites.ventana_desde <= now() - make_interval(mins => :v)"
+            "             THEN 1 ELSE limites.contador + 1 END,"
+            "  ventana_desde = CASE WHEN limites.ventana_desde <= now() - make_interval(mins => :v)"
+            "                  THEN now() ELSE limites.ventana_desde END"
             " RETURNING contador"
         ),
         {"c": clave, "v": ventana_min},
@@ -159,7 +162,7 @@ async def limite_sumar(sesion: AsyncSession, clave: str, ventana_min: int) -> in
 
 
 async def limite_reiniciar(sesion: AsyncSession, clave: str) -> None:
-    await sesion.execute(text("UPDATE lab.limites SET contador = 0 WHERE clave = :c"), {"c": clave})
+    await sesion.execute(text("UPDATE limites SET contador = 0 WHERE clave = :c"), {"c": clave})
 
 
 # --- Sesiones ---
@@ -178,8 +181,8 @@ async def crear_sesion(
     token = cripto.token_aleatorio()
     await sesion.execute(
         text(
-            "INSERT INTO lab.sesiones (tenant_id, usuario_id, token_hash, segundo_factor_ok, expira_en, ip, agente)"
-            " VALUES (lab.tenant_actual(), :u, :h, :f, now() + make_interval(mins => :m), CAST(:ip AS inet), :a)"
+            "INSERT INTO sesiones (usuario_id, token_hash, segundo_factor_ok, expira_en, ip, agente)"
+            " VALUES (:u, :h, :f, now() + make_interval(mins => :m), CAST(:ip AS inet), :a)"
         ),
         {"u": usuario_id, "h": cripto.hash_token(token), "f": segundo_factor_ok, "m": minutos, "ip": ip, "a": agente},
     )
@@ -191,8 +194,8 @@ async def obtener_sesion(sesion: AsyncSession, token: str, inactividad_min: int)
         (
             await sesion.execute(
                 text(
-                    "UPDATE lab.sesiones s SET ultima_actividad = now()"
-                    " FROM lab.usuarios u"
+                    "UPDATE sesiones s SET ultima_actividad = now()"
+                    " FROM usuarios u"
                     " WHERE s.token_hash = :h AND u.id = s.usuario_id AND u.estado = 'ACTIVO'"
                     "   AND s.revocada_en IS NULL AND s.expira_en > now()"
                     "   AND s.ultima_actividad > now() - make_interval(mins => :i)"
@@ -208,12 +211,12 @@ async def obtener_sesion(sesion: AsyncSession, token: str, inactividad_min: int)
 
 
 async def revocar_sesion(sesion: AsyncSession, sesion_id: int) -> None:
-    await sesion.execute(text("UPDATE lab.sesiones SET revocada_en = now() WHERE id = :i"), {"i": sesion_id})
+    await sesion.execute(text("UPDATE sesiones SET revocada_en = now() WHERE id = :i"), {"i": sesion_id})
 
 
 async def revocar_sesiones_de(sesion: AsyncSession, usuario_id: int) -> None:
     await sesion.execute(
-        text("UPDATE lab.sesiones SET revocada_en = now() WHERE usuario_id = :u AND revocada_en IS NULL"),
+        text("UPDATE sesiones SET revocada_en = now() WHERE usuario_id = :u AND revocada_en IS NULL"),
         {"u": usuario_id},
     )
 
@@ -222,15 +225,14 @@ async def revocar_sesiones_de(sesion: AsyncSession, usuario_id: int) -> None:
 
 
 def _contexto_codigo(usuario: Usuario) -> str:
-    return f"{usuario.tenant_id}:{usuario.uuid}:codigo"
+    return f"{usuario.ambito}:{usuario.uuid}:codigo"
 
 
 async def crear_codigo(sesion: AsyncSession, usuario: Usuario) -> str | None:
     """Genera un código de 6 dígitos; None si ya se enviaron demasiados en la última hora."""
     enviados = await sesion.scalar(
         text(
-            "SELECT count(*) FROM lab.codigos_verificacion"
-            " WHERE usuario_id = :u AND creado_en > now() - interval '1 hour'"
+            "SELECT count(*) FROM codigos_verificacion WHERE usuario_id = :u AND creado_en > now() - interval '1 hour'"
         ),
         {"u": usuario.id},
     )
@@ -238,14 +240,14 @@ async def crear_codigo(sesion: AsyncSession, usuario: Usuario) -> str | None:
         return None
     # Un código nuevo invalida los anteriores.
     await sesion.execute(
-        text("UPDATE lab.codigos_verificacion SET usado_en = now() WHERE usuario_id = :u AND usado_en IS NULL"),
+        text("UPDATE codigos_verificacion SET usado_en = now() WHERE usuario_id = :u AND usado_en IS NULL"),
         {"u": usuario.id},
     )
     codigo = f"{secrets.randbelow(10**6):06d}"
     await sesion.execute(
         text(
-            "INSERT INTO lab.codigos_verificacion (tenant_id, usuario_id, codigo_hmac, expira_en)"
-            " VALUES (lab.tenant_actual(), :u, :h, now() + make_interval(mins => :m))"
+            "INSERT INTO codigos_verificacion (usuario_id, codigo_hmac, expira_en)"
+            " VALUES (:u, :h, now() + make_interval(mins => :m))"
         ),
         {"u": usuario.id, "h": cripto.hmac_valor(codigo, _contexto_codigo(usuario)), "m": CODIGO_VIGENCIA_MIN},
     )
@@ -257,8 +259,8 @@ async def verificar_codigo(sesion: AsyncSession, usuario: Usuario, codigo: str) 
         (
             await sesion.execute(
                 text(
-                    "UPDATE lab.codigos_verificacion SET intentos = intentos + 1"
-                    " WHERE id = (SELECT id FROM lab.codigos_verificacion WHERE usuario_id = :u AND usado_en IS NULL"
+                    "UPDATE codigos_verificacion SET intentos = intentos + 1"
+                    " WHERE id = (SELECT id FROM codigos_verificacion WHERE usuario_id = :u AND usado_en IS NULL"
                     "             AND expira_en > now() AND intentos < :max ORDER BY creado_en DESC LIMIT 1"
                     "             FOR UPDATE)"
                     " RETURNING id, codigo_hmac"
@@ -273,7 +275,7 @@ async def verificar_codigo(sesion: AsyncSession, usuario: Usuario, codigo: str) 
         bytes(fila["codigo_hmac"]), cripto.hmac_valor(codigo.strip(), _contexto_codigo(usuario))
     ):
         return False
-    await sesion.execute(text("UPDATE lab.codigos_verificacion SET usado_en = now() WHERE id = :i"), {"i": fila["id"]})
+    await sesion.execute(text("UPDATE codigos_verificacion SET usado_en = now() WHERE id = :i"), {"i": fila["id"]})
     return True
 
 
@@ -282,14 +284,14 @@ async def verificar_codigo(sesion: AsyncSession, usuario: Usuario, codigo: str) 
 
 async def guardar_totp(sesion: AsyncSession, usuario: Usuario, secreto: str) -> None:
     await sesion.execute(
-        text("UPDATE lab.usuarios SET totp_secreto_cifrado = :s, totp_confirmado = false WHERE id = :i"),
+        text("UPDATE usuarios SET totp_secreto_cifrado = :s, totp_confirmado = false WHERE id = :i"),
         {"s": cripto.cifrar(secreto.encode(), usuario.contexto_totp()), "i": usuario.id},
     )
 
 
 async def confirmar_totp(sesion: AsyncSession, usuario_id: int, contador: int) -> None:
     await sesion.execute(
-        text("UPDATE lab.usuarios SET totp_confirmado = true, totp_ultimo_contador = :c WHERE id = :i"),
+        text("UPDATE usuarios SET totp_confirmado = true, totp_ultimo_contador = :c WHERE id = :i"),
         {"c": contador, "i": usuario_id},
     )
 
@@ -298,7 +300,7 @@ async def registrar_contador_totp(sesion: AsyncSession, usuario_id: int, contado
     """Guarda el último contador usado; False si el código ya se había usado (repetición)."""
     actualizado = await sesion.scalar(
         text(
-            "UPDATE lab.usuarios SET totp_ultimo_contador = :c"
+            "UPDATE usuarios SET totp_ultimo_contador = :c"
             " WHERE id = :i AND (totp_ultimo_contador IS NULL OR totp_ultimo_contador < :c) RETURNING id"
         ),
         {"c": contador, "i": usuario_id},
@@ -313,7 +315,7 @@ async def cargar_permisos(sesion: AsyncSession, usuario_id: int) -> Permisos:
     roles = (
         await sesion.execute(
             text(
-                "SELECT r.codigo FROM lab.usuario_roles ur JOIN lab.roles r ON r.id = ur.rol_id"
+                "SELECT r.codigo FROM usuario_roles ur JOIN roles r ON r.id = ur.rol_id"
                 " WHERE ur.usuario_id = :u ORDER BY r.codigo"
             ),
             {"u": usuario_id},
@@ -324,7 +326,7 @@ async def cargar_permisos(sesion: AsyncSession, usuario_id: int) -> Permisos:
         text(
             "SELECT rp.modulo, bool_or(rp.consultar) AS consultar, bool_or(rp.crear) AS crear,"
             " bool_or(rp.modificar) AS modificar, bool_or(rp.eliminar) AS eliminar"
-            " FROM lab.usuario_roles ur JOIN lab.rol_permisos rp ON rp.rol_id = ur.rol_id"
+            " FROM usuario_roles ur JOIN rol_permisos rp ON rp.rol_id = ur.rol_id"
             " WHERE ur.usuario_id = :u GROUP BY rp.modulo"
         ),
         {"u": usuario_id},
@@ -334,7 +336,7 @@ async def cargar_permisos(sesion: AsyncSession, usuario_id: int) -> Permisos:
     acciones = (
         await sesion.execute(
             text(
-                "SELECT DISTINCT ra.accion FROM lab.usuario_roles ur JOIN lab.rol_acciones ra ON ra.rol_id = ur.rol_id"
+                "SELECT DISTINCT ra.accion FROM usuario_roles ur JOIN rol_acciones ra ON ra.rol_id = ur.rol_id"
                 " WHERE ur.usuario_id = :u"
             ),
             {"u": usuario_id},

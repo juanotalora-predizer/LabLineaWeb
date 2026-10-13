@@ -6,7 +6,7 @@ Formato: `- [ ] Descripción — prioridad (Alta/Media/Baja) — spec relacionad
 
 ## En curso
 
-- [ ] Etapa 4: Admin Hub (alta de laboratorios, planes y licencias) — Alta — [plan](plan-desarrollo.md)
+- [ ] Etapa 4: compuerta local en verde; falta commit, push y CI verde para cerrarla — Alta — [informe](etapas/etapa-04.md)
 
 ## Pendiente
 
@@ -21,12 +21,12 @@ Formato: `- [ ] Descripción — prioridad (Alta/Media/Baja) — spec relacionad
 ### Fase 1 — Base multi-tenant
 
 - [ ] RLS en todas las tablas de `lab` con `USING` + `WITH CHECK` + `FORCE`, rol de aplicación sin privilegios, `SET LOCAL` por transacción, y prueba que verifique todas las tablas — Alta — [0007](infraestructura/0007-base-de-datos.md)
-- [ ] Laboratorios, sedes y estaciones de trabajo — Alta — [funcional/0005](funcional/0005-plataforma-saas-suscripciones.md), [funcional/0003](funcional/0003-muestras-impresion.md)
+- [ ] Estaciones de trabajo por sede (laboratorios y sedes ya están, etapa 4) — Alta — [funcional/0005](funcional/0005-plataforma-saas-suscripciones.md), [funcional/0003](funcional/0003-muestras-impresion.md)
 - [ ] Configuración por país: impuestos, medios de pago y textos legales (monedas, tipos de documento, idioma y zona horaria ya están, etapa 1) — Alta — [0004](infraestructura/0004-normativa-colombia-latam.md)
 - [ ] Catálogo de exámenes: secciones, parámetros, unidades, listas de valores, técnica, requisitos de muestra, tarifas, códigos CUPS y alternos — Alta — [funcional/0004](funcional/0004-resultados-validacion-entrega.md), [funcional/0003](funcional/0003-muestras-impresion.md)
 - [ ] Rangos de referencia por sexo y edad en días, con rangos críticos — Alta — [funcional/0004](funcional/0004-resultados-validacion-entrega.md)
 - [ ] Importador del catálogo de Lablinea (Access) con vista previa y marcado de rangos para revisión — Alta — [funcional/0007](funcional/0007-alcance-mvp.md)
-- [ ] Licencias, listas de precios, campañas y suscripciones; bloqueo de órdenes nuevas con suscripción vencida — Media — [funcional/0005](funcional/0005-plataforma-saas-suscripciones.md)
+- [ ] Licencias, listas de precios, campañas y suscripciones; bloqueo de órdenes nuevas con suscripción vencida (planes y módulos ya están, etapa 4) — Media — [funcional/0005](funcional/0005-plataforma-saas-suscripciones.md)
 - [ ] Facturas de la plataforma con registro manual de pagos — Media — [funcional/0005](funcional/0005-plataforma-saas-suscripciones.md)
 - [ ] Incorporar htmx y Chart.js como estáticos propios — Baja — [0001](infraestructura/0001-stack-fastapi-jinja2.md)
 
@@ -34,9 +34,11 @@ Formato: `- [ ] Descripción — prioridad (Alta/Media/Baja) — spec relacionad
 
 - [ ] Recuperación de contraseña por enlace de un solo uso — Media — [0008](infraestructura/0008-autenticacion-autorizacion.md)
 - [ ] Código QR para inscribir la app autenticadora — Baja — [0008](infraestructura/0008-autenticacion-autorizacion.md)
-- [ ] Administración de usuarios y roles desde la interfaz del laboratorio — Media — [0008](infraestructura/0008-autenticacion-autorizacion.md)
+- [ ] Roles propios del laboratorio desde la interfaz (invitar y desactivar usuarios ya está, etapa 4) — Media — [0008](infraestructura/0008-autenticacion-autorizacion.md)
+- [ ] Editar y desactivar personal de la plataforma desde el Admin Hub (hoy por script) — Baja — [funcional/0005](funcional/0005-plataforma-saas-suscripciones.md)
+- [ ] Etapa 20: el log de acceso del proxy no guarda la ruta completa de `/activar/<token>` — Baja — [informe etapa 4](etapas/etapa-04.md)
 
-- [ ] Usuarios y roles de la plataforma; acceso de soporte autorizado y auditado — Media — [funcional/0005](funcional/0005-plataforma-saas-suscripciones.md), [0005](infraestructura/0005-arquitectura-saas-multitenant.md)
+- [ ] Acceso de soporte autorizado y auditado (usuarios y roles de la plataforma ya están, etapa 4) — Media — [funcional/0005](funcional/0005-plataforma-saas-suscripciones.md), [0005](infraestructura/0005-arquitectura-saas-multitenant.md)
 - [ ] Vista de la auditoría para el rol AUDITOR, con filtros y exportación auditada — Media — [0007](infraestructura/0007-base-de-datos.md)
 - [ ] Purga de tareas terminadas antiguas y rol de base de datos propio para el trabajador (etapa 20) — Baja — [0012](infraestructura/0012-cola-de-tareas.md)
 - [ ] Traducir códigos de módulos y operaciones de permisos en la interfaz (etapa 4); formatos de número y moneda por país (etapa 8) — Baja — [0013](infraestructura/0013-textos-externalizados-i18n.md)
@@ -109,6 +111,8 @@ Formato: `- [ ] Descripción — prioridad (Alta/Media/Baja) — spec relacionad
 - [ ] Análisis de riesgos, políticas, oficial de seguridad, capacitación, notificación de brechas — Media — [0003](infraestructura/0003-seguridad-hipaa.md)
 
 ## Hecho
+
+- [x] Etapa 4 (compuerta local): Admin Hub con ingreso propio y TOTP, roles de plataforma, alta atómica de laboratorios con invitación al administrador, planes con módulos y máximo de usuarios, invitar y desactivar usuarios del laboratorio; 435 pruebas, cobertura 99,5%, ZAP sin hallazgos en los dos sitios, 14/14 pruebas manuales — 2026-10-13 — [informe](etapas/etapa-04.md)
 
 - [x] **Etapa 3 cerrada** (CI verde, commit `77a82ea`): auditoría particionada de solo inserción con antes y después, lecturas y accesos denegados auditados; cola de tareas propia sobre PostgreSQL con reintentos y ejecución única; textos externalizados `es-CO` y fechas en UTC; generador de datos sintéticos; 305 pruebas, cobertura 99,3%, ZAP sin hallazgos, 11/11 pruebas manuales — 2026-10-13 — [informe](etapas/etapa-03.md), [0012](infraestructura/0012-cola-de-tareas.md), [0013](infraestructura/0013-textos-externalizados-i18n.md)
 

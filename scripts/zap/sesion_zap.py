@@ -1,4 +1,5 @@
-"""Inicia sesión como el administrador sintético de lab-a (contraseña + TOTP) y escribe en la
+"""Inicia sesión como el administrador sintético del sitio (admin@lab-a.test o admin@admin.test,
+con contraseña y TOTP) y escribe en la
 salida estándar la cabecera Cookie para que ZAP escanee las páginas autenticadas.
 
     .venv/bin/python scripts/zap/sesion_zap.py https://lab-a.lablinea.localhost:8443 <ca.pem>

@@ -87,9 +87,13 @@ def test_laboratorio_suspendido_se_resuelve():
     assert "Laboratorio Suspendido" in respuesta.text
 
 
-@pytest.mark.parametrize("subdominio", ["admin", None])
-def test_admin_y_dominio_base_no_tienen_laboratorio(subdominio):
-    assert cliente(subdominio).get("/").status_code == 404
+def test_dominio_base_no_tiene_laboratorio():
+    assert cliente(None).get("/").status_code == 404
+
+
+def test_inicio_del_admin_hub_lleva_al_panel():
+    respuesta = cliente("admin").get("/", follow_redirects=False)
+    assert (respuesta.status_code, respuesta.headers["location"]) == (303, "/panel")
 
 
 @pytest.mark.parametrize(

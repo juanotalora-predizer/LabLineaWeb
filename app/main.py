@@ -7,13 +7,16 @@ from fastapi.responses import HTMLResponse, PlainTextResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
+from app.admin.rutas import router as rutas_admin
+from app.auth.invitaciones import router as rutas_invitaciones
 from app.auth.rutas import router as rutas_auth
 from app.auth.web import InscripcionTotpPendiente, NoAutenticado, SegundoFactorPendiente
 from app.core.config import get_settings
 from app.core.i18n import t
 from app.core.plantillas import templates
 from app.core.seguridad import CabecerasSeguridad
-from app.core.tenancy import Laboratorio, ResolverLaboratorio, laboratorio_actual
+from app.core.tenancy import Laboratorio, ResolverLaboratorio, Sitio, sitio_actual
+from app.laboratorio.usuarios import router as rutas_usuarios_laboratorio
 
 BASE_DIR = Path(__file__).resolve().parent
 settings = get_settings()
@@ -38,6 +41,9 @@ app.add_middleware(
 app.add_middleware(CabecerasSeguridad)
 app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 app.include_router(rutas_auth)
+app.include_router(rutas_invitaciones)
+app.include_router(rutas_usuarios_laboratorio)
+app.include_router(rutas_admin)
 
 
 @app.exception_handler(NoAutenticado)
@@ -62,8 +68,10 @@ async def _validacion(request: Request, _exc: RequestValidationError):
 
 
 @app.get("/", response_class=HTMLResponse)
-async def index(request: Request, laboratorio: Annotated[Laboratorio, Depends(laboratorio_actual)]):
-    return templates.TemplateResponse(request, "index.html", {"laboratorio": laboratorio})
+async def index(request: Request, sitio: Annotated[Sitio, Depends(sitio_actual)]):
+    if not isinstance(sitio, Laboratorio):
+        return RedirectResponse("/panel", status_code=303)  # Admin Hub
+    return templates.TemplateResponse(request, "index.html", {"sitio": sitio})
 
 
 @app.get("/health")

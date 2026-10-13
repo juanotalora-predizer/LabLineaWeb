@@ -85,3 +85,10 @@ Ver [informe de la etapa 3](../etapas/etapa-03.md). Migración `0004`.
 - **Solo inserción:** la aplicación solo tiene `SELECT` (bajo RLS). Triggers rechazan `UPDATE`, `DELETE` y `TRUNCATE` incluso al dueño.
 - **Particiones:** `lab.crear_particion_auditoria(mes)` crea el mes con RLS forzado, su política y **sin privilegios para la aplicación**: una partición consultada directamente no aplica las políticas de la tabla madre. Admite desde el mes anterior hasta 24 meses adelante. La migración crea 12 meses y una partición por defecto; el trabajador mantiene 3 meses por delante.
 - **Conservación:** las particiones no se borran desde la aplicación. El archivo o borrado después de 6 años se define con el hosting (etapa 20).
+
+## Ajustes de la etapa 4 (2026-10-13)
+
+- `tenant_id` de las tablas de `lab` tiene por defecto `lab.tenant_actual()`: las inserciones no lo repiten, y el `WITH CHECK` de RLS lo sigue verificando.
+- `lab.usuarios.password_hash` es opcional: los usuarios invitados aún no tienen contraseña, y sin ella no pueden ingresar.
+- Nuevas tablas `lab.sedes` y `lab.invitaciones` (auditada; el hash del token aparece como `[protegido]`).
+- `plataforma.auditoria` sigue el mismo diseño que `lab.auditoria`, sin particiones ni `tenant_id`, porque su volumen es bajo.

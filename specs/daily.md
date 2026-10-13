@@ -22,6 +22,12 @@ Plantilla:
 ## 2026-10-13
 
 **Avances**
+- **Etapa 4** construida y con la compuerta local en verde ([informe](etapas/etapa-04.md)); falta subirla y que pase la CI.
+  - Admin Hub en `admin.<dominio>` con su propio esquema, rol de base de datos, usuarios, roles y auditoría; mismo código de ingreso que los laboratorios (el `search_path` de la transacción decide el esquema).
+  - Alta de laboratorio atómica (laboratorio, sede, roles, administrador e invitación); el administrador crea su propia contraseña con un enlace de un solo uso.
+  - Planes con módulos y máximo de usuarios; fuera del plan, 403 y fuera del menú.
+  - Invitar y desactivar usuarios desde el laboratorio.
+  - 435 pruebas (129 nuevas), cobertura 99,5%, ZAP sin hallazgos altos, medios ni bajos en lab-a y en el Admin Hub, 14/14 pruebas manuales con el trabajador real.
 - **Etapa 3 cerrada** ([informe](etapas/etapa-03.md)): commit `77a82ea`, CI verde.
 - Migración `0004`: auditoría `lab.auditoria` particionada por mes, de solo inserción, con trigger genérico (antes y después, usuario, IP, secretos protegidos) y registro de lecturas y accesos denegados desde la aplicación. Esquema `cola` para tareas.
 - Cola de tareas propia (`app/core/tareas.py`, `trabajador.py`): reintentos con espera exponencial, ejecución única aunque un trabajador muera (probado con `SIGKILL`), cada tarea con el laboratorio con que se encoló.
@@ -30,11 +36,15 @@ Plantilla:
 - 305 pruebas (79 nuevas), cobertura 99,3%, ZAP autenticado sin hallazgos altos, medios ni bajos, 11/11 pruebas manuales.
 
 **Decisiones**
+- Separación de sitios por dependencia de host con guardián, en lugar de dos sub-aplicaciones montadas ([infraestructura/0005](infraestructura/0005-arquitectura-saas-multitenant.md)).
+- Ningún usuario recibe una contraseña de otra persona: todos la crean con una invitación ([infraestructura/0008](infraestructura/0008-autenticacion-autorizacion.md)).
 - Cola de tareas propia sobre PostgreSQL, sin librería externa ([infraestructura/0012](infraestructura/0012-cola-de-tareas.md)).
 - Catálogos de textos en TOML con la biblioteca estándar, sin Babel ([infraestructura/0013](infraestructura/0013-textos-externalizados-i18n.md)).
 - Las particiones de la auditoría se crean sin privilegios para la aplicación: consultadas directamente no aplican el RLS de la tabla madre.
 
 **Bloqueos / pendientes**
+- Commit, push y CI de la etapa 4 (a la espera de autorización del usuario).
+- Riesgo bajo documentado: el token de invitación queda en la URL (un solo uso, 72 horas); en la etapa 20 el log del proxy no debe guardar esa ruta.
 - Hallazgo: la configuración de logs de Alembic deshabilitaba los loggers de la aplicación durante las pruebas, así que las pruebas de logs de la etapa 2 no veían nada. Corregido; ahora las pruebas exigen que haya registros.
 
 ## 2026-10-12

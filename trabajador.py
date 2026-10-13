@@ -9,6 +9,7 @@ import asyncio
 import logging
 import signal
 
+import app.auth.invitaciones  # noqa: F401 — registra el manejador de invitaciones
 from app.core import db, tareas
 
 

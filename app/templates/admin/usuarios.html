@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t("usuarios.titulo") }} · {{ sitio.nombre_comercial }}{% endblock %}
+
+{% block content %}
+<h1>{{ t("usuarios.titulo_plataforma") }}</h1>
+<table>
+    <thead><tr><th>{{ t("usuarios.nombre") }}</th><th>{{ t("usuarios.correo") }}</th><th>{{ t("usuarios.roles") }}</th><th>{{ t("usuarios.estado") }}</th></tr></thead>
+    <tbody>
+    {% for u in usuarios %}
+    <tr><td>{{ u.nombre }}</td><td>{{ u.email }}</td><td>{{ u.roles }}</td><td>{{ u.estado }}</td></tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

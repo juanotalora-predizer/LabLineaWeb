@@ -84,3 +84,12 @@ async def test_engine_por_defecto_usa_el_rol_de_la_aplicacion():
     finally:
         await db.cerrar()
     await db.cerrar()  # cerrar dos veces no falla
+
+
+def test_url_de_un_sitio_con_y_sin_puerto():
+    from app.core.config import Settings
+
+    base = {"db_owner_password": "x", "db_app_password": "x", "db_plataforma_password": "x", "clave_cifrado": "x"}
+    assert Settings(**base, puerto_publico=None).url_sitio("lab-a") == "https://lab-a.lablinea.localhost"
+    assert Settings(**base, puerto_publico=443).url_sitio("lab-a") == "https://lab-a.lablinea.localhost"
+    assert Settings(**base, puerto_publico=8443).url_sitio("admin") == "https://admin.lablinea.localhost:8443"

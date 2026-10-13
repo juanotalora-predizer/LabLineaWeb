@@ -106,3 +106,77 @@ async def _reiniciar_limites():
     async with owner.begin() as conexion:
         await conexion.execute(text("TRUNCATE lab.limites, lab.codigos_verificacion"))
     await owner.dispose()
+
+
+# --- Formularios de la etapa 4 ---
+
+CAMPOS_ALTA = [
+    "nombre",
+    "subdominio",
+    "identificador_fiscal",
+    "pais",
+    "plan",
+    "sede",
+    "ciudad",
+    "admin_email",
+    "admin_nombre",
+]
+
+
+@pytest.fixture
+def maestro():
+    """Personal de la plataforma con sesión completa (una por prueba: el TOTP no se puede reutilizar)."""
+    from tests.ayudas import autenticar
+
+    return autenticar(cliente("admin"), "maestro@plataforma.test", [], laboratorio="plataforma")
+
+
+@pytest.fixture
+def admin_lab_a():
+    from tests.ayudas import autenticar
+
+    return autenticar(cliente(), "admin@lab-a.test", [])
+
+
+@AJUSTES
+@given(datos=st.fixed_dictionaries({campo: texto for campo in CAMPOS_ALTA}))
+def test_alta_de_laboratorio_con_entradas_arbitrarias(maestro, datos):
+    c = maestro
+    respuesta = c.post("/laboratorios/nuevo", data={**datos, "csrf": csrf(c, "/laboratorios/nuevo")})
+    assert respuesta.status_code in PERMITIDOS, respuesta.status_code
+    _sin_reflejo_peligroso(respuesta.text)
+
+
+@AJUSTES
+@given(codigo=texto, nombre=texto, maximo=texto, modulos=st.lists(texto, max_size=5))
+def test_plan_con_entradas_arbitrarias(maestro, codigo, nombre, maximo, modulos):
+    c = maestro
+    datos = {"codigo": codigo, "nombre": nombre, "max_usuarios": maximo, "modulos": modulos}
+    respuesta = c.post("/planes/nuevo", data={**datos, "csrf": csrf(c, "/planes/nuevo")})
+    assert respuesta.status_code in PERMITIDOS, respuesta.status_code
+    _sin_reflejo_peligroso(respuesta.text)
+
+
+@AJUSTES
+@given(email=texto, nombre=texto, tipo=texto, roles=st.lists(texto, max_size=4))
+def test_invitar_usuario_con_entradas_arbitrarias(admin_lab_a, email, nombre, tipo, roles):
+    c = admin_lab_a
+    datos = {"email": email, "nombre": nombre, "tipo": tipo, "roles": roles}
+    respuesta = c.post(
+        "/configuracion/usuarios/nuevo", data={**datos, "csrf": csrf(c, "/configuracion/usuarios/nuevo")}
+    )
+    assert respuesta.status_code in PERMITIDOS, respuesta.status_code
+    _sin_reflejo_peligroso(respuesta.text)
+
+
+@AJUSTES
+@given(
+    token=st.text(alphabet="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_", max_size=200),
+    clave=texto,
+    confirmacion=texto,
+)
+def test_activar_con_entradas_arbitrarias(token, clave, confirmacion):
+    c = cliente()
+    ruta = f"/activar/{token}" if token else "/activar/x"
+    respuesta = c.post(ruta, data={"clave": clave, "confirmacion": confirmacion, "csrf": csrf(c)})
+    assert respuesta.status_code in PERMITIDOS | {404}, respuesta.status_code

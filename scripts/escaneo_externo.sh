@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 # Escaneo de seguridad externo (spec infraestructura/0011, criterios 10 y 11):
 # levanta la aplicación en HTTPS local, corre OWASP ZAP (pasivo + activo) y falla si hay
-# hallazgos de riesgo alto o medio. Reportes en reportes/zap/ (fuera de git).
+# hallazgos de riesgo alto o medio. Reportes en reportes/zap/<sitio>/ (fuera de git).
+#   scripts/escaneo_externo.sh                                              # lab-a
+#   ZAP_OBJETIVO=https://admin.lablinea.localhost:8443 scripts/escaneo_externo.sh  # Admin Hub
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -9,7 +11,8 @@ ZAP_DIR="${ZAP_DIR:-$HOME/herramientas/ZAP_2.17.0}"
 export JAVA_HOME="${JAVA_HOME:-/opt/homebrew/opt/openjdk@21}"
 PUERTO="${PUERTO:-8443}"
 export ZAP_OBJETIVO="${ZAP_OBJETIVO:-https://lab-a.lablinea.localhost:$PUERTO}"
-export ZAP_REPORTES="$PWD/reportes/zap"
+SITIO="${ZAP_OBJETIVO#https://}"; SITIO="${SITIO%%.*}"
+export ZAP_REPORTES="$PWD/reportes/zap/$SITIO"
 ZAP_HOME_TMP="$(mktemp -d)"   # perfil de ZAP limpio en cada corrida
 
 mkdir -p "$ZAP_REPORTES"
@@ -45,7 +48,7 @@ echo "== ZAP contra $ZAP_OBJETIVO"
 
 # Evidencia de que el escaneo fue autenticado: la sesión sigue viva y ZAP llegó a páginas protegidas.
 codigo_panel=$(curl -s -o /dev/null -w "%{http_code}" --cacert "$CA" -H "Cookie: $ZAP_COOKIE" "$ZAP_OBJETIVO/panel")
-autenticadas=$(grep -cE '"GET /(panel|configuracion/usuarios)[^"]*" 200' "$ZAP_REPORTES/servidor.log" || true)
+autenticadas=$(grep -cE '"GET /(panel|configuracion/usuarios|laboratorios|planes)[^"]*" 200' "$ZAP_REPORTES/servidor.log" || true)
 echo "Sesión al terminar: /panel -> $codigo_panel · peticiones autenticadas respondidas con 200: $autenticadas"
 [[ "$codigo_panel" == "200" && "$autenticadas" -gt 0 ]] || { echo "FALLA: el escaneo no se mantuvo autenticado." >&2; exit 1; }
 

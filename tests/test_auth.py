@@ -369,14 +369,13 @@ def test_paginas_protegidas_redirigen_sin_sesion():
     assert c.get("/verificar").headers["location"] == "/ingresar"
 
 
-def test_autenticacion_no_existe_en_admin_ni_en_el_dominio_base():
-    for sub in ("admin", None):
-        base = f"https://{sub}.lablinea.localhost" if sub else "https://lablinea.localhost"
-        from fastapi.testclient import TestClient
+def test_autenticacion_no_existe_en_el_dominio_base():
+    """Ni laboratorio ni Admin Hub: el dominio base no tiene ingreso (el Admin Hub sí, desde la etapa 4)."""
+    from fastapi.testclient import TestClient
 
-        from app.main import app
+    from app.main import app
 
-        assert TestClient(app, base_url=base).get("/ingresar").status_code == 404
+    assert TestClient(app, base_url="https://lablinea.localhost").get("/ingresar").status_code == 404
 
 
 def test_hash_con_parametros_viejos_se_actualiza_al_ingresar(buzon):

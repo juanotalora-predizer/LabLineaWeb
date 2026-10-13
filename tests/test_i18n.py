@@ -60,7 +60,9 @@ def _claves_usadas() -> set[str]:
 def test_toda_clave_usada_existe_en_el_catalogo_por_defecto():
     usadas = _claves_usadas()
     assert len(usadas) > 30
-    faltan = {c for c in usadas if c not in catalogo(i18n.IDIOMA_POR_DEFECTO) and not c.startswith("formato.")}
+    # Prefijos de claves compuestas en la plantilla (p. ej. "usuarios.tipo_" ~ tipo) y formatos de fecha.
+    dinamicas = {c for c in usadas if c.endswith(("_", ".")) or c.startswith("formato.")}
+    faltan = {c for c in usadas - dinamicas if c not in catalogo(i18n.IDIOMA_POR_DEFECTO)}
     assert faltan == set()
 
 
@@ -117,7 +119,7 @@ def test_fecha_sin_zona_se_rechaza():
 def test_filtro_de_plantilla_usa_la_zona_del_laboratorio():
     plantilla = templates.env.from_string("{{ instante | fecha }} · {{ t('menu.panel') }} · {{ idioma() }}")
     instante = datetime(2026, 1, 1, 2, 0, tzinfo=UTC)
-    assert plantilla.render(laboratorio=LAB, instante=instante) == "31/12/2025 21:00 · Panel · es-CO"
+    assert plantilla.render(sitio=LAB, instante=instante) == "31/12/2025 21:00 · Panel · es-CO"
     assert plantilla.render(instante=instante) == "01/01/2026 02:00 · Panel · es-CO"  # sin laboratorio: UTC
 
 

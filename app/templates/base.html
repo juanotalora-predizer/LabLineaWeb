@@ -9,12 +9,18 @@
 </head>
 <body>
     <header>
-        <a href="/">{% if laboratorio %}{{ laboratorio.nombre_comercial }}{% else %}{{ t("app.nombre") }}{% endif %}</a>
+        <a href="/">{% if sitio %}{{ sitio.nombre_comercial }}{% else %}{{ t("app.nombre") }}{% endif %}</a>
         {% if activa %}
         <nav>
             <span class="usuario">{{ activa.usuario.nombre }}</span>
             <a href="/panel">{{ t("menu.panel") }}</a>
+            {% if sitio.tenant_id %}
             {% if activa.permisos.puede("usuarios", "consultar") %}<a href="/configuracion/usuarios">{{ t("menu.usuarios") }}</a>{% endif %}
+            {% else %}
+            {% if activa.permisos.puede("laboratorios", "consultar") %}<a href="/laboratorios">{{ t("menu.laboratorios") }}</a>{% endif %}
+            {% if activa.permisos.puede("planes", "consultar") %}<a href="/planes">{{ t("menu.planes") }}</a>{% endif %}
+            {% if activa.permisos.puede("usuarios", "consultar") %}<a href="/plataforma/usuarios">{{ t("menu.usuarios") }}</a>{% endif %}
+            {% endif %}
             <form method="post" action="/salir" class="en-linea">
                 <input type="hidden" name="csrf" value="{{ csrf }}">
                 <button type="submit">{{ t("menu.salir") }}</button>

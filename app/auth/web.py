@@ -20,10 +20,10 @@ from app.auth.repositorio import Permisos, Usuario
 from app.core import cripto
 from app.core.auditoria import registrar_acceso
 from app.core.config import get_settings
-from app.core.db import sesion_tenant
+from app.core.db import sesion_plataforma, sesion_tenant
 from app.core.i18n import t
 from app.core.plantillas import templates
-from app.core.tenancy import Laboratorio, laboratorio_actual
+from app.core.tenancy import Laboratorio, Sitio, laboratorio_actual, sitio_actual
 
 COOKIE_SESION = "__Host-sesion"
 COOKIE_CSRF = "__Host-csrf"
@@ -117,6 +117,14 @@ def _sin_caracteres_de_control(valor: str) -> str:
 # Texto de formulario apto para la base de datos; si no lo es, la petición termina en 400 genérico.
 TextoSeguro = Annotated[str, AfterValidator(_sin_caracteres_de_control)]
 LaboratorioActual = Annotated[Laboratorio, Depends(laboratorio_actual)]
+SitioActual = Annotated[Sitio, Depends(sitio_actual)]
+
+
+def sesion_del_sitio(sitio: Sitio, *, usuario_id: str | None = None, ip: str | None = None):
+    """Transacción del sitio: el laboratorio (rol de la aplicación, bajo RLS) o el Admin Hub (rol de plataforma)."""
+    if sitio.tenant_id:
+        return sesion_tenant(sitio.tenant_id, usuario_id=usuario_id, ip=ip)
+    return sesion_plataforma(usuario_id=usuario_id, ip=ip)
 
 
 # --- Sesión del usuario ---
@@ -130,34 +138,42 @@ class SesionActiva:
     segundo_factor_ok: bool
 
 
-async def _cargar_sesion(request: Request, laboratorio: Laboratorio) -> SesionActiva | None:
+def _limitar_al_plan(permisos: Permisos, sitio: Sitio) -> Permisos:
+    """En un laboratorio, los módulos fuera de su plan no otorgan ningún permiso (403 y fuera del menú)."""
+    if not isinstance(sitio, Laboratorio):
+        return permisos
+    modulos = {m: ops for m, ops in permisos.modulos.items() if m in sitio.modulos}
+    return Permisos(permisos.roles, modulos, permisos.acciones)
+
+
+async def _cargar_sesion(request: Request, sitio: Sitio) -> SesionActiva | None:
     if hasattr(request.state, "sesion_activa"):
         return request.state.sesion_activa
     token = request.cookies.get(COOKIE_SESION)
     activa = None
     if token and len(token) <= 128:
         settings = get_settings()
-        async with sesion_tenant(laboratorio.tenant_id, ip=ip_cliente(request)) as sesion:
+        async with sesion_del_sitio(sitio, ip=ip_cliente(request)) as sesion:
             fila = await repositorio.obtener_sesion(sesion, token, settings.sesion_inactividad_min)
             if fila:
                 usuario = await repositorio.buscar_usuario(sesion, fila.usuario_id)
-                permisos = await repositorio.cargar_permisos(sesion, fila.usuario_id)
+                permisos = _limitar_al_plan(await repositorio.cargar_permisos(sesion, fila.usuario_id), sitio)
                 activa = SesionActiva(fila.id, usuario, permisos, fila.segundo_factor_ok)
     request.state.sesion_activa = activa
     return activa
 
 
-async def sesion_pendiente(request: Request, laboratorio: LaboratorioActual) -> SesionActiva:
+async def sesion_pendiente(request: Request, sitio: SitioActual) -> SesionActiva:
     """Sesión con contraseña verificada y segundo factor pendiente."""
-    activa = await _cargar_sesion(request, laboratorio)
+    activa = await _cargar_sesion(request, sitio)
     if activa is None or activa.segundo_factor_ok:
         raise NoAutenticado
     return activa
 
 
-async def sesion_completa(request: Request, laboratorio: LaboratorioActual) -> SesionActiva:
+async def sesion_completa(request: Request, sitio: SitioActual) -> SesionActiva:
     """Sesión con ambos factores, sin exigir inscripción de TOTP (la usa la propia inscripción)."""
-    activa = await _cargar_sesion(request, laboratorio)
+    activa = await _cargar_sesion(request, sitio)
     if activa is None:
         raise NoAutenticado
     if not activa.segundo_factor_ok:
@@ -175,29 +191,28 @@ async def usuario_actual(activa: Annotated[SesionActiva, Depends(sesion_completa
 UsuarioActual = Annotated[SesionActiva, Depends(usuario_actual)]
 
 
-async def _denegar(request: Request, activa: SesionActiva, recurso: str, permiso: str) -> HTTPException:
+async def _denegar(request: Request, sitio: Sitio, activa: SesionActiva, recurso: str, permiso: str) -> HTTPException:
     """Registra el acceso denegado en la auditoría (HIPAA: también se auditan los intentos) y devuelve el 403."""
-    laboratorio = request.state.laboratorio
-    async with sesion_tenant(laboratorio.tenant_id, usuario_id=activa.usuario.uuid, ip=ip_cliente(request)) as sesion:
+    async with sesion_del_sitio(sitio, usuario_id=activa.usuario.uuid, ip=ip_cliente(request)) as sesion:
         await registrar_acceso(sesion, recurso, operacion="ACCESO", denegado=True, detalle={"permiso": permiso})
     return HTTPException(status_code=403)
 
 
 def requiere_permiso(modulo: str, operacion: str) -> Callable:
-    async def dependencia(request: Request, activa: UsuarioActual) -> SesionActiva:
+    async def dependencia(request: Request, sitio: SitioActual, activa: UsuarioActual) -> SesionActiva:
         if not activa.permisos.puede(modulo, operacion):
-            raise await _denegar(request, activa, f"modulo:{modulo}", f"{modulo}.{operacion}")
+            raise await _denegar(request, sitio, activa, f"modulo:{modulo}", f"{modulo}.{operacion}")
         return activa
 
     return dependencia
 
 
 def requiere_accion(accion: str) -> Callable:
-    async def dependencia(request: Request, activa: UsuarioActual) -> SesionActiva:
+    async def dependencia(request: Request, sitio: SitioActual, activa: UsuarioActual) -> SesionActiva:
         # Validar resultados exige además tarjeta profesional registrada (spec infraestructura/0008).
         sin_tarjeta = accion == "VALIDAR_RESULTADOS" and not activa.usuario.tarjeta_profesional
         if accion not in activa.permisos.acciones or sin_tarjeta:
-            raise await _denegar(request, activa, f"accion:{accion}", accion)
+            raise await _denegar(request, sitio, activa, f"accion:{accion}", accion)
         return activa
 
     return dependencia

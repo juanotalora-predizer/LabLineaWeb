@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t("laboratorios.nuevo") }} · {{ sitio.nombre_comercial }}{% endblock %}
+
+{% block content %}
+<section class="tarjeta ancha">
+    <h1>{{ t("laboratorios.nuevo") }}</h1>
+    {% if errores %}<ul class="error" role="alert">{% for e in errores %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+    <form method="post" action="/laboratorios/nuevo">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+        <label for="nombre">{{ t("laboratorios.nombre") }}</label>
+        <input id="nombre" name="nombre" required minlength="2" maxlength="120" value="{{ datos.nombre or '' }}">
+        <label for="subdominio">{{ t("laboratorios.subdominio") }}</label>
+        <input id="subdominio" name="subdominio" required pattern="[a-z0-9][a-z0-9-]{1,38}[a-z0-9]" maxlength="40" value="{{ datos.subdominio or '' }}">
+        <p class="nota">{{ t("laboratorios.ayuda_subdominio") }}</p>
+        <label for="identificador_fiscal">{{ t("laboratorios.identificador_fiscal") }}</label>
+        <input id="identificador_fiscal" name="identificador_fiscal" required maxlength="20" value="{{ datos.identificador_fiscal or '' }}">
+        <label for="pais">{{ t("laboratorios.pais") }}</label>
+        <select id="pais" name="pais">{% for p in paises %}<option value="{{ p.codigo }}" {% if datos.pais == p.codigo %}selected{% endif %}>{{ p.nombre }}</option>{% endfor %}</select>
+        <label for="plan">{{ t("laboratorios.plan") }}</label>
+        <select id="plan" name="plan">{% for p in planes %}<option value="{{ p.uuid }}" {% if datos.plan == p.uuid %}selected{% endif %}>{{ p.nombre }}</option>{% endfor %}</select>
+        <label for="sede">{{ t("laboratorios.sede") }}</label>
+        <input id="sede" name="sede" required minlength="2" maxlength="120" value="{{ datos.sede or '' }}">
+        <label for="ciudad">{{ t("laboratorios.ciudad") }}</label>
+        <input id="ciudad" name="ciudad" required minlength="2" maxlength="80" value="{{ datos.ciudad or '' }}">
+        <h2>{{ t("laboratorios.administrador") }}</h2>
+        <p class="nota">{{ t("laboratorios.ayuda_administrador") }}</p>
+        <label for="admin_nombre">{{ t("laboratorios.admin_nombre") }}</label>
+        <input id="admin_nombre" name="admin_nombre" required minlength="2" maxlength="120" value="{{ datos.admin_nombre or '' }}">
+        <label for="admin_email">{{ t("laboratorios.admin_correo") }}</label>
+        <input id="admin_email" name="admin_email" type="email" required maxlength="254" value="{{ datos.admin_email or '' }}">
+        <button type="submit">{{ t("laboratorios.crear") }}</button>
+    </form>
+</section>
+{% endblock %}

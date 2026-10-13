@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t("usuarios.invitar") }} · {{ sitio.nombre_comercial }}{% endblock %}
+
+{% block content %}
+<section class="tarjeta">
+    <h1>{{ t("usuarios.invitar") }}</h1>
+    {% if errores %}<ul class="error" role="alert">{% for e in errores %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+    <p>{{ t("usuarios.explicacion_invitacion") }}</p>
+    <form method="post" action="/configuracion/usuarios/nuevo">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+        <label for="email">{{ t("usuarios.correo") }}</label>
+        <input id="email" name="email" type="email" required maxlength="254" value="{{ datos.email or '' }}">
+        <label for="nombre">{{ t("usuarios.nombre") }}</label>
+        <input id="nombre" name="nombre" required minlength="2" maxlength="120" value="{{ datos.nombre or '' }}">
+        <label for="tipo">{{ t("usuarios.tipo") }}</label>
+        <select id="tipo" name="tipo">
+            {% for tipo in tipos %}<option value="{{ tipo }}" {% if datos.tipo == tipo %}selected{% endif %}>{{ t("usuarios.tipo_" ~ tipo | lower) }}</option>{% endfor %}
+        </select>
+        <fieldset>
+            <legend>{{ t("usuarios.roles") }}</legend>
+            {% for rol in roles %}
+            <label class="opcion"><input type="checkbox" name="roles" value="{{ rol.codigo }}" {% if rol.codigo in (datos.roles or []) %}checked{% endif %}> {{ rol.nombre }}</label>
+            {% endfor %}
+        </fieldset>
+        <button type="submit">{{ t("usuarios.enviar_invitacion") }}</button>
+    </form>
+</section>
+{% endblock %}

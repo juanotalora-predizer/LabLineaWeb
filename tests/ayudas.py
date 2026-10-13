@@ -51,5 +51,9 @@ def autenticar(c: TestClient, email: str, buzon: list, laboratorio: str = "lab_a
     con_totp = (laboratorio, email) in SECRETOS_TOTP
     codigo = totp_actual(laboratorio, email) if con_totp else codigo_en_buzon(buzon, email)
     respuesta = enviar_codigo(c, codigo)
+    if con_totp and respuesta.status_code == 400:
+        # Segundo ingreso del mismo usuario en la ventana de 30 s: el código ya se usó (anti-repetición);
+        # el servidor acepta el del intervalo siguiente.
+        respuesta = enviar_codigo(c, totp_actual(laboratorio, email, desfase=30))
     assert respuesta.status_code == 303, respuesta.text
     return c

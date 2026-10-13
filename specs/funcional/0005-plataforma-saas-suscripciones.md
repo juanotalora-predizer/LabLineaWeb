@@ -51,3 +51,24 @@ Registro con nombre comercial, NIT o identificador fiscal, país, contacto y est
 - Las facturas de la plataforma a laboratorios colombianos se emiten como factura electrónica con la misma integración directa con la DIAN ([infraestructura/0009](../infraestructura/0009-facturacion-electronica.md)).
 - **Sin comisiones** en el Admin Hub por ahora (decidido el 2026-10-12).
 - **Pendiente:** elegir la pasarela de pagos para Colombia.
+
+## Implementación (etapa 4, 2026-10-13)
+
+Ver [informe de la etapa 4](../etapas/etapa-04.md). Migración `0005`.
+
+- **Admin Hub** en `admin.<dominio>`, con el mismo ingreso que los laboratorios (contraseña, TOTP obligatorio, sesiones `__Host-`), pero con sus propias tablas en el esquema `plataforma` y su propio rol de base de datos, sin acceso a `lab`. Una sesión, un usuario o una cookie de un sitio no sirven en el otro.
+- **Roles de la plataforma** (`app/admin/roles.py`): `ADMIN_MAESTRO` (todo), `GERENTE_COMERCIAL` (laboratorios, consulta de planes, suscripciones) y `SOPORTE_FINANCIERO` (consulta de laboratorios, suscripciones, facturación). El personal se crea con `scripts/crear_usuario_plataforma.py`; la contraseña se pide por consola.
+- **Alta de laboratorio en una transacción** (`plataforma.alta_laboratorio`):
+  - Crea el laboratorio con su subdominio y plan, la sede principal, los roles del sistema y el administrador.
+  - El `tenant_id` sale del subdominio (`lab_<subdominio>`).
+  - Si algo falla, no queda nada.
+  - El administrador **no recibe contraseña de la plataforma**: le llega un enlace de activación de un solo uso (72 horas) y crea la suya ([infraestructura/0008](../infraestructura/0008-autenticacion-autorizacion.md)).
+  - La auditoría del laboratorio registra al usuario de la plataforma que lo creó (`plataforma:<uuid>`).
+- **Planes:**
+  - Código, nombre, máximo de usuarios (personal y médicos activos; vacío = sin límite) y módulos incluidos.
+  - `usuarios` y `configuracion` están siempre activos.
+  - Fuera del plan, los permisos del módulo no aplican: 403 y el módulo sale del menú.
+  - El plan `COMPLETO` incluye todos los módulos; los laboratorios existentes quedaron en él.
+- **Auditoría de la plataforma** (`plataforma.auditoria`): las escrituras en laboratorios, planes, módulos de plan, usuarios, roles y permisos quedan registradas por trigger. Lecturas y accesos denegados quedan registrados desde la aplicación. Es de solo inserción.
+
+**Pendiente para la etapa 5:** tipos de licencia, suscripciones con vencimiento y suspensión, facturas con pagos manuales y acceso de soporte autorizado.

@@ -20,3 +20,10 @@ def test_endpoints_resisten_entradas_generadas(case):
     respuesta = case.call_and_validate(base_url="https://lab-a.lablinea.localhost", checks=[not_a_server_error])
     for nombre in CABECERAS:
         assert nombre in respuesta.headers, nombre
+
+
+@esquema.parametrize()
+def test_endpoints_del_admin_hub_resisten_entradas_generadas(case):
+    respuesta = case.call_and_validate(base_url="https://admin.lablinea.localhost", checks=[not_a_server_error])
+    for nombre in CABECERAS:
+        assert nombre in respuesta.headers, nombre

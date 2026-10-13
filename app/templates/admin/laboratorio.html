@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}{{ laboratorio.nombre_comercial }} · {{ sitio.nombre_comercial }}{% endblock %}
+
+{% block content %}
+<h1>{{ laboratorio.nombre_comercial }}</h1>
+{% if aviso == "plan" %}<p class="aviso" role="status">{{ t("laboratorios.aviso_plan") }}</p>{% endif %}
+{% if aviso == "invitacion" %}<p class="aviso" role="status">{{ t("laboratorios.aviso_invitacion") }}</p>{% endif %}
+{% if error == "invitacion" %}<p class="error" role="alert">{{ t("laboratorios.error_invitacion") }}</p>{% endif %}
+<dl class="ficha">
+    <dt>{{ t("laboratorios.subdominio") }}</dt><dd>{{ laboratorio.subdominio }}</dd>
+    <dt>{{ t("laboratorios.identificador_fiscal") }}</dt><dd>{{ laboratorio.identificador_fiscal }}</dd>
+    <dt>{{ t("laboratorios.pais") }}</dt><dd>{{ laboratorio.pais }}</dd>
+    <dt>{{ t("laboratorios.estado") }}</dt><dd>{{ laboratorio.estado }}</dd>
+    <dt>{{ t("laboratorios.plan") }}</dt><dd>{{ laboratorio.plan }}</dd>
+    <dt>{{ t("laboratorios.creado") }}</dt><dd>{{ laboratorio.creado_en | fecha }}</dd>
+</dl>
+{% if activa.permisos.puede("laboratorios", "modificar") %}
+<form method="post" action="/laboratorios/{{ laboratorio.uuid }}/plan">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <label for="plan">{{ t("laboratorios.cambiar_plan") }}</label>
+    <select id="plan" name="plan">{% for p in planes %}<option value="{{ p.uuid }}" {% if p.uuid == laboratorio.plan_uuid %}selected{% endif %}>{{ p.nombre }}</option>{% endfor %}</select>
+    <button type="submit">{{ t("laboratorios.guardar_plan") }}</button>
+</form>
+<form method="post" action="/laboratorios/{{ laboratorio.uuid }}/invitacion">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <button type="submit" class="secundario">{{ t("laboratorios.reenviar_invitacion") }}</button>
+</form>
+{% endif %}
+{% endblock %}

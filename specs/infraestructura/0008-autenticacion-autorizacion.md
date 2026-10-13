@@ -72,3 +72,17 @@ Detalles fijados al construir; ver [informe de la etapa 2](../etapas/etapa-02.md
 
 **Pendiente:** recuperación de contraseña por enlace, código QR para inscribir el TOTP, administración de usuarios y roles desde la interfaz (con el alta de laboratorios, etapa 4), y transporte cifrado del correo e IP real detrás del proxy (etapa 20).
 
+## Implementación (etapa 4, 2026-10-13)
+
+- **Dos sitios, un mismo mecanismo:** el personal de la plataforma ingresa en el Admin Hub con el mismo código (Argon2id, TOTP obligatorio, sesiones `__Host-`, CSRF, límites). Sus datos viven en `plataforma` (tablas gemelas, sin `tenant_id`). Los secretos TOTP se ligan al ámbito (`plataforma` o el laboratorio) y al usuario.
+- **Invitaciones** (`app/auth/invitaciones.py`):
+  - El usuario se crea sin contraseña.
+  - La tarea `auth.invitacion` genera un token de 32 bytes, guarda su SHA-256 (`lab.invitaciones`, 72 horas, una invitación nueva anula las anteriores) y envía el enlace `https://<subdominio>/activar/<token>`.
+  - El enlace solo funciona en su laboratorio y una sola vez. Activar exige la política de contraseñas y confirmación.
+  - Luego el usuario ingresa con su contraseña y su segundo factor (y el personal inscribe su app).
+- **Usuarios del laboratorio** (`/configuracion/usuarios`):
+  - Invitar exige `usuarios.crear`; acepta personal y médicos, con roles del laboratorio, hasta el máximo del plan.
+  - Desactivar exige `usuarios.modificar` y revoca las sesiones; nadie puede desactivarse a sí mismo.
+- **Mensajes de la política de contraseñas** externalizados en el catálogo de textos.
+
+**Pendiente:** recuperación de contraseña por enlace (reutilizará las invitaciones), código QR del TOTP, edición de roles propios del laboratorio.

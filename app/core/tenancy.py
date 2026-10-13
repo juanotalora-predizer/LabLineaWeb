@@ -10,7 +10,7 @@ Ningún parámetro, cookie ni cabecera enviada por el cliente puede cambiarlo.
 """
 
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Literal
 
 from fastapi import HTTPException, Request
@@ -20,7 +20,7 @@ from starlette.types import ASGIApp, Receive, Scope, Send
 
 from app.core import db
 from app.core.config import get_settings
-from app.core.i18n import t
+from app.core.i18n import IDIOMA_POR_DEFECTO, t
 
 SUBDOMINIO_ADMIN = "admin"
 # Misma regla que el CHECK de plataforma.laboratorios: una etiqueta DNS en minúsculas.
@@ -38,6 +38,23 @@ class Laboratorio:
     zona_horaria: str
     idioma: str
     moneda: str
+    subdominio: str = ""
+    # Módulos del plan más los siempre activos: fuera de ellos ningún permiso aplica.
+    modulos: frozenset[str] = field(default_factory=frozenset)
+    max_usuarios: int | None = None
+
+
+@dataclass(frozen=True)
+class SitioAdmin:
+    """El Admin Hub visto como sitio: mismos atributos que usan las plantillas y la autenticación."""
+
+    nombre_comercial: str
+    idioma: str
+    zona_horaria: str
+    tenant_id: None = None
+
+
+Sitio = Laboratorio | SitioAdmin
 
 
 def extraer_subdominio(host: str, dominio_base: str) -> str | None:
@@ -62,7 +79,7 @@ async def buscar_laboratorio(subdominio: str) -> Laboratorio | None:
             .mappings()
             .first()
         )
-    return Laboratorio(**fila) if fila else None
+    return Laboratorio(**{**fila, "modulos": frozenset(fila["modulos"])}) if fila else None
 
 
 class ResolverLaboratorio:
@@ -100,6 +117,20 @@ class ResolverLaboratorio:
 async def _no_encontrado(scope: Scope, receive: Receive, send: Send) -> None:
     # Mismo 404 para subdominio inexistente, cancelado o mal formado: no revela cuáles existen.
     await PlainTextResponse(t("error.no_encontrado"), status_code=404)(scope, receive, send)
+
+
+def sitio_admin(request: Request) -> SitioAdmin:
+    """Dependencia de las rutas del Admin Hub: 404 en cualquier otro host."""
+    if getattr(request.state, "sitio", None) != "admin":
+        raise HTTPException(status_code=404)
+    settings = get_settings()
+    return SitioAdmin(t("admin.nombre"), IDIOMA_POR_DEFECTO, settings.zona_horaria_plataforma)
+
+
+def sitio_actual(request: Request) -> Sitio:
+    """Dependencia de las rutas comunes (ingreso, panel): el laboratorio o el Admin Hub; 404 en el dominio base."""
+    laboratorio = getattr(request.state, "laboratorio", None)
+    return laboratorio if laboratorio is not None else sitio_admin(request)
 
 
 def laboratorio_actual(request: Request) -> Laboratorio:

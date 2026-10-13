@@ -77,30 +77,31 @@ def fecha_local(
 # --- Plantillas ---
 
 
-def _laboratorio(contexto) -> object | None:
-    return contexto.get("laboratorio")
+def _sitio(contexto) -> object | None:
+    """Laboratorio o Admin Hub de la página: de él salen el idioma y la zona horaria."""
+    return contexto.get("sitio")
 
 
 @pass_context
 def _t_plantilla(contexto, clave: str, **parametros: object) -> str:
-    laboratorio = _laboratorio(contexto)
-    return t(clave, getattr(laboratorio, "idioma", None), **parametros)
+    sitio = _sitio(contexto)
+    return t(clave, getattr(sitio, "idioma", None), **parametros)
 
 
 @pass_context
 def _idioma_plantilla(contexto) -> str:
-    return getattr(_laboratorio(contexto), "idioma", None) or IDIOMA_POR_DEFECTO
+    return getattr(_sitio(contexto), "idioma", None) or IDIOMA_POR_DEFECTO
 
 
 @pass_context
 def _fecha_plantilla(contexto, valor: datetime, formato: str = "fecha_hora") -> str:
-    laboratorio = _laboratorio(contexto)
-    zona = getattr(laboratorio, "zona_horaria", None) or ZONA_POR_DEFECTO
-    return fecha_local(valor, zona, getattr(laboratorio, "idioma", None), formato)
+    sitio = _sitio(contexto)
+    zona = getattr(sitio, "zona_horaria", None) or ZONA_POR_DEFECTO
+    return fecha_local(valor, zona, getattr(sitio, "idioma", None), formato)
 
 
 def configurar_plantillas(entorno: Environment) -> None:
-    """Expone t(), idioma() y el filtro |fecha a las plantillas. El idioma y la zona salen del laboratorio."""
+    """Expone t(), idioma() y el filtro |fecha a las plantillas. El idioma y la zona salen del sitio."""
     entorno.globals["t"] = _t_plantilla
     entorno.globals["idioma"] = _idioma_plantilla
     entorno.filters["fecha"] = _fecha_plantilla

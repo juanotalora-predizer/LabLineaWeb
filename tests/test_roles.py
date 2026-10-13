@@ -116,8 +116,8 @@ def _laboratorio(**cambios) -> dict:
 
 
 INSERTAR = text(
-    "INSERT INTO plataforma.laboratorios (tenant_id, subdominio, nombre_comercial, identificador_fiscal, pais)"
-    " VALUES (:t, :s, :n, :nit, :p)"
+    "INSERT INTO plataforma.laboratorios (tenant_id, subdominio, nombre_comercial, identificador_fiscal, pais, plan_id)"
+    " VALUES (:t, :s, :n, :nit, :p, (SELECT id FROM plataforma.planes WHERE codigo = 'COMPLETO'))"
 )
 
 
