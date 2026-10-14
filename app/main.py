@@ -12,6 +12,7 @@ from app.admin.suscripciones import router as rutas_suscripciones
 from app.auth.invitaciones import router as rutas_invitaciones
 from app.auth.rutas import router as rutas_auth
 from app.auth.web import InscripcionTotpPendiente, NoAutenticado, SegundoFactorPendiente
+from app.catalogo.rutas import router as rutas_catalogo
 from app.core.config import get_settings
 from app.core.i18n import t
 from app.core.plantillas import templates
@@ -49,6 +50,7 @@ app.include_router(rutas_usuarios_laboratorio)
 app.include_router(rutas_admin)
 app.include_router(rutas_suscripciones)
 app.include_router(rutas_soporte)
+app.include_router(rutas_catalogo)
 
 
 @app.exception_handler(NoAutenticado)

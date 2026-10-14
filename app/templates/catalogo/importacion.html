@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t("importador.vista_previa") }} · {{ sitio.nombre_comercial }}{% endblock %}
+
+{% macro mensaje(m) -%}{{ t("importador." ~ m.clave, **m.params) }}{%- endmacro %}
+
+{% block content %}
+{% set resumen = importacion.resumen %}
+<div class="encabezado">
+    <h1>{{ t("importador.vista_previa") }}</h1>
+    {{ importacion.estado | insignia }}
+</div>
+<p><a href="/catalogo/importar">{{ t("importador.volver") }}</a></p>
+{% if error %}<p class="error" role="alert">{{ t("importador.cambio") }}</p>{% endif %}
+<div class="rejilla">
+    {% for nombre, cantidad in resumen.conteos.items() %}
+    <div class="tarjeta indicador"><span class="etiqueta">{{ t("importador.entidad_" ~ nombre) }}</span><span class="cifra">{{ cantidad }}</span></div>
+    {% endfor %}
+</div>
+<section class="tarjeta">
+    <dl class="ficha">
+        <dt>{{ t("importador.archivo") }}</dt><dd>{{ importacion.nombre_archivo }}</dd>
+        <dt>{{ t("importador.fecha") }}</dt><dd>{{ importacion.creada_en | fecha }}</dd>
+        <dt>{{ t("importador.errores") }}</dt><dd>{{ resumen.total_errores }}</dd>
+        <dt>{{ t("importador.advertencias") }}</dt><dd>{{ resumen.total_advertencias }}</dd>
+    </dl>
+    {% if importacion.estado == "PREVISTA" %}
+    <div class="acciones">
+        {% if resumen.total_errores == 0 %}
+        <form method="post" action="/catalogo/importaciones/{{ importacion.uuid }}/cargar"><input type="hidden" name="csrf" value="{{ csrf }}"><button type="submit">{{ icono("download") }}{{ t("importador.cargar") }}</button></form>
+        {% else %}
+        <p class="nota">{{ t("importador.corrija") }}</p>
+        {% endif %}
+        <form method="post" action="/catalogo/importaciones/{{ importacion.uuid }}/descartar"><input type="hidden" name="csrf" value="{{ csrf }}"><button type="submit" class="secundario">{{ t("importador.descartar") }}</button></form>
+    </div>
+    {% elif importacion.estado == "CARGADA" %}
+    <p class="aviso" role="status">{{ t("importador.cargada") }} <a href="/catalogo/revision">{{ t("catalogo.ver_revision") }}</a></p>
+    {% endif %}
+</section>
+{% if resumen.errores %}
+<section class="tarjeta">
+    <h2>{{ icono("circle-x") }} {{ t("importador.errores") }}</h2>
+    <ul class="mensajes">{% for m in resumen.errores %}<li>{{ mensaje(m) }}</li>{% endfor %}</ul>
+    {% if resumen.total_errores > resumen.errores | length %}<p class="nota">{{ t("importador.mas", cantidad=resumen.total_errores - resumen.errores | length) }}</p>{% endif %}
+</section>
+{% endif %}
+{% if resumen.advertencias %}
+<section class="tarjeta">
+    <h2>{{ icono("triangle-alert") }} {{ t("importador.advertencias") }}</h2>
+    <ul class="mensajes">{% for m in resumen.advertencias %}<li>{{ mensaje(m) }}</li>{% endfor %}</ul>
+    {% if resumen.total_advertencias > resumen.advertencias | length %}<p class="nota">{{ t("importador.mas", cantidad=resumen.total_advertencias - resumen.advertencias | length) }}</p>{% endif %}
+</section>
+{% endif %}
+{% endblock %}

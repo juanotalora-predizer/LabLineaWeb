@@ -80,7 +80,10 @@ def test_plantillas_sin_estilos_ni_scripts_en_linea(plantilla):
     assert not re.search(r"\son[a-z]+\s*=", fuente)  # manejadores de eventos en línea
 
 
-@pytest.mark.parametrize("plantilla", [p for p in PLANTILLAS if p.name != "base.html"], ids=lambda p: p.name)
+# Los fragmentos que se incluyen (prefijo "_") no son páginas.
+@pytest.mark.parametrize(
+    "plantilla", [p for p in PLANTILLAS if p.name != "base.html" and not p.name.startswith("_")], ids=lambda p: p.name
+)
 def test_toda_plantilla_hereda_de_base(plantilla):
     assert plantilla.read_text().startswith('{% extends "base.html" %}')
 
@@ -153,3 +156,12 @@ def test_fuentes_e_iconos_se_sirven_con_cache():
         respuesta = cliente().get(ruta)
         assert respuesta.status_code == 200, ruta
         assert respuesta.headers["cache-control"].startswith("public")
+
+
+@pytest.mark.parametrize(
+    ("valor", "esperado"), [("12.5000", "12.5"), ("100.0000", "100"), ("0.0010", "0.001"), ("1E+3", "1000"), (None, "")]
+)
+def test_numero_sin_ceros_sobrantes(valor, esperado):
+    from decimal import Decimal
+
+    assert plantillas.numero(Decimal(valor) if valor else None) == esperado

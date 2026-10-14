@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t("importador.titulo") }} · {{ sitio.nombre_comercial }}{% endblock %}
+
+{% block content %}
+<div class="encabezado"><h1>{{ t("importador.titulo") }}</h1></div>
+<p><a href="/catalogo">{{ t("catalogo.volver") }}</a></p>
+{% if rechazo %}<p class="error" role="alert">{{ rechazo }}</p>{% endif %}
+<div class="columnas">
+    <section class="tarjeta">
+        <h2>{{ icono("file-text") }} {{ t("importador.subir") }}</h2>
+        <form method="post" action="/catalogo/importar" enctype="multipart/form-data">
+            <input type="hidden" name="csrf" value="{{ csrf }}">
+            <label for="archivo">{{ t("importador.archivo") }}</label>
+            <input id="archivo" name="archivo" type="file" accept=".zip,application/zip" required>
+            <p class="nota">{{ t("importador.ayuda_archivo") }}</p>
+            <button type="submit">{{ t("importador.analizar") }}</button>
+        </form>
+    </section>
+    <section class="tarjeta">
+        <h2>{{ icono("info") }} {{ t("importador.como_exportar") }}</h2>
+        <p>{{ t("importador.instrucciones") }}</p>
+        <p class="nota">{{ t("importador.tablas") }}</p>
+    </section>
+</div>
+<section class="tarjeta">
+    <h2>{{ t("importador.recientes") }}</h2>
+    <div class="tabla-contenedor">
+    <table>
+        <thead><tr><th>{{ t("importador.archivo") }}</th><th>{{ t("importador.fecha") }}</th><th>{{ t("catalogo.estado") }}</th></tr></thead>
+        <tbody>
+        {% for i in recientes %}
+        <tr><td class="principal"><a href="/catalogo/importaciones/{{ i.uuid }}">{{ i.nombre_archivo }}</a></td><td>{{ i.creada_en | fecha }}</td><td>{{ i.estado | insignia }}</td></tr>
+        {% else %}
+        <tr><td colspan="3" class="vacio">{{ t("comun.sin_registros") }}</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    </div>
+</section>
+{% endblock %}

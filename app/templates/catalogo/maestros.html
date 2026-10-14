@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t("catalogo.maestros") }} · {{ sitio.nombre_comercial }}{% endblock %}
+
+{% macro formulario(tipo, campos) -%}
+{% if activa.permisos.puede("configuracion", "crear") %}
+<form method="post" action="/catalogo/maestros/{{ tipo }}" class="formulario-fila">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    {% for nombre, etiqueta, largo in campos %}
+    <div><label for="{{ tipo }}-{{ nombre }}">{{ etiqueta }}</label><input id="{{ tipo }}-{{ nombre }}" name="{{ nombre }}" maxlength="{{ largo }}"></div>
+    {% endfor %}
+    <div><button type="submit" class="secundario">{{ icono("plus") }}{{ t("catalogo.agregar") }}</button></div>
+</form>
+{% endif %}
+{%- endmacro %}
+
+{% block content %}
+<div class="encabezado"><h1>{{ t("catalogo.maestros") }}</h1></div>
+<p><a href="/catalogo">{{ t("catalogo.volver") }}</a></p>
+{% if errores %}<ul class="error" role="alert">{% for e in errores %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+<div class="columnas">
+    <section class="tarjeta">
+        <h2>{{ t("catalogo.secciones") }}</h2>
+        <dl class="ficha">{% for s in secciones %}<dt>{{ s.codigo }}</dt><dd>{{ s.nombre }}</dd>{% else %}<dt>{{ t("comun.sin_registros") }}</dt><dd></dd>{% endfor %}</dl>
+        {{ formulario("secciones", [("codigo", t("catalogo.codigo"), 50), ("nombre", t("catalogo.nombre"), 120), ("extra", t("catalogo.orden"), 4)]) }}
+    </section>
+    <section class="tarjeta">
+        <h2>{{ t("catalogo.unidades") }}</h2>
+        <dl class="ficha">{% for u in unidades %}<dt>{{ u.codigo }}</dt><dd>{{ u.nombre }}{% if u.ucum %} · {{ t("catalogo.ucum") }} {{ u.ucum }}{% endif %}</dd>{% else %}<dt>{{ t("comun.sin_registros") }}</dt><dd></dd>{% endfor %}</dl>
+        {{ formulario("unidades", [("codigo", t("catalogo.codigo"), 50), ("nombre", t("catalogo.nombre"), 60), ("extra", t("catalogo.ucum"), 40)]) }}
+    </section>
+    <section class="tarjeta">
+        <h2>{{ t("catalogo.tipos_muestra") }}</h2>
+        <dl class="ficha">{% for m in tipos_muestra %}<dt>{{ m.codigo }}</dt><dd>{{ m.nombre }}</dd>{% else %}<dt>{{ t("comun.sin_registros") }}</dt><dd></dd>{% endfor %}</dl>
+        {{ formulario("tipos_muestra", [("codigo", t("catalogo.codigo"), 10), ("nombre", t("catalogo.nombre"), 60)]) }}
+    </section>
+    <section class="tarjeta">
+        <h2>{{ t("catalogo.tipos_tubo") }}</h2>
+        <dl class="ficha">{% for tt in tipos_tubo %}<dt>{{ tt.codigo }}</dt><dd>{{ tt.nombre }}{% if tt.aditivo %} · {{ tt.aditivo }}{% endif %} · {{ tt.capacidad_ml }} {{ t("catalogo.ml") }}</dd>{% else %}<dt>{{ t("comun.sin_registros") }}</dt><dd></dd>{% endfor %}</dl>
+        {{ formulario("tipos_tubo", [("codigo", t("catalogo.codigo"), 20), ("nombre", t("catalogo.nombre"), 60), ("aditivo", t("catalogo.aditivo"), 60), ("capacidad", t("catalogo.capacidad"), 8)]) }}
+    </section>
+    <section class="tarjeta">
+        <h2>{{ t("catalogo.tecnicas") }}</h2>
+        <dl class="ficha">{% for tc in tecnicas %}<dt>{{ tc.nombre }}</dt><dd></dd>{% else %}<dt>{{ t("comun.sin_registros") }}</dt><dd></dd>{% endfor %}</dl>
+        {{ formulario("tecnicas", [("nombre", t("catalogo.nombre"), 120)]) }}
+    </section>
+    <section class="tarjeta">
+        <h2>{{ t("catalogo.tarifas") }}</h2>
+        <dl class="ficha">{% for tr in tarifas %}<dt>{{ tr.codigo }}</dt><dd>{{ tr.nombre }} · {{ tr.moneda }}</dd>{% else %}<dt>{{ t("comun.sin_registros") }}</dt><dd></dd>{% endfor %}</dl>
+        {{ formulario("tarifas", [("codigo", t("catalogo.codigo"), 15), ("nombre", t("catalogo.nombre"), 60)]) }}
+    </section>
+    <section class="tarjeta">
+        <h2>{{ t("catalogo.tipos_codigo") }}</h2>
+        <dl class="ficha">{% for tc in tipos_codigo %}<dt>{{ tc.codigo }}</dt><dd>{{ tc.nombre }}</dd>{% else %}<dt>{{ t("comun.sin_registros") }}</dt><dd></dd>{% endfor %}</dl>
+        {{ formulario("tipos_codigo", [("codigo", t("catalogo.codigo"), 10), ("nombre", t("catalogo.nombre"), 60)]) }}
+    </section>
+</div>
+{% endblock %}

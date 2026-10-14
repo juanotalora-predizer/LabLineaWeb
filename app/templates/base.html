@@ -19,6 +19,7 @@
         <nav class="menu" aria-label="{{ t('menu.principal') }}">
             {{ item("/panel", "layout-dashboard", t("menu.panel")) }}
             {% if sitio.tenant_id %}
+            {% if activa.permisos.puede("configuracion", "consultar") %}{{ item("/catalogo", "flask-conical", t("menu.catalogo")) }}{% endif %}
             {% if activa.permisos.puede("usuarios", "consultar") %}{{ item("/configuracion/usuarios", "users", t("menu.usuarios")) }}{% endif %}
             {% if "AUTORIZAR_SOPORTE" in activa.permisos.acciones %}{{ item("/configuracion/soporte", "life-buoy", t("menu.soporte")) }}{% endif %}
             {% else %}

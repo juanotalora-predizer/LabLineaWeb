@@ -1,6 +1,7 @@
 """Entorno único de plantillas Jinja2: textos externalizados, fechas locales (app/core/i18n.py) y los
 componentes del sistema de diseño (spec funcional/0008): íconos, insignias de estado e iniciales."""
 
+from decimal import Decimal
 from pathlib import Path
 
 from fastapi.templating import Jinja2Templates
@@ -13,10 +14,18 @@ SPRITE = "/static/img/iconos.svg"
 
 # Tono de la insignia según el código de estado (spec funcional/0008, sección 2).
 TONOS = {
-    "exito": {"ACTIVO", "ACTIVA", "PAGADA", "COMPLETADA", "VIGENTE", "VALIDADO", "EN_ATENCION"},
-    "alerta": {"PENDIENTE", "INVITACION_PENDIENTE", "PAGADA_PARCIAL", "EN_OBSERVACION", "EN_CURSO", "POR_VENCER"},
+    "exito": {"ACTIVO", "ACTIVA", "PAGADA", "COMPLETADA", "VIGENTE", "VALIDADO", "EN_ATENCION", "CARGADA"},
+    "alerta": {
+        "PENDIENTE",
+        "POR_REVISAR",
+        "INVITACION_PENDIENTE",
+        "PAGADA_PARCIAL",
+        "EN_OBSERVACION",
+        "EN_CURSO",
+        "POR_VENCER",
+    },
     "peligro": {"VENCIDA", "SUSPENDIDA", "SUSPENDIDO", "ANULADA", "FALLIDA", "CRITICO", "SIN_TRIAGE", "REVOCADO"},
-    "info": {"EN_PROCESO"},
+    "info": {"EN_PROCESO", "PREVISTA"},
 }
 _TONO_POR_ESTADO = {estado: tono for tono, estados in TONOS.items() for estado in estados}
 
@@ -43,6 +52,14 @@ def insignia(contexto, estado: str) -> Markup:
     return Markup('<span class="insignia {}">{}</span>').format(tono(estado), escape(texto))
 
 
+def numero(valor) -> str:
+    """Decimal sin ceros sobrantes ni notación científica (12.5000 → 12.5; 100.0000 → 100)."""
+    if valor is None:
+        return ""
+    texto = f"{Decimal(valor):f}"
+    return texto.rstrip("0").rstrip(".") if "." in texto else texto
+
+
 def iniciales(nombre: str) -> str:
     partes = [p for p in str(nombre).split() if p[:1].isalpha()]
     return "".join(p[0] for p in partes[:2]).upper() or "?"
@@ -53,3 +70,4 @@ configurar_plantillas(templates.env)
 templates.env.globals["icono"] = icono
 templates.env.filters["insignia"] = insignia
 templates.env.filters["iniciales"] = iniciales
+templates.env.filters["numero"] = numero

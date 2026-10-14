@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+
+{% block title %}{{ parametro.nombre }} · {{ sitio.nombre_comercial }}{% endblock %}
+
+{% block content %}
+<div class="encabezado">
+    <h1>{{ parametro.nombre }}</h1>
+    {{ ("ACTIVO" if parametro.activo else "INACTIVO") | insignia }}
+</div>
+<p><a href="/catalogo/examenes/{{ parametro.examen_uuid }}">{{ t("catalogo.volver_examen", examen=parametro.examen) }}</a></p>
+{% if errores %}<ul class="error" role="alert">{% for e in errores %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+{% for a in advertencias %}
+<p class="aviso alerta" role="status">{{ icono("triangle-alert") }} {{ t("catalogo.advertencia_" ~ a.tipo | lower, sexo=t("catalogo.sexo_" ~ a.sexo | lower), desde=a.desde[0], unidad_desde=t("catalogo.edad_" ~ a.desde[1]), hasta=a.hasta[0], unidad_hasta=t("catalogo.edad_" ~ a.hasta[1])) }}</p>
+{% endfor %}
+
+<div class="columnas">
+    <section class="tarjeta">
+        <h2>{{ icono("settings") }} {{ t("catalogo.datos_parametro") }}</h2>
+        {% if activa.permisos.puede("configuracion", "modificar") %}
+        <form method="post" action="/catalogo/parametros/{{ parametro.uuid }}">
+            <input type="hidden" name="csrf" value="{{ csrf }}">
+            <label for="nombre">{{ t("catalogo.parametro") }}</label>
+            <input id="nombre" name="nombre" required maxlength="120" value="{{ parametro.nombre }}">
+            <label for="tipo">{{ t("catalogo.tipo") }}</label>
+            <select id="tipo" name="tipo">{% for tp in tipos_parametro %}<option value="{{ tp }}" {% if parametro.tipo == tp %}selected{% endif %}>{{ t("catalogo.tipo_" ~ tp | lower) }}</option>{% endfor %}</select>
+            <label for="unidad">{{ t("catalogo.unidad") }}</label>
+            <select id="unidad" name="unidad"><option value="">{{ t("catalogo.sin_unidad") }}</option>{% for u in unidades %}<option value="{{ u.codigo }}" {% if parametro.unidad == u.codigo %}selected{% endif %}>{{ u.nombre }}</option>{% endfor %}</select>
+            <label for="orden">{{ t("catalogo.orden") }}</label>
+            <input id="orden" name="orden" inputmode="numeric" maxlength="4" value="{{ parametro.orden }}">
+            <label for="decimales">{{ t("catalogo.decimales") }}</label>
+            <input id="decimales" name="decimales" inputmode="numeric" maxlength="1" value="{{ parametro.decimales }}">
+            <label for="loinc">{{ t("catalogo.loinc") }}</label>
+            <input id="loinc" name="loinc" maxlength="10" pattern="[0-9]{1,7}-[0-9]" value="{{ parametro.loinc or '' }}">
+            <label class="opcion"><input type="checkbox" name="grafica" value="si" {% if parametro.grafica %}checked{% endif %}> {{ t("catalogo.grafica") }}</label>
+            <label class="opcion"><input type="checkbox" name="activo" value="si" {% if parametro.activo %}checked{% endif %}> {{ t("catalogo.activo") }}</label>
+            <button type="submit">{{ t("catalogo.guardar") }}</button>
+        </form>
+        {% else %}
+        <dl class="ficha">
+            <dt>{{ t("catalogo.tipo") }}</dt><dd>{{ t("catalogo.tipo_" ~ parametro.tipo | lower) }}</dd>
+            <dt>{{ t("catalogo.unidad") }}</dt><dd>{{ parametro.unidad_nombre or "" }}</dd>
+        </dl>
+        {% endif %}
+    </section>
+    {% if parametro.tipo == "LISTA" %}
+    <section class="tarjeta">
+        <h2>{{ icono("layers") }} {{ t("catalogo.valores_lista") }}</h2>
+        <div class="tabla-contenedor">
+        <table>
+            <thead><tr><th>{{ t("catalogo.valor") }}</th><th></th></tr></thead>
+            <tbody>
+            {% for v in valores %}
+            <tr><td class="principal">{{ v.valor }}{% if v.es_normal %}<span class="secundario">{{ t("catalogo.valor_normal") }}</span>{% endif %}</td>
+                <td class="numero">{% if activa.permisos.puede("configuracion", "eliminar") %}
+                    <form method="post" action="/catalogo/parametros/{{ parametro.uuid }}/valores/eliminar" class="en-linea"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="valor" value="{{ v.valor }}"><button type="submit" class="terciario peligro-texto">{{ t("catalogo.quitar") }}</button></form>
+                {% endif %}</td></tr>
+            {% else %}
+            <tr><td colspan="2" class="vacio">{{ t("comun.sin_registros") }}</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        </div>
+        {% if activa.permisos.puede("configuracion", "crear") %}
+        <form method="post" action="/catalogo/parametros/{{ parametro.uuid }}/valores">
+            <input type="hidden" name="csrf" value="{{ csrf }}">
+            <label for="valor">{{ t("catalogo.valor") }}</label>
+            <input id="valor" name="valor" required maxlength="120">
+            <label class="opcion"><input type="checkbox" name="es_normal" value="si"> {{ t("catalogo.valor_normal") }}</label>
+            <button type="submit" class="secundario">{{ icono("plus") }}{{ t("catalogo.agregar_valor") }}</button>
+        </form>
+        {% endif %}
+    </section>
+    {% endif %}
+</div>
+
+{% if parametro.tipo != "TITULO" %}
+<section class="tarjeta">
+    <h2>{{ icono("heart-pulse") }} {{ t("catalogo.rangos") }}</h2>
+    <div class="tabla-contenedor">
+    <table>
+        <thead><tr><th>{{ t("catalogo.sexo") }}</th><th>{{ t("catalogo.edades") }}</th><th class="numero">{{ t("catalogo.normal") }}</th><th class="numero">{{ t("catalogo.critico") }}</th><th>{{ t("catalogo.texto_impreso") }}</th><th></th></tr></thead>
+        <tbody>
+        {% for r in rangos %}
+        <tr>
+            <td>{{ t("catalogo.sexo_" ~ r.sexo | lower) }}</td>
+            <td>{{ r.desde[0] }} {{ t("catalogo.edad_" ~ r.desde[1]) }} – {{ r.hasta[0] }} {{ t("catalogo.edad_" ~ r.hasta[1]) }}</td>
+            <td class="numero">{% if r.minimo is not none or r.maximo is not none %}{{ r.minimo | numero if r.minimo is not none else "…" }} – {{ r.maximo | numero if r.maximo is not none else "…" }}{% else %}{{ r.valor_esperado or "" }}{% endif %}</td>
+            <td class="numero">{% if r.critico_min is not none or r.critico_max is not none %}{{ r.critico_min | numero if r.critico_min is not none else "…" }} – {{ r.critico_max | numero if r.critico_max is not none else "…" }}{% endif %}</td>
+            <td>{{ r.texto_impreso or "" }}{% if r.requiere_revision %}<span class="secundario">{{ "POR_REVISAR" | insignia }}</span>{% endif %}</td>
+            <td class="numero">
+                {% if r.requiere_revision and activa.permisos.puede("configuracion", "modificar") %}
+                <form method="post" action="/catalogo/rangos/{{ r.uuid }}/revisado" class="en-linea"><input type="hidden" name="csrf" value="{{ csrf }}"><button type="submit" class="terciario">{{ t("catalogo.marcar_revisado") }}</button></form>
+                {% endif %}
+                {% if activa.permisos.puede("configuracion", "eliminar") %}
+                <form method="post" action="/catalogo/rangos/{{ r.uuid }}/eliminar" class="en-linea"><input type="hidden" name="csrf" value="{{ csrf }}"><button type="submit" class="terciario peligro-texto">{{ t("catalogo.quitar") }}</button></form>
+                {% endif %}
+            </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" class="vacio">{{ t("catalogo.sin_rangos") }}</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    </div>
+    {% if activa.permisos.puede("configuracion", "crear") %}
+    <h3>{{ t("catalogo.nuevo_rango") }}</h3>
+    <form method="post" action="/catalogo/parametros/{{ parametro.uuid }}/rangos" class="formulario-fila">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+        <div><label for="sexo">{{ t("catalogo.sexo") }}</label><select id="sexo" name="sexo">{% for s in sexos %}<option value="{{ s }}" {% if rango.sexo == s %}selected{% endif %}>{{ t("catalogo.sexo_" ~ s | lower) }}</option>{% endfor %}</select></div>
+        <div><label for="edad_min">{{ t("catalogo.edad_desde") }}</label><input id="edad_min" name="edad_min" inputmode="numeric" maxlength="5" value="{{ rango.edad_min or 0 }}"></div>
+        <div><label for="unidad_min">{{ t("catalogo.unidad_edad") }}</label><select id="unidad_min" name="unidad_min">{% for u in unidades_edad %}<option value="{{ u }}" {% if (rango.unidad_min or "anios") == u %}selected{% endif %}>{{ t("catalogo.edad_" ~ u) }}</option>{% endfor %}</select></div>
+        <div><label for="edad_max">{{ t("catalogo.edad_hasta") }}</label><input id="edad_max" name="edad_max" inputmode="numeric" maxlength="5" value="{{ rango.edad_max or 150 }}"></div>
+        <div><label for="unidad_max">{{ t("catalogo.unidad_edad") }}</label><select id="unidad_max" name="unidad_max">{% for u in unidades_edad %}<option value="{{ u }}" {% if (rango.unidad_max or "anios") == u %}selected{% endif %}>{{ t("catalogo.edad_" ~ u) }}</option>{% endfor %}</select></div>
+        {% if parametro.tipo == "NUMERICO" %}
+        <div><label for="minimo">{{ t("catalogo.minimo") }}</label><input id="minimo" name="minimo" inputmode="decimal" maxlength="20" value="{{ rango.minimo or '' }}"></div>
+        <div><label for="maximo">{{ t("catalogo.maximo") }}</label><input id="maximo" name="maximo" inputmode="decimal" maxlength="20" value="{{ rango.maximo or '' }}"></div>
+        <div><label for="critico_min">{{ t("catalogo.critico_min") }}</label><input id="critico_min" name="critico_min" inputmode="decimal" maxlength="20" value="{{ rango.critico_min or '' }}"></div>
+        <div><label for="critico_max">{{ t("catalogo.critico_max") }}</label><input id="critico_max" name="critico_max" inputmode="decimal" maxlength="20" value="{{ rango.critico_max or '' }}"></div>
+        {% else %}
+        <div><label for="valor_esperado">{{ t("catalogo.valor_esperado") }}</label><input id="valor_esperado" name="valor_esperado" maxlength="120" value="{{ rango.valor_esperado or '' }}"></div>
+        {% endif %}
+        <div><label for="texto_impreso">{{ t("catalogo.texto_impreso") }}</label><input id="texto_impreso" name="texto_impreso" maxlength="255" value="{{ rango.texto_impreso or '' }}"></div>
+        <div><button type="submit" class="secundario">{{ icono("plus") }}{{ t("catalogo.agregar_rango") }}</button></div>
+    </form>
+    {% endif %}
+</section>
+{% endif %}
+{% endblock %}

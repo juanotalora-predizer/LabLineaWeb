@@ -6,7 +6,7 @@ Formato: `- [ ] Descripción — prioridad (Alta/Media/Baja) — spec relacionad
 
 ## En curso
 
-- [ ] Etapa 6: catálogo de exámenes e importador de Lablinea — Alta — [plan](plan-desarrollo.md)
+- [ ] Etapa 6: catálogo de exámenes e importador de Lablinea — compuerta local en verde, pendiente de la CI — Alta — [informe](etapas/etapa-06.md)
 
 ## Pendiente
 
@@ -23,9 +23,7 @@ Formato: `- [ ] Descripción — prioridad (Alta/Media/Baja) — spec relacionad
 - [ ] RLS en todas las tablas de `lab` con `USING` + `WITH CHECK` + `FORCE`, rol de aplicación sin privilegios, `SET LOCAL` por transacción, y prueba que verifique todas las tablas — Alta — [0007](infraestructura/0007-base-de-datos.md)
 - [ ] Estaciones de trabajo por sede (laboratorios y sedes ya están, etapa 4) — Alta — [funcional/0005](funcional/0005-plataforma-saas-suscripciones.md), [funcional/0003](funcional/0003-muestras-impresion.md)
 - [ ] Configuración por país: impuestos, medios de pago y textos legales (monedas, tipos de documento, idioma y zona horaria ya están, etapa 1) — Alta — [0004](infraestructura/0004-normativa-colombia-latam.md)
-- [ ] Catálogo de exámenes: secciones, parámetros, unidades, listas de valores, técnica, requisitos de muestra, tarifas, códigos CUPS y alternos — Alta — [funcional/0004](funcional/0004-resultados-validacion-entrega.md), [funcional/0003](funcional/0003-muestras-impresion.md)
-- [ ] Rangos de referencia por sexo y edad en días, con rangos críticos — Alta — [funcional/0004](funcional/0004-resultados-validacion-entrega.md)
-- [ ] Importador del catálogo de Lablinea (Access) con vista previa y marcado de rangos para revisión — Alta — [funcional/0007](funcional/0007-alcance-mvp.md)
+- [ ] Asignación asistida de LOINC y UCUM al catálogo importado (Lablinea no los guarda), antes de la interoperabilidad FHIR — Media — [funcional/0009](funcional/0009-catalogo-e-importador.md)
 - [ ] Usar `SuscripcionVigente` en las rutas que crean órdenes (etapa 8) — Alta — [funcional/0005](funcional/0005-plataforma-saas-suscripciones.md)
 - [ ] Incorporar htmx y Chart.js como estáticos propios — Baja — [0001](infraestructura/0001-stack-fastapi-jinja2.md)
 
@@ -110,6 +108,8 @@ Formato: `- [ ] Descripción — prioridad (Alta/Media/Baja) — spec relacionad
 - [ ] Análisis de riesgos, políticas, oficial de seguridad, capacitación, notificación de brechas — Media — [0003](infraestructura/0003-seguridad-hipaa.md)
 
 ## Hecho
+
+- [x] Catálogo de exámenes por laboratorio (maestros, exámenes con CUPS y LOINC, parámetros, listas, requisitos de muestra, precios por tarifa y códigos alternos), rangos de referencia por sexo y edad en días con críticos y advertencias de huecos y solapes, importador de Lablinea (ZIP de CSV, límites estrictos, vista previa, carga atómica, rangos marcados por revisar) y exportación CSV sin fórmulas — 2026-10-13 — [funcional/0009](funcional/0009-catalogo-e-importador.md), [informe](etapas/etapa-06.md)
 
 - [x] Sistema de diseño a partir de las referencias del usuario (HMLR, Datacapt, eMedico): tokens de color con contraste AA, Inter e íconos Lucide propios, layout con menú lateral, componentes, y todas las pantallas rediseñadas; guardianes automáticos — 2026-10-13 — [funcional/0008](funcional/0008-sistema-de-diseno.md)
 

@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t("catalogo.titulo") }} · {{ sitio.nombre_comercial }}{% endblock %}
+
+{% block content %}
+<div class="encabezado">
+    <h1>{{ t("catalogo.titulo") }}</h1>
+    <div class="acciones">
+        <a class="boton secundario" href="/catalogo/maestros">{{ icono("settings") }}{{ t("catalogo.maestros") }}</a>
+        <a class="boton secundario" href="/catalogo/exportar.csv">{{ icono("download") }}{{ t("catalogo.exportar") }}</a>
+        {% if activa.permisos.puede("configuracion", "crear") %}
+        <a class="boton secundario" href="/catalogo/importar">{{ icono("file-text") }}{{ t("catalogo.importar") }}</a>
+        <a class="boton" href="/catalogo/examenes/nuevo">{{ icono("plus") }}{{ t("catalogo.nuevo_examen") }}</a>
+        {% endif %}
+    </div>
+</div>
+{% if revision %}
+<p class="aviso alerta" role="status">{{ icono("triangle-alert") }} {{ t("catalogo.pendientes_revision", cantidad=revision) }} <a href="/catalogo/revision">{{ t("catalogo.ver_revision") }}</a></p>
+{% endif %}
+<section class="tarjeta">
+    <form method="get" action="/catalogo" class="filtros-formulario">
+        <label for="q" class="visualmente-oculto">{{ t("catalogo.buscar") }}</label>
+        <input id="q" name="q" type="search" maxlength="60" value="{{ q }}" placeholder="{{ t('catalogo.buscar') }}">
+        <label for="seccion" class="visualmente-oculto">{{ t("catalogo.seccion") }}</label>
+        <select id="seccion" name="seccion">
+            <option value="">{{ t("catalogo.todas_secciones") }}</option>
+            {% for s in secciones %}<option value="{{ s.uuid }}" {% if seccion == s.uuid %}selected{% endif %}>{{ s.nombre }}</option>{% endfor %}
+        </select>
+        <button type="submit" class="secundario">{{ icono("search") }}{{ t("catalogo.filtrar") }}</button>
+    </form>
+    <div class="tabla-contenedor">
+    <table>
+        <thead><tr><th>{{ t("catalogo.examen") }}</th><th>{{ t("catalogo.seccion") }}</th><th>{{ terminologia }}</th><th class="numero">{{ t("catalogo.parametros") }}</th><th>{{ t("catalogo.estado") }}</th></tr></thead>
+        <tbody>
+        {% for e in examenes %}
+        <tr>
+            <td class="principal"><a href="/catalogo/examenes/{{ e.uuid }}">{{ e.nombre }}</a><span class="secundario">{{ e.codigo }}</span></td>
+            <td>{{ e.seccion }}</td><td>{{ e.codigo_nacional or "" }}</td><td class="numero">{{ e.parametros }}</td>
+            <td>{{ ("ACTIVO" if e.activo else "INACTIVO") | insignia }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" class="vacio">{{ t("catalogo.sin_examenes") }}</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    </div>
+</section>
+{% endblock %}

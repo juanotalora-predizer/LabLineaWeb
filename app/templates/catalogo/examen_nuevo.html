@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t("catalogo.nuevo_examen") }} · {{ sitio.nombre_comercial }}{% endblock %}
+
+{% block content %}
+<div class="encabezado"><h1>{{ t("catalogo.nuevo_examen") }}</h1></div>
+{% if errores %}<ul class="error" role="alert">{% for e in errores %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+<section class="tarjeta ancha">
+    {% if not secciones %}<p class="nota">{{ t("catalogo.primero_secciones") }} <a href="/catalogo/maestros">{{ t("catalogo.maestros") }}</a></p>{% endif %}
+    <form method="post" action="/catalogo/examenes/nuevo">
+        {% include "catalogo/_campos_examen.html" %}
+        <button type="submit">{{ t("catalogo.guardar") }}</button>
+    </form>
+</section>
+{% endblock %}

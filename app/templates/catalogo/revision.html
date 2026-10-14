@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t("catalogo.revision") }} · {{ sitio.nombre_comercial }}{% endblock %}
+
+{% block content %}
+<div class="encabezado"><h1>{{ t("catalogo.revision") }}</h1></div>
+<p><a href="/catalogo">{{ t("catalogo.volver") }}</a></p>
+<p class="nota">{{ t("catalogo.explicacion_revision") }}</p>
+<section class="tarjeta">
+    <h2>{{ icono("heart-pulse") }} {{ t("catalogo.rangos") }}</h2>
+    <div class="tabla-contenedor">
+    <table>
+        <thead><tr><th>{{ t("catalogo.parametro") }}</th><th>{{ t("catalogo.texto_impreso") }}</th><th class="numero">{{ t("catalogo.normal") }}</th></tr></thead>
+        <tbody>
+        {% for r in rangos %}
+        <tr><td class="principal"><a href="/catalogo/parametros/{{ r.parametro_uuid }}">{{ r.parametro }}</a><span class="secundario">{{ r.examen }}</span></td>
+            <td>{{ r.texto_impreso or r.valor_esperado or "" }}</td>
+            <td class="numero">{% if r.minimo is not none or r.maximo is not none %}{{ r.minimo | numero if r.minimo is not none else "…" }} – {{ r.maximo | numero if r.maximo is not none else "…" }}{% endif %}</td></tr>
+        {% else %}
+        <tr><td colspan="3" class="vacio">{{ t("catalogo.sin_pendientes") }}</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    </div>
+</section>
+<section class="tarjeta">
+    <h2>{{ icono("flask-conical") }} {{ t("catalogo.requisitos") }}</h2>
+    <div class="tabla-contenedor">
+    <table>
+        <thead><tr><th>{{ t("catalogo.examen") }}</th><th>{{ t("catalogo.muestra") }}</th></tr></thead>
+        <tbody>
+        {% for r in requisitos %}
+        <tr><td class="principal"><a href="/catalogo/examenes/{{ r.examen_uuid }}">{{ r.examen }}</a></td><td>{{ r.muestra }}</td></tr>
+        {% else %}
+        <tr><td colspan="2" class="vacio">{{ t("catalogo.sin_pendientes") }}</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    </div>
+</section>
+{% endblock %}

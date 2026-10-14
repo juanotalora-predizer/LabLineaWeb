@@ -23,6 +23,13 @@ Plantilla:
 ## 2026-10-13
 
 **Avances**
+- **Etapa 6 — compuerta local en verde** ([informe](etapas/etapa-06.md), [funcional/0009](funcional/0009-catalogo-e-importador.md)); falta la CI.
+  - Catálogo por laboratorio: maestros, exámenes con CUPS y LOINC, parámetros, listas, requisitos de muestra, precios por tarifa y códigos alternos. Exámenes y parámetros no se borran, se desactivan.
+  - Rangos por sexo y edad en días con críticos; advertencias de huecos y solapes (propiedad con hypothesis).
+  - Importador de Lablinea: ZIP con las tablas del catálogo en CSV (nunca el `.mdb`), límites estrictos, rechazo de tablas que no son del catálogo, vista previa, carga atómica y rangos importados marcados por revisar.
+  - Exportación CSV que neutraliza fórmulas y queda auditada.
+  - 846 pruebas, cobertura 99,1%, ZAP sin hallazgos altos ni medios en los dos sitios, 17/17 pruebas manuales.
+- Hallazgos: ZAP encontró un error 500 con un byte NUL en la búsqueda del catálogo (corregido con `TextoSeguro`) y un falso positivo de inyección SQL en los formularios del catálogo, verificado en la base y filtrado solo para esa regla y esas rutas. Las pruebas con hypothesis mostraron que `csv.Sniffer` no era confiable para el separador.
 - **Sistema de diseño** ([funcional/0008](funcional/0008-sistema-de-diseno.md)), a partir de tres referencias del usuario (HMLR, Datacapt, eMedico).
   - Menú lateral azul noche, tarjetas blancas sobre fondo gris azulado, azul primario para la acción e insignias de estado con punto y texto.
   - Inter e íconos Lucide servidos como estáticos propios.

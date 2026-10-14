@@ -259,3 +259,102 @@ def test_autorizar_soporte_con_entradas_arbitrarias(admin_lab_a, horas, motivo):
     )
     assert respuesta.status_code in PERMITIDOS, respuesta.status_code
     _sin_reflejo_peligroso(respuesta.text)
+
+
+# --- Formularios de la etapa 6 (catálogo) ---
+
+
+@AJUSTES
+@given(
+    datos=st.fixed_dictionaries(
+        {c: texto for c in ("codigo", "nombre", "seccion", "tecnica", "codigo_nacional", "loinc")}
+    )
+)
+def test_examen_nuevo_con_entradas_arbitrarias(admin_lab_a, datos):
+    c = admin_lab_a
+    respuesta = c.post("/catalogo/examenes/nuevo", data={**datos, "csrf": csrf(c, "/catalogo/examenes/nuevo")})
+    assert respuesta.status_code in PERMITIDOS, respuesta.status_code
+    _sin_reflejo_peligroso(respuesta.text)
+
+
+@AJUSTES
+@given(
+    tipo=st.sampled_from(
+        ["secciones", "unidades", "tipos_muestra", "tipos_tubo", "tecnicas", "tarifas", "tipos_codigo"]
+    ),
+    datos=st.fixed_dictionaries({c: texto for c in ("codigo", "nombre", "extra", "aditivo", "capacidad")}),
+)
+def test_maestros_con_entradas_arbitrarias(admin_lab_a, tipo, datos):
+    c = admin_lab_a
+    respuesta = c.post(f"/catalogo/maestros/{tipo}", data={**datos, "csrf": csrf(c, "/catalogo/maestros")})
+    assert respuesta.status_code in PERMITIDOS, respuesta.status_code
+    _sin_reflejo_peligroso(respuesta.text)
+
+
+@pytest.fixture
+def parametro_lab_a(admin_lab_a):
+    """Un examen con un parámetro numérico en lab-a para recibir rangos, precios y requisitos arbitrarios."""
+    import uuid
+
+    c = admin_lab_a
+    s = uuid.uuid4().hex[:6]
+    c.post(
+        "/catalogo/maestros/secciones",
+        data={"codigo": f"F{s}", "nombre": "Fuzz", "csrf": csrf(c, "/catalogo/maestros")},
+    )
+    examen = c.post(
+        "/catalogo/examenes/nuevo",
+        data={
+            "codigo": f"F{s}",
+            "nombre": f"Fuzz {s}",
+            "seccion": f"F{s}",
+            "csrf": csrf(c, "/catalogo/examenes/nuevo"),
+        },
+    ).headers["location"]
+    parametro = c.post(
+        f"{examen}/parametros", data={"nombre": "P", "tipo": "NUMERICO", "orden": "1", "csrf": csrf(c, examen)}
+    ).headers["location"]
+    return examen, parametro
+
+
+@AJUSTES
+@given(
+    datos=st.fixed_dictionaries(
+        {
+            c: texto
+            for c in (
+                "sexo",
+                "edad_min",
+                "unidad_min",
+                "edad_max",
+                "unidad_max",
+                "minimo",
+                "maximo",
+                "critico_min",
+                "critico_max",
+                "valor_esperado",
+                "texto_impreso",
+            )
+        }  # fmt: skip
+    )
+)
+def test_rango_con_entradas_arbitrarias(admin_lab_a, parametro_lab_a, datos):
+    c, (_, parametro) = admin_lab_a, parametro_lab_a
+    respuesta = c.post(f"{parametro}/rangos", data={**datos, "csrf": csrf(c, parametro)})
+    assert respuesta.status_code in PERMITIDOS, respuesta.status_code
+    _sin_reflejo_peligroso(respuesta.text)
+
+
+@AJUSTES
+@given(tarifa=texto, valor=texto, muestra=texto, tubo=texto, volumen=texto)
+def test_precio_y_requisito_con_entradas_arbitrarias(
+    admin_lab_a, parametro_lab_a, tarifa, valor, muestra, tubo, volumen
+):
+    c, (examen, _) = admin_lab_a, parametro_lab_a
+    token = csrf(c, examen)
+    for ruta, datos in (
+        (f"{examen}/precios", {"tarifa": tarifa, "valor": valor}),
+        (f"{examen}/requisitos", {"tipo_muestra": muestra, "tipo_tubo": tubo, "volumen_ml": volumen}),
+    ):
+        respuesta = c.post(ruta, data={**datos, "csrf": token})
+        assert respuesta.status_code in PERMITIDOS | {404}, respuesta.status_code

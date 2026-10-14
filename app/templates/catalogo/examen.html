@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+
+{% block title %}{{ examen.nombre }} · {{ sitio.nombre_comercial }}{% endblock %}
+
+{% block content %}
+<div class="encabezado">
+    <h1>{{ examen.nombre }}</h1>
+    <div class="acciones">
+        {{ ("ACTIVO" if examen.activo else "INACTIVO") | insignia }}
+        {% if activa.permisos.puede("configuracion", "modificar") %}
+        <form method="post" action="/catalogo/examenes/{{ examen.uuid }}/estado" class="en-linea">
+            <input type="hidden" name="csrf" value="{{ csrf }}">
+            <button type="submit" class="secundario">{% if examen.activo %}{{ t("catalogo.desactivar") }}{% else %}{{ t("catalogo.activar") }}{% endif %}</button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+<p><a href="/catalogo">{{ t("catalogo.volver") }}</a></p>
+{% if errores %}<ul class="error" role="alert">{% for e in errores %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+
+<div class="columnas">
+    <section class="tarjeta">
+        <h2>{{ icono("file-text") }} {{ t("catalogo.datos_examen") }}</h2>
+        {% if activa.permisos.puede("configuracion", "modificar") %}
+        <form method="post" action="/catalogo/examenes/{{ examen.uuid }}">
+            {% include "catalogo/_campos_examen.html" %}
+            <button type="submit">{{ t("catalogo.guardar") }}</button>
+        </form>
+        {% else %}
+        <dl class="ficha">
+            <dt>{{ t("catalogo.codigo") }}</dt><dd>{{ examen.codigo }}</dd>
+            <dt>{{ t("catalogo.seccion") }}</dt><dd>{{ examen.seccion_nombre }}</dd>
+            <dt>{{ terminologia }}</dt><dd>{{ examen.codigo_nacional or "" }}</dd>
+            <dt>{{ t("catalogo.loinc") }}</dt><dd>{{ examen.loinc or "" }}</dd>
+        </dl>
+        {% endif %}
+    </section>
+
+    <section class="tarjeta">
+        <h2>{{ icono("flask-conical") }} {{ t("catalogo.requisitos") }}</h2>
+        <div class="tabla-contenedor">
+        <table>
+            <thead><tr><th>{{ t("catalogo.muestra") }}</th><th>{{ t("catalogo.tubo") }}</th><th class="numero">{{ t("catalogo.volumen") }}</th><th></th></tr></thead>
+            <tbody>
+            {% for r in requisitos %}
+            <tr>
+                <td class="principal">{{ r.muestra }}{% if r.requiere_revision or not r.tubo or not r.volumen_ml %}<span class="secundario">{{ "POR_REVISAR" | insignia }}</span>{% endif %}</td>
+                <td>{{ r.tubo or "" }}</td><td class="numero">{{ r.volumen_ml or "" }}</td>
+                <td class="numero">{% if activa.permisos.puede("configuracion", "eliminar") %}
+                    <form method="post" action="/catalogo/requisitos/{{ r.uuid }}/eliminar" class="en-linea"><input type="hidden" name="csrf" value="{{ csrf }}"><button type="submit" class="terciario peligro-texto">{{ t("catalogo.quitar") }}</button></form>
+                {% endif %}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="4" class="vacio">{{ t("comun.sin_registros") }}</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        </div>
+        {% if activa.permisos.puede("configuracion", "crear") %}
+        <form method="post" action="/catalogo/examenes/{{ examen.uuid }}/requisitos">
+            <input type="hidden" name="csrf" value="{{ csrf }}">
+            <label for="tipo_muestra">{{ t("catalogo.muestra") }}</label>
+            <select id="tipo_muestra" name="tipo_muestra">{% for m in tipos_muestra %}<option value="{{ m.codigo }}">{{ m.nombre }}</option>{% endfor %}</select>
+            <label for="tipo_tubo">{{ t("catalogo.tubo") }}</label>
+            <select id="tipo_tubo" name="tipo_tubo"><option value="">{{ t("catalogo.sin_tubo") }}</option>{% for tt in tipos_tubo %}<option value="{{ tt.codigo }}">{{ tt.nombre }}</option>{% endfor %}</select>
+            <label for="volumen_ml">{{ t("catalogo.volumen") }}</label>
+            <input id="volumen_ml" name="volumen_ml" inputmode="decimal" maxlength="8">
+            <button type="submit" class="secundario">{{ icono("plus") }}{{ t("catalogo.agregar_requisito") }}</button>
+        </form>
+        {% endif %}
+    </section>
+</div>
+
+<section class="tarjeta">
+    <div class="encabezado"><h2>{{ icono("layers") }} {{ t("catalogo.parametros") }}</h2></div>
+    <div class="tabla-contenedor">
+    <table>
+        <thead><tr><th class="numero">{{ t("catalogo.orden") }}</th><th>{{ t("catalogo.parametro") }}</th><th>{{ t("catalogo.tipo") }}</th><th>{{ t("catalogo.unidad") }}</th><th class="numero">{{ t("catalogo.rangos") }}</th><th>{{ t("catalogo.estado") }}</th></tr></thead>
+        <tbody>
+        {% for p in parametros %}
+        <tr>
+            <td class="numero">{{ p.orden }}</td>
+            <td class="principal"><a href="/catalogo/parametros/{{ p.uuid }}">{{ p.nombre }}</a></td>
+            <td>{{ t("catalogo.tipo_" ~ p.tipo | lower) }}</td><td>{{ p.unidad or "" }}</td>
+            <td class="numero">{{ p.rangos }}</td>
+            <td>{% if p.por_revisar %}{{ "POR_REVISAR" | insignia }}{% else %}{{ ("ACTIVO" if p.activo else "INACTIVO") | insignia }}{% endif %}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" class="vacio">{{ t("catalogo.sin_parametros") }}</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    </div>
+    {% if activa.permisos.puede("configuracion", "crear") %}
+    <form method="post" action="/catalogo/examenes/{{ examen.uuid }}/parametros" class="formulario-fila">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+        <div><label for="nombre_parametro">{{ t("catalogo.parametro") }}</label><input id="nombre_parametro" name="nombre" required maxlength="120"></div>
+        <div><label for="tipo_parametro">{{ t("catalogo.tipo") }}</label><select id="tipo_parametro" name="tipo">{% for tp in tipos_parametro %}<option value="{{ tp }}">{{ t("catalogo.tipo_" ~ tp | lower) }}</option>{% endfor %}</select></div>
+        <div><label for="unidad_parametro">{{ t("catalogo.unidad") }}</label><select id="unidad_parametro" name="unidad"><option value="">{{ t("catalogo.sin_unidad") }}</option>{% for u in unidades %}<option value="{{ u.codigo }}">{{ u.nombre }}</option>{% endfor %}</select></div>
+        <div><label for="orden_parametro">{{ t("catalogo.orden") }}</label><input id="orden_parametro" name="orden" inputmode="numeric" maxlength="4" value="{{ parametros | length + 1 }}"></div>
+        <div><button type="submit" class="secundario">{{ icono("plus") }}{{ t("catalogo.agregar_parametro") }}</button></div>
+    </form>
+    {% endif %}
+</section>
+
+<div class="columnas">
+    <section class="tarjeta">
+        <h2>{{ icono("tag") }} {{ t("catalogo.precios") }}</h2>
+        <div class="tabla-contenedor">
+        <table>
+            <thead><tr><th>{{ t("catalogo.tarifa") }}</th><th class="numero">{{ t("catalogo.valor") }}</th></tr></thead>
+            <tbody>
+            {% for pr in precios %}
+            <tr>
+                <td class="principal">{{ pr.nombre }}<span class="secundario">{{ pr.codigo }}</span></td>
+                <td class="numero">
+                {% if activa.permisos.puede("configuracion", "modificar") %}
+                    <form method="post" action="/catalogo/examenes/{{ examen.uuid }}/precios" class="en-linea">
+                        <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="tarifa" value="{{ pr.codigo }}">
+                        <input name="valor" inputmode="decimal" maxlength="15" value="{{ pr.valor if pr.valor is not none else '' }}" aria-label="{{ t('catalogo.valor') }} {{ pr.nombre }}">
+                        <button type="submit" class="secundario">{{ t("catalogo.guardar") }}</button>
+                    </form>
+                {% elif pr.valor is not none %}{{ pr.valor | dinero(pr.moneda) }}{% endif %}
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="2" class="vacio">{{ t("catalogo.sin_tarifas") }}</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        </div>
+    </section>
+    <section class="tarjeta">
+        <h2>{{ icono("tag") }} {{ t("catalogo.codigos_alternos") }}</h2>
+        <dl class="ficha">
+            {% for c in codigos %}<dt>{{ c.tipo }}</dt><dd>{{ c.codigo }}</dd>{% else %}<dt>{{ t("comun.sin_registros") }}</dt><dd></dd>{% endfor %}
+        </dl>
+    </section>
+</div>
+{% endblock %}

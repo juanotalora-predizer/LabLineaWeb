@@ -6,6 +6,7 @@
 - Pacientes sintéticos (scripts/sinteticos.py) como usuarios del portal en cada laboratorio.
 - Admin Hub: roles de la plataforma y admin@admin.test (ADMIN_MAESTRO), con la misma clave y TOTP.
 - Suscripciones ad honorem vigentes y precios de ejemplo (plan completo, Colombia).
+- Catálogo sintético de Lablinea en lab-a, si aún no tiene exámenes (scripts/lablinea_sintetico.py).
 
     .venv/bin/python scripts/sembrar_desarrollo.py
 """
@@ -23,8 +24,10 @@ from sqlalchemy.pool import NullPool  # noqa: E402
 from app.admin.roles import crear_roles_plataforma  # noqa: E402
 from app.auth import repositorio  # noqa: E402
 from app.auth.roles_sistema import crear_roles_sistema  # noqa: E402
+from app.catalogo import importador  # noqa: E402
 from app.core import db  # noqa: E402
 from app.core.config import get_settings  # noqa: E402
+from scripts.lablinea_sintetico import generar as generar_catalogo  # noqa: E402
 from scripts.sinteticos import generar_personas  # noqa: E402
 
 # (tenant_id, subdominio, nombre, NIT ficticio)
@@ -124,6 +127,12 @@ async def sembrar() -> None:
                     await repositorio.crear_usuario(
                         sesion, email=persona.email, nombre=persona.nombre_completo, tipo="PACIENTE", clave=clave
                     )
+    async with db.sesion_tenant("lab_a") as sesion:
+        if not await sesion.scalar(text("SELECT count(*) FROM lab.examenes")):
+            plan = importador.analizar(
+                importador.leer_paquete(generar_catalogo()), await importador.existentes(sesion), "COP"
+            )
+            await importador.cargar(sesion, plan)
     async with db.sesion_plataforma() as sesion:
         await crear_roles_plataforma(sesion)
         if not await _existe_y_reactivar(sesion, "admin@admin.test"):

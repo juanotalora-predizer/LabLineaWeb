@@ -36,6 +36,18 @@ jobs:
     parameters:
       maxDuration: 5
 
+  # Falsos positivos verificados, acotados a regla y ruta (evidencia en specs/etapas/).
+  # 40018 en los formularios de edición del catálogo (etapa 6): cada POST guarda el texto tal cual (SQL con
+  # parámetros, sin SQL dinámico en app/catalogo) y la página cambia con el dato nuevo; ZAP lo toma como
+  # "más datos". La búsqueda (/catalogo?q=) y el importador quedan fuera del filtro. Prueba:
+  # tests/test_catalogo.py::test_maestros_guardan_inyeccion_sql_como_texto_literal.
+  - type: alertFilter
+    alertFilters:
+      - ruleId: 40018
+        newRisk: False Positive
+        url: https://[a-z0-9.-]+(:[0-9]+)?/catalogo/(maestros|examenes|parametros|rangos|requisitos)/.*
+        urlRegex: true
+
   # Ataques activos: inyecciones, XSS, path traversal, cabeceras, etc.
   - type: activeScan
     parameters:

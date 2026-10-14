@@ -1,0 +1,16 @@
+<input type="hidden" name="csrf" value="{{ csrf }}">
+<label for="codigo">{{ t("catalogo.codigo") }}</label>
+<input id="codigo" name="codigo" required maxlength="20" value="{{ examen.codigo or '' }}">
+<label for="nombre">{{ t("catalogo.nombre") }}</label>
+<input id="nombre" name="nombre" required minlength="2" maxlength="120" value="{{ examen.nombre or '' }}">
+<label for="seccion_examen">{{ t("catalogo.seccion") }}</label>
+<select id="seccion_examen" name="seccion" required>{% for s in secciones %}<option value="{{ s.codigo }}" {% if examen.seccion == s.codigo %}selected{% endif %}>{{ s.nombre }}</option>{% endfor %}</select>
+<label for="tecnica">{{ t("catalogo.tecnica") }}</label>
+<select id="tecnica" name="tecnica"><option value="">{{ t("catalogo.sin_tecnica") }}</option>{% for tc in tecnicas %}<option value="{{ tc.nombre }}" {% if examen.tecnica == tc.nombre %}selected{% endif %}>{{ tc.nombre }}</option>{% endfor %}</select>
+<label for="codigo_nacional">{{ terminologia }}</label>
+<input id="codigo_nacional" name="codigo_nacional" maxlength="20" value="{{ examen.codigo_nacional or '' }}">
+<label for="loinc">{{ t("catalogo.loinc") }}</label>
+<input id="loinc" name="loinc" maxlength="10" pattern="[0-9]{1,7}-[0-9]" value="{{ examen.loinc or '' }}">
+<label for="dias">{{ t("catalogo.dias_procesamiento") }}</label>
+<input id="dias" name="dias_procesamiento" maxlength="30" value="{{ examen.dias or '' }}">
+<label class="opcion"><input type="checkbox" name="requiere_autorizacion" value="si" {% if examen.autorizacion %}checked{% endif %}> {{ t("catalogo.requiere_autorizacion") }}</label>

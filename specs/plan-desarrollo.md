@@ -548,7 +548,7 @@ Pruebas específicas:
 
 ### Bloque C — Tenant App
 
-#### Etapa 6 — Catálogo e importador de Lablinea
+#### Etapa 6 — Catálogo e importador de Lablinea · *compuerta local en verde el 2026-10-13, pendiente de la CI ([informe](etapas/etapa-06.md))*
 
 Pasos:
 1. Exámenes, parámetros, unidades, listas de valores, técnicas, requisitos de muestra, tarifas, códigos CUPS.

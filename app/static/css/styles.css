@@ -634,6 +634,62 @@ ul.error {
     padding-left: var(--e-8);
 }
 
+.aviso.alerta {
+    background: var(--alerta-fondo);
+    color: var(--alerta);
+}
+
+.aviso .icono,
+.error .icono {
+    vertical-align: -4px;
+}
+
+ul.mensajes {
+    margin: 0;
+    padding-left: var(--e-6);
+}
+
+ul.mensajes li {
+    padding: var(--e-1) 0;
+}
+
+/* Formularios en una fila (alta rápida dentro de una tarjeta). */
+.formulario-fila,
+.filtros-formulario {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: var(--e-3);
+    margin-top: var(--e-4);
+}
+
+.formulario-fila > div {
+    flex: 1 1 140px;
+}
+
+.formulario-fila label {
+    margin-top: 0;
+}
+
+.filtros-formulario {
+    margin: 0 0 var(--e-4);
+}
+
+.filtros-formulario input {
+    flex: 1 1 240px;
+    width: auto;
+}
+
+.filtros-formulario select {
+    flex: 0 1 220px;
+    width: auto;
+}
+
+.filtros-formulario button,
+.formulario-fila button {
+    margin-top: 0;
+}
+
 /* ------------------------------------------------------------ formularios */
 
 form label {
