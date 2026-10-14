@@ -1,9 +1,9 @@
 # Informe de cierre — Etapa 7: Pacientes y Ley 1581
 
-- **Fecha de cierre:** pendiente de la CI
-- **Commit verificado:** pendiente
-- **CI:** pendiente
-- **Estado:** Abierta (compuerta local en verde; falta la CI)
+- **Fecha de cierre:** 2026-10-14
+- **Commit verificado:** `0beeb6c`
+- **CI:** ejecución [38586377836](https://github.com/juanotalora-predizer/LabLineaWeb/actions/runs/38586377836), exitosa (incluye las pruebas en Chromium)
+- **Estado:** Cerrada
 
 ## Alcance entregado
 
@@ -39,7 +39,7 @@ Decisiones en [funcional/0010](../funcional/0010-pacientes-ley-1581.md).
 
 | # | Criterio | Resultado | Evidencia |
 |---|----------|-----------|-----------|
-| 1 | Pruebas en verde (local y CI) | ⏳ | 966 pruebas en local (60 de pacientes y 3 de fuzzing nuevas); CI pendiente |
+| 1 | Pruebas en verde (local y CI) | ✅ | 966 pruebas (60 de pacientes y 3 de fuzzing nuevas), local y CI |
 | 2 | Cobertura ≥ 85% | ✅ | 99,0% de líneas y ramas; rutas de pacientes 98%, reglas 100% |
 | 3 | E2E de flujos nuevos | ✅ | Chromium: publicar el texto → registrar con autorización firmada → buscar por documento (no queda en la URL) → abrir la ficha → registrar una solicitud → revocar. Los flujos anteriores siguen en verde |
 | 4 | Migraciones upgrade/downgrade | ✅ | 0008 baja y sube en limpio y con datos (pacientes, autorizaciones y textos sintéticos) |

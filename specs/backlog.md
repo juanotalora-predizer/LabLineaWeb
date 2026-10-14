@@ -6,7 +6,7 @@ Formato: `- [ ] Descripción — prioridad (Alta/Media/Baja) — spec relacionad
 
 ## En curso
 
-- [ ] Etapa 7: pacientes y Ley 1581 — compuerta local en verde, pendiente de la CI — Alta — [informe](etapas/etapa-07.md)
+- [ ] Etapa 8: órdenes y POS — Alta — [plan](plan-desarrollo.md)
 
 ## Pendiente
 
@@ -109,6 +109,8 @@ Formato: `- [ ] Descripción — prioridad (Alta/Media/Baja) — spec relacionad
 - [ ] Análisis de riesgos, políticas, oficial de seguridad, capacitación, notificación de brechas — Media — [0003](infraestructura/0003-seguridad-hipaa.md)
 
 ## Hecho
+
+- [x] **Etapa 7 cerrada** (CI verde, commit `0beeb6c`): pacientes y Ley 1581; 966 pruebas, cobertura 99%, ZAP sin hallazgos altos ni medios en los dos sitios, 15/15 pruebas manuales — 2026-10-14 — [informe](etapas/etapa-07.md)
 
 - [x] Pacientes por documento y país con autorización de tratamiento de datos versionada (la base no guarda un paciente sin ella), revocación, solicitudes del titular con vencimiento en días hábiles, informe del titular, supresión por anonimización y búsqueda sin enumeración — 2026-10-14 — [funcional/0010](funcional/0010-pacientes-ley-1581.md), [informe](etapas/etapa-07.md)
 

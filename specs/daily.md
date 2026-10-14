@@ -23,7 +23,7 @@ Plantilla:
 ## 2026-10-14
 
 **Avances**
-- **Etapa 7 — compuerta local en verde** ([informe](etapas/etapa-07.md), [funcional/0010](funcional/0010-pacientes-ley-1581.md)); falta la CI.
+- **Etapa 7 cerrada** ([informe](etapas/etapa-07.md), [funcional/0010](funcional/0010-pacientes-ley-1581.md)): commit `0beeb6c`, CI verde.
   - Pacientes por tipo y número de documento (expresión válida por país) y país de residencia.
   - Autorización de tratamiento de datos versionada: la base no guarda un paciente sin ella, permite una sola vigente y solo deja revocarla.
   - Representante legal obligatorio para menores.
