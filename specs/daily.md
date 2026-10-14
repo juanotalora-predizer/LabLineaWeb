@@ -23,7 +23,7 @@ Plantilla:
 ## 2026-10-13
 
 **Avances**
-- **Etapa 6 — compuerta local en verde** ([informe](etapas/etapa-06.md), [funcional/0009](funcional/0009-catalogo-e-importador.md)); falta la CI.
+- **Etapa 6 cerrada** ([informe](etapas/etapa-06.md), [funcional/0009](funcional/0009-catalogo-e-importador.md)): commit `c19fed6`, CI verde.
   - Catálogo por laboratorio: maestros, exámenes con CUPS y LOINC, parámetros, listas, requisitos de muestra, precios por tarifa y códigos alternos. Exámenes y parámetros no se borran, se desactivan.
   - Rangos por sexo y edad en días con críticos; advertencias de huecos y solapes (propiedad con hypothesis).
   - Importador de Lablinea: ZIP con las tablas del catálogo en CSV (nunca el `.mdb`), límites estrictos, rechazo de tablas que no son del catálogo, vista previa, carga atómica y rangos importados marcados por revisar.

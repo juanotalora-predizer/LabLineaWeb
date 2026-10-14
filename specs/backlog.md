@@ -6,7 +6,7 @@ Formato: `- [ ] Descripción — prioridad (Alta/Media/Baja) — spec relacionad
 
 ## En curso
 
-- [ ] Etapa 6: catálogo de exámenes e importador de Lablinea — compuerta local en verde, pendiente de la CI — Alta — [informe](etapas/etapa-06.md)
+- [ ] Etapa 7: pacientes y Ley 1581 — Alta — [plan](plan-desarrollo.md)
 
 ## Pendiente
 
@@ -108,6 +108,8 @@ Formato: `- [ ] Descripción — prioridad (Alta/Media/Baja) — spec relacionad
 - [ ] Análisis de riesgos, políticas, oficial de seguridad, capacitación, notificación de brechas — Media — [0003](infraestructura/0003-seguridad-hipaa.md)
 
 ## Hecho
+
+- [x] **Etapa 6 cerrada** (CI verde, commit `c19fed6`): catálogo, rangos e importador de Lablinea; 846 pruebas, cobertura 99,1%, ZAP sin hallazgos altos ni medios en los dos sitios, 17/17 pruebas manuales — 2026-10-13 — [informe](etapas/etapa-06.md)
 
 - [x] Catálogo de exámenes por laboratorio (maestros, exámenes con CUPS y LOINC, parámetros, listas, requisitos de muestra, precios por tarifa y códigos alternos), rangos de referencia por sexo y edad en días con críticos y advertencias de huecos y solapes, importador de Lablinea (ZIP de CSV, límites estrictos, vista previa, carga atómica, rangos marcados por revisar) y exportación CSV sin fórmulas — 2026-10-13 — [funcional/0009](funcional/0009-catalogo-e-importador.md), [informe](etapas/etapa-06.md)
 

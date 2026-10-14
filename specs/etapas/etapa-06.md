@@ -1,9 +1,9 @@
 # Informe de cierre — Etapa 6: Catálogo e importador de Lablinea
 
-- **Fecha de cierre:** pendiente de la CI
-- **Commit verificado:** pendiente
-- **CI:** pendiente
-- **Estado:** Abierta (compuerta local en verde; falta la CI)
+- **Fecha de cierre:** 2026-10-13
+- **Commit verificado:** `c19fed6`
+- **CI:** ejecución [38496107468](https://github.com/juanotalora-predizer/LabLineaWeb/actions/runs/38496107468), exitosa (incluye las pruebas en Chromium)
+- **Estado:** Cerrada
 
 ## Alcance entregado
 
@@ -32,7 +32,7 @@ Decisiones en [funcional/0009](../funcional/0009-catalogo-e-importador.md).
 
 | # | Criterio | Resultado | Evidencia |
 |---|----------|-----------|-----------|
-| 1 | Pruebas en verde (local y CI) | ⏳ | 846 pruebas en local (114 del catálogo y el importador, más fuzzing y diseño); CI pendiente |
+| 1 | Pruebas en verde (local y CI) | ✅ | 846 pruebas (114 del catálogo y el importador, más fuzzing y diseño), local y CI |
 | 2 | Cobertura ≥ 85% | ✅ | 99,1% de líneas y ramas; importador 99%, rutas del catálogo 99% |
 | 3 | E2E de flujos nuevos | ✅ | Chromium: subir la exportación → vista previa con "por revisar" → cargar → el catálogo aparece → rango por sexo y edad en la hemoglobina → marcar revisado el importado. Los flujos anteriores siguen en verde |
 | 4 | Migraciones upgrade/downgrade | ✅ | 0007 baja y sube en limpio, también con datos (catálogo importado y datos del escaneo ZAP) |
