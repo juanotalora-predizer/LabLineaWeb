@@ -3,17 +3,25 @@
 {% block title %}{{ t("facturas.titulo") }} · {{ sitio.nombre_comercial }}{% endblock %}
 
 {% block content %}
-<h1>{{ t("facturas.titulo") }}</h1>
+<div class="encabezado">
+    <h1>{{ t("facturas.titulo") }}</h1>
+</div>
 <p class="filtros">
     <a href="/facturas">{{ t("facturas.todas") }}</a>
     {% for e in estados %} · <a href="/facturas?estado={{ e }}" {% if filtro == e %}aria-current="true"{% endif %}>{{ e }}</a>{% endfor %}
 </p>
+<section class="tarjeta">
+<div class="tabla-contenedor">
 <table>
-    <thead><tr><th>{{ t("facturas.numero") }}</th><th>{{ t("facturas.laboratorio") }}</th><th>{{ t("suscripcion.licencia") }}</th><th>{{ t("facturas.total") }}</th><th>{{ t("facturas.saldo") }}</th><th>{{ t("facturas.estado") }}</th><th>{{ t("facturas.vence") }}</th></tr></thead>
+    <thead><tr><th>{{ t("facturas.numero") }}</th><th>{{ t("facturas.laboratorio") }}</th><th>{{ t("suscripcion.licencia") }}</th><th class="numero">{{ t("facturas.total") }}</th><th class="numero">{{ t("facturas.saldo") }}</th><th>{{ t("facturas.estado") }}</th><th>{{ t("facturas.vence") }}</th></tr></thead>
     <tbody>
     {% for f in facturas %}
-    <tr><td><a href="/facturas/{{ f.uuid }}">{{ f.numero }}</a></td><td>{{ f.laboratorio }}</td><td>{{ f.tipo_licencia }}</td><td>{{ f.total | dinero(f.moneda) }}</td><td>{{ f.saldo | dinero(f.moneda) }}</td><td>{{ f.estado }}</td><td>{{ f.vence_en | fecha("fecha") }}</td></tr>
+    <tr><td class="principal"><a href="/facturas/{{ f.uuid }}">{{ f.numero }}</a></td><td>{{ f.laboratorio }}</td><td>{{ f.tipo_licencia }}</td><td class="numero">{{ f.total | dinero(f.moneda) }}</td><td class="numero">{{ f.saldo | dinero(f.moneda) }}</td><td>{{ f.estado | insignia }}</td><td>{{ f.vence_en | fecha("fecha") }}</td></tr>
+    {% else %}
+    <tr><td colspan="7" class="vacio">{{ t("comun.sin_registros") }}</td></tr>
     {% endfor %}
     </tbody>
 </table>
+</div>
+</section>
 {% endblock %}

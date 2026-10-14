@@ -394,7 +394,7 @@ def test_flujo_de_facturacion_en_el_admin_hub(buzon):
     assert pagina.status_code == 200 and "COP 119.000,00" in pagina.text  # 100.000 + 19% IVA
     datos = {"valor": "19000", "medio": "TRANSFERENCIA", "referencia": "TRX-1", "recibido_en": date.today().isoformat()}
     assert c.post(f"{ruta}/pagos", data={**datos, "csrf": csrf(c, ruta)}).status_code == 303
-    assert "PAGADA_PARCIAL" in c.get(ruta).text
+    assert "Pago parcial" in c.get(ruta).text  # insignia con el texto del estado
     for malo in ({"valor": "1,5"}, {"valor": "200000"}, {"recibido_en": "ayer"}, {"medio": "TRUEQUE"}):
         respuesta = c.post(f"{ruta}/pagos", data={**datos, **malo, "csrf": csrf(c, ruta)})
         assert respuesta.status_code == 400
@@ -488,5 +488,5 @@ def test_anulaciones_desde_el_admin_hub(buzon):
         == 303
     )
     assert c.post(f"{ruta}/anular", data={"motivo": "Prueba de anulación", "csrf": csrf(c, ruta)}).status_code == 303
-    assert "ANULADA" in c.get(ruta).text
+    assert 'insignia peligro">Anulada' in c.get(ruta).text
     assert c.get("/facturas/00000000-0000-0000-0000-000000000000").status_code == 404

@@ -3,7 +3,9 @@
 {% block title %}{{ sitio.nombre_comercial }} · {{ t("app.nombre") }}{% endblock %}
 
 {% block content %}
-<h1>{{ sitio.nombre_comercial }}</h1>
-<p>{{ t("inicio.descripcion") }}</p>
-<p><a class="boton" href="/ingresar">{{ t("inicio.ingresar") }}</a></p>
+<section class="tarjeta">
+    <h1>{{ sitio.nombre_comercial }}</h1>
+    <p class="nota">{{ t("inicio.descripcion") }}</p>
+    <a class="boton" href="/ingresar">{{ icono("log-out") }}{{ t("inicio.ingresar") }}</a>
+</section>
 {% endblock %}

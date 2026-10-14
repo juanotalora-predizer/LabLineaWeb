@@ -3,33 +3,47 @@
 {% block title %}{{ factura.numero }} · {{ sitio.nombre_comercial }}{% endblock %}
 
 {% block content %}
-<h1>{{ t("facturas.factura") }} {{ factura.numero }}</h1>
+<div class="encabezado">
+    <h1>{{ t("facturas.factura") }} {{ factura.numero }}</h1>
+    {{ factura.estado | insignia }}
+</div>
 {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
-<p class="nota">{{ t("facturas.nota_electronica") }}</p>
-<dl class="ficha">
-    <dt>{{ t("facturas.laboratorio") }}</dt><dd><a href="/laboratorios/{{ factura.laboratorio_uuid }}">{{ factura.laboratorio }}</a></dd>
-    <dt>{{ t("suscripcion.licencia") }}</dt><dd>{{ factura.tipo_licencia }}</dd>
-    <dt>{{ t("facturas.periodo") }}</dt><dd>{{ factura.periodo_desde | fecha("fecha") }} – {{ factura.periodo_hasta | fecha("fecha") }}</dd>
-    <dt>{{ t("facturas.valor_lista") }}</dt><dd>{{ factura.valor_lista | dinero(factura.moneda) }}</dd>
-    {% if factura.descuento %}<dt>{{ t("facturas.descuento") }} ({{ factura.descuento_porcentaje }} %{% if factura.campana %}, {{ factura.campana }}{% endif %})</dt><dd>{{ factura.descuento | dinero(factura.moneda) }}</dd>{% endif %}
-    <dt>{{ t("facturas.subtotal") }}</dt><dd>{{ factura.subtotal | dinero(factura.moneda) }}</dd>
-    <dt>{{ t("facturas.impuesto") }} ({{ factura.impuesto_porcentaje }} %)</dt><dd>{{ factura.impuesto | dinero(factura.moneda) }}</dd>
-    <dt>{{ t("facturas.total") }}</dt><dd><strong>{{ factura.total | dinero(factura.moneda) }}</strong></dd>
-    <dt>{{ t("facturas.saldo") }}</dt><dd><strong>{{ factura.saldo | dinero(factura.moneda) }}</strong></dd>
-    <dt>{{ t("facturas.estado") }}</dt><dd>{{ factura.estado }}</dd>
-    <dt>{{ t("facturas.emitida") }}</dt><dd>{{ factura.emitida_en | fecha }}</dd>
-    <dt>{{ t("facturas.vence") }}</dt><dd>{{ factura.vence_en | fecha("fecha") }}</dd>
-    {% if factura.motivo_anulacion %}<dt>{{ t("facturas.motivo_anulacion") }}</dt><dd>{{ factura.motivo_anulacion }}</dd>{% endif %}
-</dl>
+<div class="columnas">
+    <section class="tarjeta">
+        <h2>{{ icono("file-text") }} {{ t("facturas.detalle") }}</h2>
+        <dl class="ficha">
+            <dt>{{ t("facturas.laboratorio") }}</dt><dd><a href="/laboratorios/{{ factura.laboratorio_uuid }}">{{ factura.laboratorio }}</a></dd>
+            <dt>{{ t("suscripcion.licencia") }}</dt><dd>{{ factura.tipo_licencia }}</dd>
+            <dt>{{ t("facturas.periodo") }}</dt><dd>{{ factura.periodo_desde | fecha("fecha") }} – {{ factura.periodo_hasta | fecha("fecha") }}</dd>
+            <dt>{{ t("facturas.emitida") }}</dt><dd>{{ factura.emitida_en | fecha }}</dd>
+            <dt>{{ t("facturas.vence") }}</dt><dd>{{ factura.vence_en | fecha("fecha") }}</dd>
+            {% if factura.motivo_anulacion %}<dt>{{ t("facturas.motivo_anulacion") }}</dt><dd>{{ factura.motivo_anulacion }}</dd>{% endif %}
+        </dl>
+        <p class="nota">{{ t("facturas.nota_electronica") }}</p>
+    </section>
+    <section class="tarjeta">
+        <h2>{{ icono("credit-card") }} {{ t("facturas.valores") }}</h2>
+        <dl class="ficha cifras">
+            <dt>{{ t("facturas.valor_lista") }}</dt><dd>{{ factura.valor_lista | dinero(factura.moneda) }}</dd>
+            {% if factura.descuento %}<dt>{{ t("facturas.descuento") }} ({{ factura.descuento_porcentaje }} %{% if factura.campana %}, {{ factura.campana }}{% endif %})</dt><dd>{{ factura.descuento | dinero(factura.moneda) }}</dd>{% endif %}
+            <dt>{{ t("facturas.subtotal") }}</dt><dd>{{ factura.subtotal | dinero(factura.moneda) }}</dd>
+            <dt>{{ t("facturas.impuesto") }} ({{ factura.impuesto_porcentaje }} %)</dt><dd>{{ factura.impuesto | dinero(factura.moneda) }}</dd>
+            <dt>{{ t("facturas.total") }}</dt><dd><strong>{{ factura.total | dinero(factura.moneda) }}</strong></dd>
+            <dt>{{ t("facturas.saldo") }}</dt><dd><strong>{{ factura.saldo | dinero(factura.moneda) }}</strong></dd>
+        </dl>
+    </section>
+</div>
 
-<h2>{{ t("facturas.pagos") }}</h2>
+<section class="tarjeta">
+<h2>{{ icono("credit-card") }} {{ t("facturas.pagos") }}</h2>
+<div class="tabla-contenedor">
 <table>
     <thead><tr><th>{{ t("facturas.recibido") }}</th><th>{{ t("facturas.valor") }}</th><th>{{ t("facturas.medio") }}</th><th>{{ t("facturas.referencia") }}</th><th>{{ t("facturas.estado") }}</th><th></th></tr></thead>
     <tbody>
     {% for p in pagos %}
     <tr>
         <td>{{ p.recibido_en }}</td><td>{{ p.valor | dinero(factura.moneda) }}</td><td>{{ p.medio }}</td><td>{{ p.referencia or "" }}</td>
-        <td>{% if p.anulado_en %}{{ t("facturas.pago_anulado") }}: {{ p.motivo_anulacion }}{% else %}{{ t("facturas.pago_vigente") }}{% endif %}</td>
+        <td>{% if p.anulado_en %}{{ "ANULADO" | insignia }}<span class="secundario">{{ p.motivo_anulacion }}</span>{% else %}{{ "VIGENTE" | insignia }}{% endif %}</td>
         <td>
         {% if not p.anulado_en and activa.permisos.puede("facturacion", "eliminar") %}
             <form method="post" action="/facturas/{{ factura.uuid }}/pagos/{{ p.uuid }}/anular" class="en-linea">
@@ -40,9 +54,13 @@
         {% endif %}
         </td>
     </tr>
+    {% else %}
+    <tr><td colspan="6" class="vacio">{{ t("comun.sin_registros") }}</td></tr>
     {% endfor %}
     </tbody>
 </table>
+</div>
+</section>
 
 {% if factura.estado in ("PENDIENTE", "PAGADA_PARCIAL") and activa.permisos.puede("facturacion", "crear") %}
 <section class="tarjeta ancha">

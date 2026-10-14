@@ -3,13 +3,19 @@
 {% block title %}{{ t("usuarios.titulo") }} · {{ sitio.nombre_comercial }}{% endblock %}
 
 {% block content %}
-<h1>{{ t("usuarios.titulo_plataforma") }}</h1>
+<div class="encabezado">
+    <h1>{{ t("usuarios.titulo_plataforma") }}</h1>
+</div>
+<section class="tarjeta">
+<div class="tabla-contenedor">
 <table>
-    <thead><tr><th>{{ t("usuarios.nombre") }}</th><th>{{ t("usuarios.correo") }}</th><th>{{ t("usuarios.roles") }}</th><th>{{ t("usuarios.estado") }}</th></tr></thead>
+    <thead><tr><th>{{ t("usuarios.nombre") }}</th><th>{{ t("usuarios.roles") }}</th><th>{{ t("usuarios.estado") }}</th></tr></thead>
     <tbody>
     {% for u in usuarios %}
-    <tr><td>{{ u.nombre }}</td><td>{{ u.email }}</td><td>{{ u.roles }}</td><td>{{ u.estado }}</td></tr>
+    <tr><td class="principal">{{ u.nombre }}<span class="secundario">{{ u.email }}</span></td><td>{{ u.roles }}</td><td>{{ u.estado | insignia }}</td></tr>
     {% endfor %}
     </tbody>
 </table>
+</div>
+</section>
 {% endblock %}

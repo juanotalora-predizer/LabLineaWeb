@@ -3,7 +3,7 @@
 {% block title %}{{ t("usuarios.invitar") }} · {{ sitio.nombre_comercial }}{% endblock %}
 
 {% block content %}
-<section class="tarjeta">
+<section class="tarjeta ancha">
     <h1>{{ t("usuarios.invitar") }}</h1>
     {% if errores %}<ul class="error" role="alert">{% for e in errores %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
     <p>{{ t("usuarios.explicacion_invitacion") }}</p>

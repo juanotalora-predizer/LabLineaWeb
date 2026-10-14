@@ -3,16 +3,33 @@
 {% block title %}{{ t("panel.titulo") }} · {{ sitio.nombre_comercial }}{% endblock %}
 
 {% block content %}
-<h1>{{ t("panel.saludo", nombre=activa.usuario.nombre) }}</h1>
+<div class="encabezado">
+    <h1>{{ t("panel.saludo", nombre=activa.usuario.nombre) }}</h1>
+</div>
 {% if activa.permisos.roles %}
-<p>{{ t("panel.roles", roles=activa.permisos.roles | join(", ")) }}</p>
-<h2>{{ t("panel.modulos") }}</h2>
-<ul class="modulos">
-    {% for modulo, operaciones in activa.permisos.modulos | dictsort %}
-    <li>{{ modulo }} <small>({{ operaciones | sort | join(", ") }})</small></li>
-    {% endfor %}
-</ul>
+<div class="rejilla">
+    {% if sitio.tenant_id %}
+    {% if activa.permisos.puede("usuarios", "consultar") %}<a class="tarjeta acceso" href="/configuracion/usuarios">{{ icono("users") }}<span>{{ t("menu.usuarios") }}<small>{{ t("panel.acceso_usuarios") }}</small></span></a>{% endif %}
+    {% if "AUTORIZAR_SOPORTE" in activa.permisos.acciones %}<a class="tarjeta acceso" href="/configuracion/soporte">{{ icono("life-buoy") }}<span>{{ t("menu.soporte") }}<small>{{ t("panel.acceso_soporte") }}</small></span></a>{% endif %}
+    {% else %}
+    {% if activa.permisos.puede("laboratorios", "consultar") %}<a class="tarjeta acceso" href="/laboratorios">{{ icono("building-2") }}<span>{{ t("menu.laboratorios") }}<small>{{ t("panel.acceso_laboratorios") }}</small></span></a>{% endif %}
+    {% if activa.permisos.puede("planes", "consultar") %}<a class="tarjeta acceso" href="/planes">{{ icono("layers") }}<span>{{ t("menu.planes") }}<small>{{ t("panel.acceso_planes") }}</small></span></a>{% endif %}
+    {% if activa.permisos.puede("facturacion", "consultar") %}<a class="tarjeta acceso" href="/facturas">{{ icono("receipt") }}<span>{{ t("menu.facturas") }}<small>{{ t("panel.acceso_facturas") }}</small></span></a>{% endif %}
+    {% if activa.permisos.puede("soporte", "consultar") %}<a class="tarjeta acceso" href="/soporte">{{ icono("life-buoy") }}<span>{{ t("menu.soporte") }}<small>{{ t("panel.acceso_soporte_plataforma") }}</small></span></a>{% endif %}
+    {% endif %}
+</div>
+<section class="tarjeta">
+    <h2>{{ t("panel.modulos") }}</h2>
+    <p class="nota">{{ t("panel.roles", roles=activa.permisos.roles | join(", ")) }}</p>
+    <dl class="ficha">
+        {% for modulo, operaciones in activa.permisos.modulos | dictsort %}
+        <dt>{{ modulo }}</dt><dd>{{ operaciones | sort | join(", ") }}</dd>
+        {% endfor %}
+    </dl>
+</section>
 {% else %}
-<p>{{ t("panel.sin_roles") }}</p>
+<section class="tarjeta">
+    <p>{{ t("panel.sin_roles") }}</p>
+</section>
 {% endif %}
 {% endblock %}

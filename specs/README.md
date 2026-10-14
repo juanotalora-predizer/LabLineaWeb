@@ -49,3 +49,4 @@ Registro de decisiones del proyecto LabLineaWeb.
 | 0005 | [Plataforma SaaS: laboratorios, licencias y facturación](funcional/0005-plataforma-saas-suscripciones.md) | Aceptada | 2026-10-12 |
 | 0006 | [Gestión: inventarios, costeo y dashboard](funcional/0006-gestion-inventarios-costos-dashboard.md) | Aceptada (dashboard en el MVP) | 2026-10-12 |
 | 0007 | [Alcance del MVP](funcional/0007-alcance-mvp.md) | Aceptada | 2026-10-12 |
+| 0008 | [Sistema de diseño de la interfaz](funcional/0008-sistema-de-diseno.md) | Aceptada | 2026-10-13 |

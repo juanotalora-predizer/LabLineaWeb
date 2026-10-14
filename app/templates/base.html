@@ -5,39 +5,62 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="referrer" content="same-origin">
     <title>{% block title %}{{ t("app.nombre") }}{% endblock %}</title>
+    <link rel="preload" href="{{ url_for('static', path='fonts/inter-latin.woff2') }}" as="font" type="font/woff2" crossorigin>
     <link rel="stylesheet" href="{{ url_for('static', path='css/styles.css') }}">
 </head>
+{% macro item(ruta, nombre_icono, texto) -%}
+<a href="{{ ruta }}"{% if request.url.path == ruta or request.url.path.startswith(ruta ~ "/") %} aria-current="page"{% endif %}>{{ icono(nombre_icono) }}<span>{{ texto }}</span></a>
+{%- endmacro %}
+{% if activa %}
 <body>
-    <header>
-        <a href="/">{% if sitio %}{{ sitio.nombre_comercial }}{% else %}{{ t("app.nombre") }}{% endif %}</a>
-        {% if activa %}
-        <nav>
-            <span class="usuario">{{ activa.usuario.nombre }}</span>
-            <a href="/panel">{{ t("menu.panel") }}</a>
+<div class="aplicacion">
+    <aside class="lateral">
+        <a class="marca" href="/panel">{{ icono("flask-conical") }}<span>{{ t("app.nombre") }}</span></a>
+        <nav class="menu" aria-label="{{ t('menu.principal') }}">
+            {{ item("/panel", "layout-dashboard", t("menu.panel")) }}
             {% if sitio.tenant_id %}
-            {% if activa.permisos.puede("usuarios", "consultar") %}<a href="/configuracion/usuarios">{{ t("menu.usuarios") }}</a>{% endif %}
-            {% if "AUTORIZAR_SOPORTE" in activa.permisos.acciones %}<a href="/configuracion/soporte">{{ t("menu.soporte") }}</a>{% endif %}
+            {% if activa.permisos.puede("usuarios", "consultar") %}{{ item("/configuracion/usuarios", "users", t("menu.usuarios")) }}{% endif %}
+            {% if "AUTORIZAR_SOPORTE" in activa.permisos.acciones %}{{ item("/configuracion/soporte", "life-buoy", t("menu.soporte")) }}{% endif %}
             {% else %}
-            {% if activa.permisos.puede("laboratorios", "consultar") %}<a href="/laboratorios">{{ t("menu.laboratorios") }}</a>{% endif %}
-            {% if activa.permisos.puede("planes", "consultar") %}<a href="/planes">{{ t("menu.planes") }}</a>{% endif %}
-            {% if activa.permisos.puede("facturacion", "consultar") %}<a href="/facturas">{{ t("menu.facturas") }}</a><a href="/precios">{{ t("menu.precios") }}</a>{% endif %}
-            {% if activa.permisos.puede("soporte", "consultar") %}<a href="/soporte">{{ t("menu.soporte") }}</a>{% endif %}
-            {% if activa.permisos.puede("usuarios", "consultar") %}<a href="/plataforma/usuarios">{{ t("menu.usuarios") }}</a>{% endif %}
+            {% if activa.permisos.puede("laboratorios", "consultar") %}{{ item("/laboratorios", "building-2", t("menu.laboratorios")) }}{% endif %}
+            {% if activa.permisos.puede("planes", "consultar") %}{{ item("/planes", "layers", t("menu.planes")) }}{% endif %}
+            {% if activa.permisos.puede("facturacion", "consultar") %}{{ item("/facturas", "receipt", t("menu.facturas")) }}{{ item("/precios", "tag", t("menu.precios")) }}{% endif %}
+            {% if activa.permisos.puede("soporte", "consultar") %}{{ item("/soporte", "life-buoy", t("menu.soporte")) }}{% endif %}
+            {% if activa.permisos.puede("usuarios", "consultar") %}{{ item("/plataforma/usuarios", "users", t("menu.usuarios")) }}{% endif %}
             {% endif %}
-            <form method="post" action="/salir" class="en-linea">
-                <input type="hidden" name="csrf" value="{{ csrf }}">
-                <button type="submit">{{ t("menu.salir") }}</button>
-            </form>
         </nav>
-        {% endif %}
-    </header>
-    {% if activa and activa.usuario.tipo == "SOPORTE" %}<p class="franja soporte" role="status">{{ t("soporte.franja") }}</p>{% endif %}
-    {% if activa and sitio.tenant_id and not sitio.suscripcion_vigente %}<p class="franja alerta" role="alert">{{ t("suscripcion.franja_" ~ sitio.suscripcion_estado | lower) }}</p>{% endif %}
-    <main>
-        {% block content %}{% endblock %}
-    </main>
-    <footer>
-        <small>{{ t("app.pie") }}</small>
-    </footer>
+        <form method="post" action="/salir" class="salir">
+            <input type="hidden" name="csrf" value="{{ csrf }}">
+            <button type="submit">{{ icono("log-out") }}<span>{{ t("menu.salir") }}</span></button>
+        </form>
+    </aside>
+    <div class="contenido">
+        <header class="superior">
+            <span class="sitio">{{ sitio.nombre_comercial }}</span>
+            <div class="usuario-chip">
+                <span class="avatar" aria-hidden="true">{{ activa.usuario.nombre | iniciales }}</span>
+                <span class="textos">
+                    <span class="nombre">{{ activa.usuario.nombre }}</span>
+                    <span class="rol">{% if sitio.tenant_id %}{{ t("tipos_usuario." ~ activa.usuario.tipo | lower) }}{% else %}{{ t("tipos_usuario.plataforma") }}{% endif %}</span>
+                </span>
+            </div>
+        </header>
+        {% if activa.usuario.tipo == "SOPORTE" %}<p class="franja soporte" role="status">{{ icono("shield-check") }}{{ t("soporte.franja") }}</p>{% endif %}
+        {% if sitio.tenant_id and not sitio.suscripcion_vigente %}<p class="franja alerta" role="alert">{{ icono("triangle-alert") }}{{ t("suscripcion.franja_" ~ sitio.suscripcion_estado | lower) }}</p>{% endif %}
+        <main>
+            {% block content %}{% endblock %}
+        </main>
+        <footer class="pie">{{ t("app.pie") }}</footer>
+    </div>
+</div>
 </body>
+{% else %}
+<body class="publica">
+    <a class="marca" href="/">{{ icono("flask-conical") }}<span>{% if sitio %}{{ sitio.nombre_comercial }}{% else %}{{ t("app.nombre") }}{% endif %}</span></a>
+    <main>
+        {% block publico %}{{ self.content() }}{% endblock %}
+    </main>
+    <footer class="pie">{{ t("app.pie") }}</footer>
+</body>
+{% endif %}
 </html>

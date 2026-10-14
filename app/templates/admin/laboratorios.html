@@ -3,14 +3,22 @@
 {% block title %}{{ t("laboratorios.titulo") }} · {{ sitio.nombre_comercial }}{% endblock %}
 
 {% block content %}
-<h1>{{ t("laboratorios.titulo") }}</h1>
-{% if activa.permisos.puede("laboratorios", "crear") %}<p><a class="boton" href="/laboratorios/nuevo">{{ t("laboratorios.nuevo") }}</a></p>{% endif %}
+<div class="encabezado">
+    <h1>{{ t("laboratorios.titulo") }}</h1>
+    {% if activa.permisos.puede("laboratorios", "crear") %}<a class="boton" href="/laboratorios/nuevo">{{ icono("plus") }}{{ t("laboratorios.nuevo") }}</a>{% endif %}
+</div>
+<section class="tarjeta">
+<div class="tabla-contenedor">
 <table>
-    <thead><tr><th>{{ t("laboratorios.nombre") }}</th><th>{{ t("laboratorios.subdominio") }}</th><th>{{ t("laboratorios.pais") }}</th><th>{{ t("laboratorios.plan") }}</th><th>{{ t("laboratorios.estado") }}</th><th>{{ t("laboratorios.creado") }}</th></tr></thead>
+    <thead><tr><th>{{ t("laboratorios.nombre") }}</th><th>{{ t("laboratorios.pais") }}</th><th>{{ t("laboratorios.plan") }}</th><th>{{ t("laboratorios.estado") }}</th><th>{{ t("laboratorios.creado") }}</th></tr></thead>
     <tbody>
     {% for l in laboratorios %}
-    <tr><td><a href="/laboratorios/{{ l.uuid }}">{{ l.nombre_comercial }}</a></td><td>{{ l.subdominio }}</td><td>{{ l.pais }}</td><td>{{ l.plan }}</td><td>{{ l.estado }}</td><td>{{ l.creado_en | fecha("fecha") }}</td></tr>
+    <tr><td class="principal"><a href="/laboratorios/{{ l.uuid }}">{{ l.nombre_comercial }}</a><span class="secundario">{{ l.subdominio }}</span></td><td>{{ l.pais }}</td><td>{{ l.plan }}</td><td>{{ l.estado | insignia }}</td><td>{{ l.creado_en | fecha("fecha") }}</td></tr>
+    {% else %}
+    <tr><td colspan="5" class="vacio">{{ t("comun.sin_registros") }}</td></tr>
     {% endfor %}
     </tbody>
 </table>
+</div>
+</section>
 {% endblock %}

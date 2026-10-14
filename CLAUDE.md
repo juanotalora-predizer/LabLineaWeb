@@ -20,6 +20,11 @@ Los documentos originales de la descripción funcional están en [specs/fuentes/
 - PostgreSQL 16+ con SQLAlchemy 2 async + asyncpg; migraciones con Alembic ([infraestructura/0007](specs/infraestructura/0007-base-de-datos.md)).
 - PDF de resultados con WeasyPrint desde plantillas Jinja2. Etiquetas en ZPL impresas con QZ Tray.
 - Rutas en `app/`, plantillas en `app/templates/` (heredan de `base.html`), estáticos en `app/static/`.
+- **Diseño** ([funcional/0008](specs/funcional/0008-sistema-de-diseno.md), obligatorio en toda pantalla):
+  - Colores solo como tokens de `:root` en `app/static/css/styles.css`; contraste AA. `tests/test_diseno.py` lo verifica.
+  - Componentes: `.encabezado` (título y acción), `.tarjeta`, `.columnas`, `.ficha`, tabla dentro de `.tarjeta` > `.tabla-contenedor` con estado vacío, `{{ estado | insignia }}`, `{{ icono("nombre") }}` y botones primario, `.secundario`, `.terciario` o `.peligro`.
+  - Tipografía Inter e íconos Lucide propios (sin CDN). Un ícono nuevo se agrega al sprite con `scripts/construir_iconos.py`.
+  - El color nunca es la única señal: todo estado lleva texto. Sin estilos ni scripts en línea.
 - No introducir frameworks de frontend (React, Vue, etc.), otros frameworks web ni nuevas dependencias sin una spec aceptada que lo respalde.
 - Dependencias en `requirements.txt` (producción) y `requirements-dev.txt` (desarrollo), con rango de versión acotado.
 

@@ -3,16 +3,24 @@
 {% block title %}{{ t("precios.titulo") }} · {{ sitio.nombre_comercial }}{% endblock %}
 
 {% block content %}
-<h1>{{ t("precios.titulo") }}</h1>
+<div class="encabezado">
+    <h1>{{ t("precios.titulo") }}</h1>
+</div>
 {% if errores %}<ul class="error" role="alert">{% for e in errores %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+<section class="tarjeta">
+<div class="tabla-contenedor">
 <table>
     <thead><tr><th>{{ t("laboratorios.pais") }}</th><th>{{ t("laboratorios.plan") }}</th><th>{{ t("suscripcion.licencia") }}</th><th>{{ t("precios.valor") }}</th><th>{{ t("precios.vigente_desde") }}</th></tr></thead>
     <tbody>
     {% for p in precios %}
     <tr><td>{{ p.pais }}</td><td>{{ p.plan }}</td><td>{{ p.tipo_licencia }}</td><td>{{ p.valor | dinero(p.moneda) }}</td><td>{{ p.vigente_desde }}</td></tr>
+    {% else %}
+    <tr><td colspan="5" class="vacio">{{ t("comun.sin_registros") }}</td></tr>
     {% endfor %}
     </tbody>
 </table>
+</div>
+</section>
 {% if activa.permisos.puede("facturacion", "crear") %}
 <section class="tarjeta ancha">
     <h2>{{ t("precios.nuevo") }}</h2>
@@ -36,20 +44,26 @@
 {% endif %}
 
 <h2>{{ t("campanas.titulo") }}</h2>
+<section class="tarjeta">
+<div class="tabla-contenedor">
 <table>
     <thead><tr><th>{{ t("campanas.nombre") }}</th><th>{{ t("campanas.porcentaje") }}</th><th>{{ t("suscripcion.licencia") }}</th><th>{{ t("campanas.vigencia") }}</th><th>{{ t("campanas.estado") }}</th><th></th></tr></thead>
     <tbody>
     {% for c in campanas %}
     <tr>
         <td>{{ c.nombre }}</td><td>{{ c.porcentaje }} %</td><td>{{ c.tipo_licencia or t("campanas.todas") }}</td><td>{{ c.desde }} – {{ c.hasta }}</td>
-        <td>{% if c.activa %}{{ t("planes.activo") }}{% else %}{{ t("planes.inactivo") }}{% endif %}</td>
+        <td>{{ ("ACTIVA" if c.activa else "INACTIVA") | insignia }}</td>
         <td>{% if c.activa and activa.permisos.puede("facturacion", "modificar") %}
             <form method="post" action="/campanas/{{ c.uuid }}/desactivar" class="en-linea"><input type="hidden" name="csrf" value="{{ csrf }}"><button type="submit" class="secundario">{{ t("campanas.desactivar") }}</button></form>
         {% endif %}</td>
     </tr>
+    {% else %}
+    <tr><td colspan="6" class="vacio">{{ t("comun.sin_registros") }}</td></tr>
     {% endfor %}
     </tbody>
 </table>
+</div>
+</section>
 {% if activa.permisos.puede("facturacion", "crear") %}
 <section class="tarjeta ancha">
     <h2>{{ t("campanas.nueva") }}</h2>

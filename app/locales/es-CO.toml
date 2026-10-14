@@ -19,6 +19,7 @@ origen_no_permitido = "Origen no permitido"
 csrf_invalido = "Token CSRF inválido"
 
 [menu]
+principal = "Menú principal"
 panel = "Panel"
 usuarios = "Usuarios"
 laboratorios = "Laboratorios"
@@ -79,6 +80,12 @@ saludo = "Hola, {nombre}"
 roles = "Roles: {roles}"
 modulos = "Módulos disponibles"
 sin_roles = "Aquí podrá consultar sus resultados cuando estén disponibles."
+acceso_usuarios = "Invitar, consultar y desactivar"
+acceso_soporte = "Autorizar el soporte de la plataforma"
+acceso_laboratorios = "Alta, planes y suscripciones"
+acceso_planes = "Módulos y límites"
+acceso_facturas = "Cobros y pagos"
+acceso_soporte_plataforma = "Laboratorios que autorizaron soporte"
 
 [usuarios]
 titulo = "Usuarios"
@@ -142,6 +149,7 @@ ayuda_administrador = "Recibirá un correo para crear su contraseña. Nadie más
 admin_nombre = "Nombre"
 admin_correo = "Correo"
 crear = "Crear laboratorio"
+datos = "Datos del laboratorio"
 cambiar_plan = "Cambiar de plan"
 guardar_plan = "Guardar plan"
 reenviar_invitacion = "Reenviar la invitación al administrador"
@@ -213,6 +221,8 @@ Los resultados ya emitidos seguirán disponibles."""
 [facturas]
 titulo = "Facturas"
 factura = "Factura"
+detalle = "Detalle"
+valores = "Valores"
 todas = "Todas"
 numero = "Número"
 laboratorio = "Laboratorio"
@@ -311,3 +321,35 @@ tiquete_listo = "El acceso está listo. El enlace sirve una sola vez durante 2 m
 continuar = "Continuar al laboratorio"
 error_horas = "La duración debe estar entre 1 y {maximo} horas."
 error_motivo = "Escriba el motivo (entre 5 y 300 caracteres)."
+
+[tipos_usuario]
+personal = "Personal del laboratorio"
+paciente = "Paciente"
+medico = "Médico"
+soporte = "Soporte de la plataforma"
+plataforma = "Personal de la plataforma"
+
+[comun]
+sin_registros = "No hay registros todavía."
+
+# Textos de los estados que se muestran como insignias (app/core/plantillas.py).
+[estados]
+activo = "Activo"
+activa = "Activa"
+inactivo = "Inactivo"
+inactiva = "Inactiva"
+pendiente = "Pendiente"
+invitacion_pendiente = "Invitación pendiente"
+pagada = "Pagada"
+pagada_parcial = "Pago parcial"
+anulada = "Anulada"
+anulado = "Anulado"
+vigente = "Vigente"
+vencido = "Vencido"
+vencida = "Vencida"
+revocado = "Revocado"
+suspendida = "Suspendida"
+suspendido = "Suspendido"
+cancelada = "Cancelada"
+cancelado = "Cancelado"
+sin_suscripcion = "Sin suscripción"

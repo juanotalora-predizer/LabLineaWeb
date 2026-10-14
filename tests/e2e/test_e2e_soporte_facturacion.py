@@ -90,4 +90,4 @@ def test_registro_de_un_pago_en_el_admin_hub(pagina, servidor):
     pagina.fill("#referencia", "TRX-E2E")
     pagina.click("form[action$='/pagos'] button[type=submit]")
     contenido = pagina.content()
-    assert "PAGADA" in contenido and "TRX-E2E" in contenido
+    assert 'insignia exito">Pagada' in contenido and "TRX-E2E" in contenido

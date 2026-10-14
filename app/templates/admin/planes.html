@@ -3,14 +3,22 @@
 {% block title %}{{ t("planes.titulo") }} · {{ sitio.nombre_comercial }}{% endblock %}
 
 {% block content %}
-<h1>{{ t("planes.titulo") }}</h1>
-{% if activa.permisos.puede("planes", "crear") %}<p><a class="boton" href="/planes/nuevo">{{ t("planes.nuevo") }}</a></p>{% endif %}
+<div class="encabezado">
+    <h1>{{ t("planes.titulo") }}</h1>
+    {% if activa.permisos.puede("planes", "crear") %}<a class="boton" href="/planes/nuevo">{{ icono("plus") }}{{ t("planes.nuevo") }}</a>{% endif %}
+</div>
+<section class="tarjeta">
+<div class="tabla-contenedor">
 <table>
     <thead><tr><th>{{ t("planes.codigo") }}</th><th>{{ t("planes.nombre") }}</th><th>{{ t("planes.max_usuarios") }}</th><th>{{ t("planes.modulos") }}</th><th>{{ t("planes.laboratorios") }}</th><th>{{ t("planes.estado") }}</th></tr></thead>
     <tbody>
     {% for p in planes %}
-    <tr><td><a href="/planes/{{ p.uuid }}">{{ p.codigo }}</a></td><td>{{ p.nombre }}</td><td>{{ p.max_usuarios or t("planes.sin_limite") }}</td><td>{{ p.modulos }}</td><td>{{ p.laboratorios }}</td><td>{% if p.activo %}{{ t("planes.activo") }}{% else %}{{ t("planes.inactivo") }}{% endif %}</td></tr>
+    <tr><td class="principal"><a href="/planes/{{ p.uuid }}">{{ p.codigo }}</a></td><td>{{ p.nombre }}</td><td>{{ p.max_usuarios or t("planes.sin_limite") }}</td><td>{{ p.modulos }}</td><td>{{ p.laboratorios }}</td><td>{{ ("ACTIVO" if p.activo else "INACTIVO") | insignia }}</td></tr>
+    {% else %}
+    <tr><td colspan="6" class="vacio">{{ t("comun.sin_registros") }}</td></tr>
     {% endfor %}
     </tbody>
 </table>
+</div>
+</section>
 {% endblock %}

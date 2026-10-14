@@ -3,8 +3,12 @@
 {% block title %}{{ t("soporte.titulo") }} · {{ sitio.nombre_comercial }}{% endblock %}
 
 {% block content %}
-<h1>{{ t("soporte.titulo") }}</h1>
+<div class="encabezado">
+    <h1>{{ t("soporte.titulo") }}</h1>
+</div>
 <p class="nota">{{ t("soporte.explicacion_plataforma") }}</p>
+<section class="tarjeta">
+<div class="tabla-contenedor">
 <table>
     <thead><tr><th>{{ t("facturas.laboratorio") }}</th><th>{{ t("soporte.motivo") }}</th><th>{{ t("soporte.hasta") }}</th><th></th></tr></thead>
     <tbody>
@@ -20,4 +24,6 @@
     {% endfor %}
     </tbody>
 </table>
+</div>
+</section>
 {% endblock %}

@@ -111,6 +111,8 @@ Formato: `- [ ] Descripción — prioridad (Alta/Media/Baja) — spec relacionad
 
 ## Hecho
 
+- [x] Sistema de diseño a partir de las referencias del usuario (HMLR, Datacapt, eMedico): tokens de color con contraste AA, Inter e íconos Lucide propios, layout con menú lateral, componentes, y todas las pantallas rediseñadas; guardianes automáticos — 2026-10-13 — [funcional/0008](funcional/0008-sistema-de-diseno.md)
+
 - [x] **Etapa 5 cerrada** (CI verde, commit `cc0e1d3`): licencias y suscripciones con vencimiento, suspensión y avisos de renovación; precios, campañas, facturas inmutables con pagos parciales (saldo y estado por trigger, sin sobrepagos ni con concurrencia) que extienden la suscripción; acceso de soporte autorizado por el laboratorio, de solo lectura, con tiquete de un solo uso y cada petición auditada — 2026-10-13 — [informe](etapas/etapa-05.md)
 
 - [x] **Etapa 4 cerrada** (CI verde, commit `14bc0d3`): Admin Hub con ingreso propio y TOTP, roles de plataforma, alta atómica de laboratorios con invitación al administrador, planes con módulos y máximo de usuarios, invitar y desactivar usuarios del laboratorio; 435 pruebas, cobertura 99,5%, ZAP sin hallazgos en los dos sitios, 14/14 pruebas manuales — 2026-10-13 — [informe](etapas/etapa-04.md)

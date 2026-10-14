@@ -3,25 +3,33 @@
 {% block title %}{{ t("usuarios.titulo") }} · {{ sitio.nombre_comercial }}{% endblock %}
 
 {% block content %}
-<h1>{{ t("usuarios.titulo") }}</h1>
-{% if activa.permisos.puede("usuarios", "crear") %}<p><a class="boton" href="/configuracion/usuarios/nuevo">{{ t("usuarios.invitar") }}</a></p>{% endif %}
-<table>
-    <thead><tr><th>{{ t("usuarios.nombre") }}</th><th>{{ t("usuarios.correo") }}</th><th>{{ t("usuarios.tipo") }}</th><th>{{ t("usuarios.roles") }}</th><th>{{ t("usuarios.estado") }}</th><th></th></tr></thead>
-    <tbody>
-    {% for u in usuarios %}
-    <tr>
-        <td>{{ u.nombre }}</td><td>{{ u.email }}</td><td>{{ u.tipo }}</td><td>{{ u.roles }}</td>
-        <td>{% if u.pendiente and u.estado == "ACTIVO" %}{{ t("usuarios.pendiente") }}{% else %}{{ u.estado }}{% endif %}</td>
-        <td>
-        {% if u.estado == "ACTIVO" and u.uuid != activa.usuario.uuid and activa.permisos.puede("usuarios", "modificar") %}
-            <form method="post" action="/configuracion/usuarios/{{ u.uuid }}/desactivar" class="en-linea">
-                <input type="hidden" name="csrf" value="{{ csrf }}">
-                <button type="submit" class="secundario">{{ t("usuarios.desactivar") }}</button>
-            </form>
-        {% endif %}
-        </td>
-    </tr>
-    {% endfor %}
-    </tbody>
-</table>
+<div class="encabezado">
+    <h1>{{ t("usuarios.titulo") }}</h1>
+    {% if activa.permisos.puede("usuarios", "crear") %}<a class="boton" href="/configuracion/usuarios/nuevo">{{ icono("plus") }}{{ t("usuarios.invitar") }}</a>{% endif %}
+</div>
+<section class="tarjeta">
+    <div class="tabla-contenedor">
+    <table>
+        <thead><tr><th>{{ t("usuarios.nombre") }}</th><th>{{ t("usuarios.tipo") }}</th><th>{{ t("usuarios.roles") }}</th><th>{{ t("usuarios.estado") }}</th><th></th></tr></thead>
+        <tbody>
+        {% for u in usuarios %}
+        <tr>
+            <td class="principal">{{ u.nombre }}<span class="secundario">{{ u.email }}</span></td>
+            <td>{{ t("tipos_usuario." ~ u.tipo | lower) }}</td>
+            <td>{{ u.roles }}</td>
+            <td>{% if u.pendiente and u.estado == "ACTIVO" and u.tipo != "SOPORTE" %}{{ "INVITACION_PENDIENTE" | insignia }}{% else %}{{ u.estado | insignia }}{% endif %}</td>
+            <td class="numero">
+            {% if u.estado == "ACTIVO" and u.uuid != activa.usuario.uuid and activa.permisos.puede("usuarios", "modificar") %}
+                <form method="post" action="/configuracion/usuarios/{{ u.uuid }}/desactivar" class="en-linea">
+                    <input type="hidden" name="csrf" value="{{ csrf }}">
+                    <button type="submit" class="secundario">{{ t("usuarios.desactivar") }}</button>
+                </form>
+            {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    </div>
+</section>
 {% endblock %}

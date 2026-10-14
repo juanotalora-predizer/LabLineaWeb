@@ -23,6 +23,12 @@ Plantilla:
 ## 2026-10-13
 
 **Avances**
+- **Sistema de diseño** ([funcional/0008](funcional/0008-sistema-de-diseno.md)), a partir de tres referencias del usuario (HMLR, Datacapt, eMedico).
+  - Menú lateral azul noche, tarjetas blancas sobre fondo gris azulado, azul primario para la acción e insignias de estado con punto y texto.
+  - Inter e íconos Lucide servidos como estáticos propios.
+  - Todas las pantallas rediseñadas, incluida la vista móvil. Patrones definidos para la ficha de paciente y las colas de trabajo.
+  - Guardianes: colores solo como tokens, contraste AA, sin estilos en línea y todo ícono existe en el sprite.
+  - El guardián de contraste detectó que el gris secundario de las referencias (`#64748B`) no cumple AA sobre el fondo de la aplicación (4,40:1); se usa `#5F6F86`.
 - **Etapa 5 cerrada** ([informe](etapas/etapa-05.md)): commit `cc0e1d3`, CI verde.
   - Licencias y suscripciones: el estado efectivo vence en el instante exacto; suspensión, cancelación, renovación automática y avisos de renovación 7 días y 1 día antes.
   - Facturas de la plataforma inmutables, con precios por país y plan, campañas e IVA del país; pagos parciales cuyo saldo y estado calcula la base, sin sobrepagos ni con pagos simultáneos; al pagarse extienden la suscripción.
