@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t("pacientes.ficha") }} · {{ sitio.nombre_comercial }}{% endblock %}
+
+{% block content %}
+{% set activo = paciente.estado == "ACTIVO" %}
+<div class="encabezado">
+    <h1>{% if activo %}{{ paciente.apellidos }}, {{ paciente.nombres }}{% else %}{{ t("pacientes.registro_suprimido") }}{% endif %}</h1>
+    <div class="acciones">
+        {% if not activo %}{{ "SUPRIMIDO" | insignia }}{% else %}{{ ("VIGENTE" if paciente.autorizado else "SIN_AUTORIZACION") | insignia }}{% endif %}
+        <a class="boton secundario" href="/pacientes/{{ paciente.uuid }}/datos">{{ icono("file-text") }}{{ t("pacientes.informe_titular") }}</a>
+        {% if activo and activa.permisos.puede("pacientes", "modificar") %}<a class="boton" href="/pacientes/{{ paciente.uuid }}/editar">{{ t("pacientes.editar") }}</a>{% endif %}
+    </div>
+</div>
+<p><a href="/pacientes">{{ t("pacientes.volver") }}</a></p>
+{% if aviso %}<p class="aviso" role="status">{{ icono("circle-check") }} {{ aviso }}</p>{% endif %}
+{% if errores %}<ul class="error" role="alert">{% for e in errores %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+{% if activo and not paciente.autorizado %}<p class="aviso alerta" role="status">{{ icono("triangle-alert") }} {{ t("pacientes.aviso_sin_autorizacion") }}</p>{% endif %}
+
+<div class="columnas">
+    <section class="tarjeta">
+        <h2>{{ icono("user") }} {{ t("pacientes.datos") }}</h2>
+        {% if activo %}
+        <dl class="ficha">
+            <dt>{{ t("pacientes.documento") }}</dt><dd>{{ tipo_nombre }} {{ paciente.numero_documento }}</dd>
+            <dt>{{ t("pacientes.sexo") }}</dt><dd>{{ t("pacientes.sexo_" ~ paciente.sexo | lower) }}</dd>
+            <dt>{{ t("pacientes.nacimiento") }}</dt><dd>{{ paciente.fecha_nacimiento | fecha }} · {{ t("pacientes.edad_anios", edad=edad) }}{% if menor %} · {{ t("pacientes.menor") }}{% endif %}</dd>
+            <dt>{{ t("pacientes.pais") }}</dt><dd>{{ pais_nombre }}</dd>
+            <dt>{{ t("pacientes.email") }}</dt><dd>{{ paciente.email or "" }}</dd>
+            <dt>{{ t("pacientes.telefono") }}</dt><dd>{{ paciente.telefono or "" }}</dd>
+            <dt>{{ t("pacientes.direccion") }}</dt><dd>{{ paciente.direccion or "" }}</dd>
+            <dt>{{ t("pacientes.registrado") }}</dt><dd>{{ paciente.creado_en | fecha }}</dd>
+        </dl>
+        {% else %}
+        <p class="nota">{{ t("pacientes.explica_suprimido") }} {{ paciente.suprimido_en | fecha }}</p>
+        {% endif %}
+    </section>
+
+    <section class="tarjeta">
+        <h2>{{ icono("shield-check") }} {{ t("pacientes.autorizaciones") }}</h2>
+        <div class="tabla-contenedor">
+        <table>
+            <thead><tr><th>{{ t("pacientes.otorgada") }}</th><th>{{ t("pacientes.version") }}</th><th>{{ t("pacientes.medio") }}</th><th>{{ t("pacientes.estado") }}</th></tr></thead>
+            <tbody>
+            {% for a in autorizaciones %}
+            <tr>
+                <td class="principal">{{ a.otorgada_en | fecha }}<span class="secundario">{{ a.registrada_por or "" }}</span></td>
+                <td>{{ a.version }}</td>
+                <td>{{ t("pacientes.medio_" ~ a.medio | lower) }}{% if a.representante_nombre %}<span class="secundario">{{ t("pacientes.por_representante", parentesco=a.representante_parentesco) }}</span>{% endif %}</td>
+                <td>{% if a.revocada_en %}{{ "REVOCADA" | insignia }}<span class="secundario">{{ a.revocada_en | fecha }}</span>{% else %}{{ "VIGENTE" | insignia }}{% endif %}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="4" class="vacio">{{ t("comun.sin_registros") }}</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        </div>
+        {% if activo and paciente.autorizado and activa.permisos.puede("pacientes", "modificar") %}
+        <details>
+            <summary>{{ t("pacientes.revocar") }}</summary>
+            <form method="post" action="/pacientes/{{ paciente.uuid }}/revocar">
+                <input type="hidden" name="csrf" value="{{ csrf }}">
+                <p class="nota">{{ t("pacientes.ayuda_revocar") }}</p>
+                <label for="canal_revocacion">{{ t("pacientes.canal") }}</label>
+                <select id="canal_revocacion" name="canal">{% for c in canales %}<option value="{{ c }}">{{ t("pacientes.canal_" ~ c | lower) }}</option>{% endfor %}</select>
+                <label for="motivo">{{ t("pacientes.motivo") }}</label>
+                <input id="motivo" name="motivo" required maxlength="500">
+                <button type="submit" class="peligro">{{ t("pacientes.revocar") }}</button>
+            </form>
+        </details>
+        {% endif %}
+        {% if activo and not paciente.autorizado and activa.permisos.puede("pacientes", "crear") and texto %}
+        <details>
+            <summary>{{ t("pacientes.registrar_autorizacion") }}</summary>
+            <form method="post" action="/pacientes/{{ paciente.uuid }}/autorizacion">
+                <input type="hidden" name="csrf" value="{{ csrf }}">
+                {% set mostrar_representante = menor %}
+                {% set datos = none %}
+                {% include "pacientes/_autorizacion.html" %}
+                <button type="submit">{{ t("pacientes.guardar_autorizacion") }}</button>
+            </form>
+        </details>
+        {% endif %}
+    </section>
+</div>
+
+<section class="tarjeta">
+    <h2>{{ icono("mail") }} {{ t("pacientes.solicitudes") }}</h2>
+    <div class="tabla-contenedor">
+    <table>
+        <thead><tr><th>{{ t("pacientes.tipo") }}</th><th>{{ t("pacientes.recibida") }}</th><th>{{ t("pacientes.vence") }}</th><th>{{ t("pacientes.estado") }}</th><th>{{ t("pacientes.respuesta") }}</th></tr></thead>
+        <tbody>
+        {% for s in solicitudes %}
+        <tr>
+            <td class="principal">{{ t("pacientes.solicitud_" ~ s.tipo | lower) }}<span class="secundario">{{ t("pacientes.canal_" ~ s.canal | lower) }}</span>{% if s.descripcion %}<span class="secundario">{{ s.descripcion }}</span>{% endif %}</td>
+            <td>{{ s.recibida_en | fecha }}</td>
+            <td>{{ s.vence_en | fecha }}{% if s.estado == "ABIERTA" and s.vence_en < hoy %} {{ "VENCIDA" | insignia }}{% endif %}</td>
+            <td>{{ s.estado | insignia }}</td>
+            <td>
+                {% if s.estado == "ABIERTA" and s.tipo != "SUPRESION" and activa.permisos.puede("pacientes", "modificar") %}
+                <form method="post" action="/pacientes/solicitudes/{{ s.uuid }}/resolver">
+                    <input type="hidden" name="csrf" value="{{ csrf }}">
+                    <label for="respuesta_{{ loop.index }}">{{ t("pacientes.respuesta") }}</label>
+                    <textarea id="respuesta_{{ loop.index }}" name="respuesta" required maxlength="2000"></textarea>
+                    <label for="estado_{{ loop.index }}">{{ t("pacientes.resultado") }}</label>
+                    <select id="estado_{{ loop.index }}" name="estado"><option value="RESUELTA">{{ t("estados.resuelta") }}</option><option value="RECHAZADA">{{ t("estados.rechazada") }}</option></select>
+                    <button type="submit" class="secundario">{{ t("pacientes.resolver") }}</button>
+                </form>
+                {% else %}{{ s.respuesta or "" }}{% if s.resuelta_por %}<span class="secundario">{{ s.resuelta_por }}</span>{% endif %}{% endif %}
+            </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" class="vacio">{{ t("comun.sin_registros") }}</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    </div>
+    {% if activo and activa.permisos.puede("pacientes", "modificar") %}
+    <form method="post" action="/pacientes/{{ paciente.uuid }}/solicitudes" class="formulario-fila">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+        <div><label for="tipo">{{ t("pacientes.tipo") }}</label>
+        <select id="tipo" name="tipo">{% for tipo in tipos_solicitud if tipo != "REVOCACION" %}<option value="{{ tipo }}">{{ t("pacientes.solicitud_" ~ tipo | lower) }}</option>{% endfor %}</select></div>
+        <div><label for="canal">{{ t("pacientes.canal") }}</label>
+        <select id="canal" name="canal">{% for c in canales %}<option value="{{ c }}">{{ t("pacientes.canal_" ~ c | lower) }}</option>{% endfor %}</select></div>
+        <div><label for="descripcion">{{ t("pacientes.descripcion") }}</label>
+        <input id="descripcion" name="descripcion" maxlength="2000"></div>
+        <button type="submit" class="secundario">{{ icono("plus") }}{{ t("pacientes.registrar_solicitud") }}</button>
+    </form>
+    <p class="nota">{{ t("pacientes.ayuda_plazos") }}</p>
+    {% endif %}
+</section>
+
+{% set supresiones = abiertas | selectattr("tipo", "equalto", "SUPRESION") | list %}
+{% if activo and supresiones and activa.permisos.puede("pacientes", "eliminar") %}
+<section class="tarjeta">
+    <h2>{{ icono("triangle-alert") }} {{ t("pacientes.suprimir") }}</h2>
+    <p class="nota">{{ t("pacientes.ayuda_suprimir", palabra=t("pacientes.palabra_suprimir")) }}</p>
+    <form method="post" action="/pacientes/{{ paciente.uuid }}/suprimir">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+        <label for="solicitud_supresion">{{ t("pacientes.solicitud") }}</label>
+        <select id="solicitud_supresion" name="solicitud">{% for s in supresiones %}<option value="{{ s.uuid }}">{{ s.recibida_en | fecha }}</option>{% endfor %}</select>
+        <label for="confirmacion">{{ t("pacientes.confirmacion") }}</label>
+        <input id="confirmacion" name="confirmacion" required maxlength="40" autocomplete="off">
+        <button type="submit" class="peligro">{{ t("pacientes.suprimir") }}</button>
+    </form>
+</section>
+{% endif %}
+{% endblock %}

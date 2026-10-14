@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t("pacientes.registrar") }} · {{ sitio.nombre_comercial }}{% endblock %}
+
+{% block content %}
+<div class="encabezado"><h1>{{ t("pacientes.registrar") }}</h1></div>
+<p><a href="/pacientes">{{ t("pacientes.volver") }}</a></p>
+{% if errores %}<ul class="error" role="alert">{% for e in errores %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+<section class="tarjeta ancha">
+    {% if not texto %}
+    <p class="aviso alerta" role="status">{{ icono("triangle-alert") }} {{ t("pacientes.aviso_sin_texto") }}{% if activa.permisos.puede("configuracion", "consultar") %} <a href="/configuracion/autorizacion">{{ t("pacientes.publicar_texto") }}</a>{% endif %}</p>
+    {% else %}
+    <form method="post" action="/pacientes/nuevo" autocomplete="off">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+        {% include "pacientes/_campos.html" %}
+        {% set mostrar_representante = datos.representante_nombre %}
+        {% include "pacientes/_autorizacion.html" %}
+        <button type="submit">{{ t("pacientes.guardar") }}</button>
+    </form>
+    {% endif %}
+</section>
+{% endblock %}

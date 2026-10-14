@@ -6,7 +6,7 @@ Formato: `- [ ] Descripción — prioridad (Alta/Media/Baja) — spec relacionad
 
 ## En curso
 
-- [ ] Etapa 7: pacientes y Ley 1581 — Alta — [plan](plan-desarrollo.md)
+- [ ] Etapa 7: pacientes y Ley 1581 — compuerta local en verde, pendiente de la CI — Alta — [informe](etapas/etapa-07.md)
 
 ## Pendiente
 
@@ -24,6 +24,9 @@ Formato: `- [ ] Descripción — prioridad (Alta/Media/Baja) — spec relacionad
 - [ ] Estaciones de trabajo por sede (laboratorios y sedes ya están, etapa 4) — Alta — [funcional/0005](funcional/0005-plataforma-saas-suscripciones.md), [funcional/0003](funcional/0003-muestras-impresion.md)
 - [ ] Configuración por país: impuestos, medios de pago y textos legales (monedas, tipos de documento, idioma y zona horaria ya están, etapa 1) — Alta — [0004](infraestructura/0004-normativa-colombia-latam.md)
 - [ ] Asignación asistida de LOINC y UCUM al catálogo importado (Lablinea no los guarda), antes de la interoperabilidad FHIR — Media — [funcional/0009](funcional/0009-catalogo-e-importador.md)
+- [ ] Etapa 8: exigir `lab.autorizacion_vigente()` al crear órdenes y redefinir `lab.paciente_tiene_historia()` con las órdenes — Alta — [funcional/0010](funcional/0010-pacientes-ley-1581.md)
+- [ ] Validar con el asesor legal el texto modelo de la autorización, los plazos y la supresión con historia clínica; validar las expresiones de los tipos de documento contra RIPS — Media — [funcional/0010](funcional/0010-pacientes-ley-1581.md)
+- [ ] Cargar los festivos de Colombia de 2028 en adelante (`global.festivos`) — Baja — [funcional/0010](funcional/0010-pacientes-ley-1581.md)
 - [ ] Usar `SuscripcionVigente` en las rutas que crean órdenes (etapa 8) — Alta — [funcional/0005](funcional/0005-plataforma-saas-suscripciones.md)
 - [ ] Incorporar htmx y Chart.js como estáticos propios — Baja — [0001](infraestructura/0001-stack-fastapi-jinja2.md)
 
@@ -33,7 +36,7 @@ Formato: `- [ ] Descripción — prioridad (Alta/Media/Baja) — spec relacionad
 - [ ] Código QR para inscribir la app autenticadora — Baja — [0008](infraestructura/0008-autenticacion-autorizacion.md)
 - [ ] Roles propios del laboratorio desde la interfaz (invitar y desactivar usuarios ya está, etapa 4) — Media — [0008](infraestructura/0008-autenticacion-autorizacion.md)
 - [ ] Editar y desactivar personal de la plataforma desde el Admin Hub (hoy por script) — Baja — [funcional/0005](funcional/0005-plataforma-saas-suscripciones.md)
-- [ ] Etapa 20: el log de acceso del proxy no guarda la ruta completa de `/activar/<token>` — Baja — [informe etapa 4](etapas/etapa-04.md)
+- [ ] Etapa 20: el log de acceso del proxy y del servidor no guarda la ruta completa de `/activar/<token>` ni la cadena de consulta — Baja — [informe etapa 4](etapas/etapa-04.md), [informe etapa 7](etapas/etapa-07.md)
 
 - [ ] Validar con el asesor tributario el IVA de la suscripción (19% configurado para Colombia) — Media — [funcional/0005](funcional/0005-plataforma-saas-suscripciones.md)
 - [ ] Vista de la auditoría para el rol AUDITOR, con filtros y exportación auditada — Media — [0007](infraestructura/0007-base-de-datos.md)
@@ -42,8 +45,6 @@ Formato: `- [ ] Descripción — prioridad (Alta/Media/Baja) — spec relacionad
 
 ### Fase 3 — POS y caja
 
-- [ ] Pacientes con identificación por documento y país, y autorización de tratamiento de datos (Ley 1581) al registrarlos — Alta — [funcional/0002](funcional/0002-pos-ordenes-caja.md), [0004](infraestructura/0004-normativa-colombia-latam.md)
-- [ ] Gestión de derechos del titular: consultar, actualizar, rectificar, suprimir y revocar — Alta — [0004](infraestructura/0004-normativa-colombia-latam.md)
 - [ ] Órdenes con estados `BORRADOR` → `PRE_CERRADA` → `PAGADA` / `ANULADA`, congelamiento de precios y trigger de protección — Alta — [funcional/0002](funcional/0002-pos-ordenes-caja.md)
 - [ ] Convenios con tope de descuento, autorización superior y evidencia obligatoria — Alta — [funcional/0002](funcional/0002-pos-ordenes-caja.md)
 - [ ] Paquetes de exámenes con comparativo de ahorro y desglose al pre-cerrar — Media — [funcional/0002](funcional/0002-pos-ordenes-caja.md)
@@ -108,6 +109,8 @@ Formato: `- [ ] Descripción — prioridad (Alta/Media/Baja) — spec relacionad
 - [ ] Análisis de riesgos, políticas, oficial de seguridad, capacitación, notificación de brechas — Media — [0003](infraestructura/0003-seguridad-hipaa.md)
 
 ## Hecho
+
+- [x] Pacientes por documento y país con autorización de tratamiento de datos versionada (la base no guarda un paciente sin ella), revocación, solicitudes del titular con vencimiento en días hábiles, informe del titular, supresión por anonimización y búsqueda sin enumeración — 2026-10-14 — [funcional/0010](funcional/0010-pacientes-ley-1581.md), [informe](etapas/etapa-07.md)
 
 - [x] **Etapa 6 cerrada** (CI verde, commit `c19fed6`): catálogo, rangos e importador de Lablinea; 846 pruebas, cobertura 99,1%, ZAP sin hallazgos altos ni medios en los dos sitios, 17/17 pruebas manuales — 2026-10-13 — [informe](etapas/etapa-06.md)
 

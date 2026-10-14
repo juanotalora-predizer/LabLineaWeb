@@ -13,6 +13,7 @@
 
 import asyncio
 import sys
+from datetime import date
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -44,6 +45,10 @@ USUARIOS = [
 ]
 
 PACIENTES_POR_LABORATORIO = 10
+TEXTO_AUTORIZACION = (
+    "Texto SINTÉTICO de desarrollo. Autorizo a {laboratorio} a tratar mis datos personales y de salud para"
+    " prestar el servicio de laboratorio, con los derechos de la Ley 1581 de 2012."
+)
 
 
 async def _existe_y_reactivar(sesion, email: str) -> bool:
@@ -122,10 +127,51 @@ async def sembrar() -> None:
                 ).scalars()
             )
             semilla = sum(map(ord, tenant_id))
+            # Texto de autorización sintético (spec funcional/0010): sin él no se registran pacientes.
+            texto_id = await sesion.scalar(text("SELECT max(id) FROM lab.textos_autorizacion"))
+            if texto_id is None:
+                texto_id = await sesion.scalar(
+                    text("INSERT INTO lab.textos_autorizacion (version, contenido) VALUES (1, :c) RETURNING id"),
+                    {"c": TEXTO_AUTORIZACION.format(laboratorio=nombre)},
+                )
             for persona in generar_personas(PACIENTES_POR_LABORATORIO, semilla=semilla, tipos_documento=tipos):
                 if not await _existe_y_reactivar(sesion, persona.email):
                     await repositorio.crear_usuario(
                         sesion, email=persona.email, nombre=persona.nombre_completo, tipo="PACIENTE", clave=clave
+                    )
+                paciente_id = await sesion.scalar(
+                    text(
+                        "INSERT INTO lab.pacientes (tipo_documento, numero_documento, nombres, apellidos, sexo,"
+                        " fecha_nacimiento, pais, email, telefono) VALUES (:t, :n, :no, :a, :s, :f, 'COL', :e, :te)"
+                        " ON CONFLICT (tenant_id, tipo_documento, numero_documento) DO NOTHING RETURNING id"
+                    ),
+                    {
+                        "t": persona.tipo_documento,
+                        "n": persona.numero_documento,
+                        "no": persona.nombres,
+                        "a": persona.apellidos,
+                        "s": persona.sexo,
+                        "f": persona.fecha_nacimiento,
+                        "e": persona.email,
+                        "te": persona.telefono,
+                    },
+                )
+                if paciente_id is not None:
+                    # Los menores sintéticos llevan un representante sintético.
+                    menor = (date.today() - persona.fecha_nacimiento).days < 18 * 365
+                    await sesion.execute(
+                        text(
+                            "INSERT INTO lab.autorizaciones_datos (paciente_id, texto_id, medio,"
+                            " representante_nombre, representante_documento, representante_parentesco)"
+                            " VALUES (:p, :t, 'FORMATO_FIRMADO', :rn, :rd, :rp)"
+                        ),
+                        {
+                            "p": paciente_id,
+                            "t": texto_id,
+                            "rn": "Representante Sintético" if menor else None,
+                            "rd": "99000001" if menor else None,
+                            "rp": "Madre" if menor else None,
+                        },
                     )
     async with db.sesion_tenant("lab_a") as sesion:
         if not await sesion.scalar(text("SELECT count(*) FROM lab.examenes")):

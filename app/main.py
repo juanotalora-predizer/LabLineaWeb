@@ -21,6 +21,7 @@ from app.core.tenancy import Laboratorio, ResolverLaboratorio, Sitio, sitio_actu
 from app.laboratorio import suscripcion  # noqa: F401 — registra el aviso de renovación
 from app.laboratorio.soporte import router as rutas_soporte
 from app.laboratorio.usuarios import router as rutas_usuarios_laboratorio
+from app.pacientes.rutas import router as rutas_pacientes
 
 BASE_DIR = Path(__file__).resolve().parent
 settings = get_settings()
@@ -51,6 +52,7 @@ app.include_router(rutas_admin)
 app.include_router(rutas_suscripciones)
 app.include_router(rutas_soporte)
 app.include_router(rutas_catalogo)
+app.include_router(rutas_pacientes)
 
 
 @app.exception_handler(NoAutenticado)

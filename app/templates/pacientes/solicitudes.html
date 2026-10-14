@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t("pacientes.solicitudes_abiertas") }} · {{ sitio.nombre_comercial }}{% endblock %}
+
+{% block content %}
+<div class="encabezado"><h1>{{ t("pacientes.solicitudes_abiertas") }}</h1></div>
+<p><a href="/pacientes">{{ t("pacientes.volver") }}</a></p>
+<section class="tarjeta">
+    <div class="tabla-contenedor">
+    <table>
+        <thead><tr><th>{{ t("pacientes.paciente") }}</th><th>{{ t("pacientes.tipo") }}</th><th>{{ t("pacientes.recibida") }}</th><th>{{ t("pacientes.vence") }}</th></tr></thead>
+        <tbody>
+        {% for s in solicitudes %}
+        <tr>
+            <td class="principal"><a href="/pacientes/{{ s.paciente }}">{{ s.apellidos }}, {{ s.nombres }}</a></td>
+            <td>{{ t("pacientes.solicitud_" ~ s.tipo | lower) }}<span class="secundario">{{ t("pacientes.canal_" ~ s.canal | lower) }}</span></td>
+            <td>{{ s.recibida_en | fecha }}</td>
+            <td>{{ s.vence_en | fecha }}{% if s.vence_en < hoy %} {{ "VENCIDA" | insignia }}{% elif (s.vence_en - hoy).days <= 2 %} {{ "POR_VENCER" | insignia }}{% endif %}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="4" class="vacio">{{ t("pacientes.sin_solicitudes") }}</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    </div>
+</section>
+{% endblock %}

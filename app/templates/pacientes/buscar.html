@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t("pacientes.titulo") }} · {{ sitio.nombre_comercial }}{% endblock %}
+
+{% block content %}
+<div class="encabezado">
+    <h1>{{ t("pacientes.titulo") }}</h1>
+    <div class="acciones">
+        <a class="boton secundario" href="/pacientes/solicitudes/abiertas">{{ icono("clock") }}{{ t("pacientes.solicitudes_abiertas") }}</a>
+        {% if activa.permisos.puede("pacientes", "crear") %}
+        <a class="boton" href="/pacientes/nuevo">{{ icono("plus") }}{{ t("pacientes.registrar") }}</a>
+        {% endif %}
+    </div>
+</div>
+{% if sin_texto %}
+<p class="aviso alerta" role="status">{{ icono("triangle-alert") }} {{ t("pacientes.aviso_sin_texto") }}{% if activa.permisos.puede("configuracion", "consultar") %} <a href="/configuracion/autorizacion">{{ t("pacientes.publicar_texto") }}</a>{% endif %}</p>
+{% endif %}
+{% if vencen %}
+<p class="aviso alerta" role="status">{{ icono("clock") }} {{ t("pacientes.aviso_vencen", cantidad=vencen) }} <a href="/pacientes/solicitudes/abiertas">{{ t("pacientes.ver_solicitudes") }}</a></p>
+{% endif %}
+{% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+<section class="tarjeta">
+    <form method="post" action="/pacientes/buscar" class="filtros-formulario" autocomplete="off">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+        <label for="consulta" class="visualmente-oculto">{{ t("pacientes.buscar") }}</label>
+        <input id="consulta" name="consulta" type="search" required minlength="3" maxlength="80" placeholder="{{ t('pacientes.buscar') }}">
+        <button type="submit" class="secundario">{{ icono("search") }}{{ t("pacientes.buscar_boton") }}</button>
+    </form>
+    <p class="nota">{{ t("pacientes.ayuda_busqueda") }}</p>
+    {% if resultados is not none %}
+    <div class="tabla-contenedor">
+    <table>
+        <thead><tr><th>{{ t("pacientes.paciente") }}</th><th>{{ t("pacientes.documento") }}</th><th>{{ t("pacientes.nacimiento") }}</th><th>{{ t("pacientes.autorizacion") }}</th></tr></thead>
+        <tbody>
+        {% for p in resultados %}
+        <tr>
+            <td class="principal"><a href="/pacientes/{{ p.uuid }}">{{ p.apellidos }}, {{ p.nombres }}</a></td>
+            <td>{{ p.tipo_documento }} {{ p.numero_documento }}</td>
+            <td>{{ p.fecha_nacimiento | fecha }}</td>
+            <td>{{ ("VIGENTE" if p.autorizado else "SIN_AUTORIZACION") | insignia }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="4" class="vacio">{{ t("pacientes.sin_resultados") }}</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    </div>
+    {% if hay_mas %}<p class="nota">{{ t("pacientes.hay_mas", maximo=maximo) }}</p>{% endif %}
+    {% endif %}
+</section>
+{% endblock %}

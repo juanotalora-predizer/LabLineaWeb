@@ -51,3 +51,4 @@ Registro de decisiones del proyecto LabLineaWeb.
 | 0007 | [Alcance del MVP](funcional/0007-alcance-mvp.md) | Aceptada | 2026-10-12 |
 | 0008 | [Sistema de diseño de la interfaz](funcional/0008-sistema-de-diseno.md) | Aceptada | 2026-10-13 |
 | 0009 | [Catálogo de exámenes e importador de Lablinea](funcional/0009-catalogo-e-importador.md) | Aceptada | 2026-10-13 |
+| 0010 | [Pacientes, autorización de datos y derechos del titular (Ley 1581)](funcional/0010-pacientes-ley-1581.md) | Aceptada | 2026-10-14 |

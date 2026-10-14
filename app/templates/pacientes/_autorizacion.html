@@ -1,0 +1,18 @@
+<fieldset>
+    <legend>{{ icono("shield-check") }} {{ t("pacientes.autorizacion_titulo", version=texto.version) }}</legend>
+    <div class="texto-legal" tabindex="0">{{ texto.contenido }}</div>
+    <input type="hidden" name="texto_version" value="{{ texto.version }}">
+    <label for="medio">{{ t("pacientes.medio") }}</label>
+    <select id="medio" name="medio" required>{% for m in medios %}<option value="{{ m }}" {% if datos and datos.medio == m %}selected{% endif %}>{{ t("pacientes.medio_" ~ m | lower) }}</option>{% endfor %}</select>
+    <label class="opcion"><input type="checkbox" name="acepto" value="si" required> {{ t("pacientes.acepto") }}</label>
+    <details {% if mostrar_representante %}open{% endif %}>
+        <summary>{{ t("pacientes.representante") }}</summary>
+        <p class="nota">{{ t("pacientes.ayuda_representante") }}</p>
+        <label for="representante_nombre">{{ t("pacientes.representante_nombre") }}</label>
+        <input id="representante_nombre" name="representante_nombre" maxlength="120" autocomplete="off" value="{{ datos.representante_nombre if datos else '' }}">
+        <label for="representante_documento">{{ t("pacientes.representante_documento") }}</label>
+        <input id="representante_documento" name="representante_documento" maxlength="40" autocomplete="off" value="{{ datos.representante_documento if datos else '' }}">
+        <label for="representante_parentesco">{{ t("pacientes.representante_parentesco") }}</label>
+        <input id="representante_parentesco" name="representante_parentesco" maxlength="40" value="{{ datos.representante_parentesco if datos else '' }}">
+    </details>
+</fieldset>

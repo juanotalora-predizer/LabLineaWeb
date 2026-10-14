@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t("pacientes.informe_titular") }} · {{ sitio.nombre_comercial }}{% endblock %}
+
+{% block content %}
+<div class="encabezado">
+    <h1>{{ t("pacientes.informe_titular") }}</h1>
+    <div class="acciones no-imprimir"><a class="boton secundario" href="/pacientes/{{ paciente.uuid }}">{{ t("pacientes.volver_ficha") }}</a></div>
+</div>
+<p class="nota">{{ t("pacientes.explica_informe", laboratorio=sitio.nombre_comercial) }} {{ generado | fecha }}</p>
+<section class="tarjeta">
+    <h2>{{ t("pacientes.datos") }}</h2>
+    {% if paciente.estado == "ACTIVO" %}
+    <dl class="ficha">
+        <dt>{{ t("pacientes.documento") }}</dt><dd>{{ tipo_nombre }} {{ paciente.numero_documento }}</dd>
+        <dt>{{ t("pacientes.nombres") }}</dt><dd>{{ paciente.nombres }}</dd>
+        <dt>{{ t("pacientes.apellidos") }}</dt><dd>{{ paciente.apellidos }}</dd>
+        <dt>{{ t("pacientes.sexo") }}</dt><dd>{{ t("pacientes.sexo_" ~ paciente.sexo | lower) }}</dd>
+        <dt>{{ t("pacientes.nacimiento") }}</dt><dd>{{ paciente.fecha_nacimiento | fecha }}</dd>
+        <dt>{{ t("pacientes.pais") }}</dt><dd>{{ pais_nombre }}</dd>
+        <dt>{{ t("pacientes.email") }}</dt><dd>{{ paciente.email or "" }}</dd>
+        <dt>{{ t("pacientes.telefono") }}</dt><dd>{{ paciente.telefono or "" }}</dd>
+        <dt>{{ t("pacientes.direccion") }}</dt><dd>{{ paciente.direccion or "" }}</dd>
+        <dt>{{ t("pacientes.registrado") }}</dt><dd>{{ paciente.creado_en | fecha }}</dd>
+        <dt>{{ t("pacientes.actualizado") }}</dt><dd>{{ paciente.actualizado_en | fecha }}</dd>
+    </dl>
+    {% else %}
+    <p>{{ t("pacientes.explica_suprimido") }} {{ paciente.suprimido_en | fecha }}</p>
+    {% endif %}
+</section>
+<section class="tarjeta">
+    <h2>{{ t("pacientes.autorizaciones") }}</h2>
+    <div class="tabla-contenedor">
+    <table>
+        <thead><tr><th>{{ t("pacientes.otorgada") }}</th><th>{{ t("pacientes.version") }}</th><th>{{ t("pacientes.medio") }}</th><th>{{ t("pacientes.representante") }}</th><th>{{ t("pacientes.revocada") }}</th></tr></thead>
+        <tbody>
+        {% for a in autorizaciones %}
+        <tr>
+            <td>{{ a.otorgada_en | fecha }}</td><td>{{ a.version }}</td><td>{{ t("pacientes.medio_" ~ a.medio | lower) }}</td>
+            <td>{% if a.representante_nombre %}{{ a.representante_nombre }} · {{ a.representante_documento }} · {{ a.representante_parentesco }}{% endif %}</td>
+            <td>{% if a.revocada_en %}{{ a.revocada_en | fecha }} · {{ a.motivo_revocacion }}{% endif %}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" class="vacio">{{ t("comun.sin_registros") }}</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    </div>
+    {% for texto in textos %}
+    <h3>{{ t("pacientes.texto_version", version=texto.version) }}</h3>
+    <div class="texto-legal">{{ texto.contenido }}</div>
+    {% endfor %}
+</section>
+<section class="tarjeta">
+    <h2>{{ t("pacientes.solicitudes") }}</h2>
+    <div class="tabla-contenedor">
+    <table>
+        <thead><tr><th>{{ t("pacientes.tipo") }}</th><th>{{ t("pacientes.recibida") }}</th><th>{{ t("pacientes.estado") }}</th><th>{{ t("pacientes.respuesta") }}</th></tr></thead>
+        <tbody>
+        {% for s in solicitudes %}
+        <tr><td>{{ t("pacientes.solicitud_" ~ s.tipo | lower) }}</td><td>{{ s.recibida_en | fecha }}</td><td>{{ s.estado | insignia }}</td><td>{{ s.respuesta or "" }}</td></tr>
+        {% else %}
+        <tr><td colspan="4" class="vacio">{{ t("comun.sin_registros") }}</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    </div>
+</section>
+{% endblock %}

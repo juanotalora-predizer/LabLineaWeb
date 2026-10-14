@@ -1,0 +1,26 @@
+<div class="columnas">
+<div>
+<label for="tipo_documento">{{ t("pacientes.tipo_documento") }}</label>
+<select id="tipo_documento" name="tipo_documento" required>{% for codigo, (nombre, _) in config.tipos.items() %}<option value="{{ codigo }}" {% if datos.tipo_documento == codigo %}selected{% endif %}>{{ nombre }}</option>{% endfor %}</select>
+<label for="numero_documento">{{ t("pacientes.numero_documento") }}</label>
+<input id="numero_documento" name="numero_documento" required maxlength="40" autocomplete="off" value="{{ datos.numero_documento or '' }}">
+<label for="nombres">{{ t("pacientes.nombres") }}</label>
+<input id="nombres" name="nombres" required maxlength="80" autocomplete="off" value="{{ datos.nombres or '' }}">
+<label for="apellidos">{{ t("pacientes.apellidos") }}</label>
+<input id="apellidos" name="apellidos" required maxlength="80" autocomplete="off" value="{{ datos.apellidos or '' }}">
+<label for="sexo">{{ t("pacientes.sexo") }}</label>
+<select id="sexo" name="sexo" required>{% for s in sexos %}<option value="{{ s }}" {% if datos.sexo == s %}selected{% endif %}>{{ t("pacientes.sexo_" ~ s | lower) }}</option>{% endfor %}</select>
+<label for="fecha_nacimiento">{{ t("pacientes.nacimiento") }}</label>
+<input id="fecha_nacimiento" name="fecha_nacimiento" type="date" required max="{{ hoy.isoformat() }}" value="{{ datos.fecha_nacimiento or '' }}">
+</div>
+<div>
+<label for="pais">{{ t("pacientes.pais") }}</label>
+<select id="pais" name="pais" required>{% for codigo, nombre in config.paises.items() %}<option value="{{ codigo }}" {% if datos.pais == codigo %}selected{% endif %}>{{ nombre }}</option>{% endfor %}</select>
+<label for="email">{{ t("pacientes.email") }}</label>
+<input id="email" name="email" type="email" maxlength="254" autocomplete="off" value="{{ datos.email or '' }}">
+<label for="telefono">{{ t("pacientes.telefono") }}</label>
+<input id="telefono" name="telefono" type="tel" maxlength="30" autocomplete="off" value="{{ datos.telefono or '' }}">
+<label for="direccion">{{ t("pacientes.direccion") }}</label>
+<input id="direccion" name="direccion" maxlength="200" autocomplete="off" value="{{ datos.direccion or '' }}">
+</div>
+</div>

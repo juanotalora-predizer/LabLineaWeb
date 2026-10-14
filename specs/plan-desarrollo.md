@@ -563,7 +563,7 @@ Pruebas específicas:
 
 **Cierra cuando:** la compuerta completa está en verde y el informe `etapa-06.md` está escrito.
 
-#### Etapa 7 — Pacientes y Ley 1581
+#### Etapa 7 — Pacientes y Ley 1581 · *compuerta local en verde el 2026-10-14, pendiente de la CI ([informe](etapas/etapa-07.md))*
 
 Pasos:
 1. Registro de pacientes con documento y país.

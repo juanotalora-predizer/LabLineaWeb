@@ -709,7 +709,8 @@ form label.opcion {
 }
 
 input,
-select {
+select,
+textarea {
     width: 100%;
     min-height: 40px;
     padding: var(--e-2) var(--e-3);
@@ -727,7 +728,8 @@ input[type="checkbox"] {
 }
 
 input:focus,
-select:focus {
+select:focus,
+textarea:focus {
     outline: none;
     border-color: var(--color-primario);
     box-shadow: 0 0 0 3px var(--color-primario-anillo);
@@ -735,6 +737,52 @@ select:focus {
 
 form .nota {
     margin-top: var(--e-1);
+}
+
+textarea {
+    min-height: 120px;
+    resize: vertical;
+    line-height: 1.5;
+}
+
+textarea.texto-legal {
+    min-height: 360px;
+}
+
+/* Texto legal (autorización de datos): respeta los saltos de línea y se lee en un bloque acotado. */
+.texto-legal {
+    white-space: pre-wrap;
+}
+
+div.texto-legal {
+    max-height: 280px;
+    overflow-y: auto;
+    padding: var(--e-3) var(--e-4);
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radio);
+    background: var(--color-fondo);
+    color: var(--color-texto-2);
+    font-size: var(--texto-sm);
+}
+
+details > summary {
+    cursor: pointer;
+    color: var(--color-primario-oscuro);
+    font-weight: 500;
+}
+
+/* Informe para el titular: al imprimir solo queda el contenido. */
+@media print {
+    .lateral,
+    .superior,
+    .no-imprimir {
+        display: none;
+    }
+
+    div.texto-legal {
+        max-height: none;
+        overflow: visible;
+    }
 }
 
 fieldset {

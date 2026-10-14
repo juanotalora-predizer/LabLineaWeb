@@ -358,3 +358,98 @@ def test_precio_y_requisito_con_entradas_arbitrarias(
     ):
         respuesta = c.post(ruta, data={**datos, "csrf": token})
         assert respuesta.status_code in PERMITIDOS | {404}, respuesta.status_code
+
+
+# --- Pacientes (etapa 7) ---
+
+CAMPOS_PACIENTE = (
+    "tipo_documento",
+    "numero_documento",
+    "nombres",
+    "apellidos",
+    "sexo",
+    "fecha_nacimiento",
+    "pais",
+    "email",
+    "telefono",
+    "direccion",
+    "medio",
+    "acepto",
+    "representante_nombre",
+    "representante_documento",
+    "representante_parentesco",
+    "texto_version",
+)
+
+
+@pytest.fixture
+def paciente_lab_a(admin_lab_a):
+    """Texto de autorización publicado y un paciente sintético de lab-a para los formularios de su ficha."""
+    import uuid
+
+    from sqlalchemy import text
+
+    from tests.conftest import ejecutar_en_tenant
+
+    async def preparar(sesion):
+        if not await sesion.scalar(text("SELECT count(*) FROM lab.textos_autorizacion")):
+            await sesion.execute(
+                text("INSERT INTO lab.textos_autorizacion (version, contenido) VALUES (1, :c)"),
+                {"c": "Texto sintético de autorización de tratamiento de datos para las pruebas de fuzzing."},
+            )
+
+    correr(ejecutar_en_tenant("app", "lab_a", preparar))
+    datos = {
+        "tipo_documento": "CC",
+        "numero_documento": "97" + str(uuid.uuid4().int)[:8],
+        "nombres": "Fuzz",
+        "apellidos": "Sintético",
+        "sexo": "F",
+        "fecha_nacimiento": "1990-01-01",
+        "pais": "COL",
+        "medio": "FORMATO_FIRMADO",
+        "acepto": "si",
+    }
+    c = admin_lab_a
+    respuesta = c.post("/pacientes/nuevo", data={**datos, "csrf": csrf(c, "/pacientes/nuevo")})
+    assert respuesta.status_code == 303, respuesta.text[-500:]
+    return respuesta.headers["location"]
+
+
+@AJUSTES
+@given(datos=st.fixed_dictionaries({c: texto for c in CAMPOS_PACIENTE}))
+def test_paciente_nuevo_con_entradas_arbitrarias(admin_lab_a, paciente_lab_a, datos):
+    c = admin_lab_a
+    respuesta = c.post("/pacientes/nuevo", data={**datos, "csrf": csrf(c, "/pacientes/nuevo")})
+    assert respuesta.status_code in PERMITIDOS, respuesta.status_code
+    _sin_reflejo_peligroso(respuesta.text)
+
+
+@AJUSTES
+@given(consulta=texto, datos=st.fixed_dictionaries({c: texto for c in (*CAMPOS_PACIENTE[:10], "solicitud")}))
+def test_busqueda_y_edicion_con_entradas_arbitrarias(admin_lab_a, paciente_lab_a, consulta, datos):
+    c = admin_lab_a
+    token = csrf(c, paciente_lab_a)
+    for ruta, cuerpo in (("/pacientes/buscar", {"consulta": consulta}), (f"{paciente_lab_a}/editar", datos)):
+        respuesta = c.post(ruta, data={**cuerpo, "csrf": token})
+        assert respuesta.status_code in PERMITIDOS, (ruta, respuesta.status_code)
+        _sin_reflejo_peligroso(respuesta.text)
+
+
+@AJUSTES
+@given(tipo=texto, canal=texto, descripcion=texto, motivo=texto, estado=texto, solicitud=texto, confirmacion=texto)
+def test_solicitudes_revocacion_y_supresion_con_entradas_arbitrarias(
+    admin_lab_a, paciente_lab_a, tipo, canal, descripcion, motivo, estado, solicitud, confirmacion
+):
+    c = admin_lab_a
+    token = csrf(c, paciente_lab_a)
+    for ruta, cuerpo in (
+        (f"{paciente_lab_a}/solicitudes", {"tipo": tipo, "canal": canal, "descripcion": descripcion}),
+        (f"{paciente_lab_a}/revocar", {"canal": canal, "motivo": motivo}),
+        (f"{paciente_lab_a}/autorizacion", {"medio": tipo, "acepto": estado, "representante_nombre": motivo}),
+        (f"{paciente_lab_a}/suprimir", {"solicitud": solicitud, "confirmacion": confirmacion}),
+        ("/configuracion/autorizacion", {"contenido": descripcion}),
+    ):
+        respuesta = c.post(ruta, data={**cuerpo, "csrf": token})
+        assert respuesta.status_code in PERMITIDOS, (ruta, respuesta.status_code)
+        _sin_reflejo_peligroso(respuesta.text)

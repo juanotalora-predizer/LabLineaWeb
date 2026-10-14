@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t("pacientes.texto_titulo") }} · {{ sitio.nombre_comercial }}{% endblock %}
+
+{% block content %}
+<div class="encabezado"><h1>{{ t("pacientes.texto_titulo") }}</h1></div>
+{% if errores %}<ul class="error" role="alert">{% for e in errores %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+{% if not versiones %}<p class="aviso alerta" role="status">{{ icono("triangle-alert") }} {{ t("pacientes.aviso_sin_texto") }}</p>{% endif %}
+<div class="columnas">
+    <section class="tarjeta">
+        <h2>{{ icono("file-text") }} {% if versiones %}{{ t("pacientes.nueva_version") }}{% else %}{{ t("pacientes.primera_version") }}{% endif %}</h2>
+        {% if activa.permisos.puede("configuracion", "modificar") %}
+        <form method="post" action="/configuracion/autorizacion">
+            <input type="hidden" name="csrf" value="{{ csrf }}">
+            <p class="nota">{{ t("pacientes.ayuda_texto") }}</p>
+            <label for="contenido">{{ t("pacientes.contenido") }}</label>
+            <textarea id="contenido" name="contenido" class="texto-legal" required minlength="50" maxlength="20000">{{ borrador }}</textarea>
+            <button type="submit">{{ t("pacientes.publicar") }}</button>
+        </form>
+        {% else %}
+        <div class="texto-legal">{{ borrador }}</div>
+        {% endif %}
+    </section>
+    <section class="tarjeta">
+        <h2>{{ icono("clock") }} {{ t("pacientes.versiones") }}</h2>
+        <div class="tabla-contenedor">
+        <table>
+            <thead><tr><th>{{ t("pacientes.version") }}</th><th>{{ t("pacientes.publicado") }}</th></tr></thead>
+            <tbody>
+            {% for v in versiones %}
+            <tr><td class="principal">{{ v.version }}</td><td>{{ v.publicado_en | fecha }}<span class="secundario">{{ v.publicado_por or "" }}</span></td></tr>
+            {% else %}
+            <tr><td colspan="2" class="vacio">{{ t("comun.sin_registros") }}</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        </div>
+    </section>
+</div>
+{% endblock %}

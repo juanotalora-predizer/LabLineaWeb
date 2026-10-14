@@ -14,7 +14,7 @@ SPRITE = "/static/img/iconos.svg"
 
 # Tono de la insignia según el código de estado (spec funcional/0008, sección 2).
 TONOS = {
-    "exito": {"ACTIVO", "ACTIVA", "PAGADA", "COMPLETADA", "VIGENTE", "VALIDADO", "EN_ATENCION", "CARGADA"},
+    "exito": {"ACTIVO", "ACTIVA", "PAGADA", "COMPLETADA", "VIGENTE", "VALIDADO", "EN_ATENCION", "CARGADA", "RESUELTA"},
     "alerta": {
         "PENDIENTE",
         "POR_REVISAR",
@@ -23,8 +23,20 @@ TONOS = {
         "EN_OBSERVACION",
         "EN_CURSO",
         "POR_VENCER",
+        "ABIERTA",
     },
-    "peligro": {"VENCIDA", "SUSPENDIDA", "SUSPENDIDO", "ANULADA", "FALLIDA", "CRITICO", "SIN_TRIAGE", "REVOCADO"},
+    "peligro": {
+        "VENCIDA",
+        "SUSPENDIDA",
+        "SUSPENDIDO",
+        "ANULADA",
+        "FALLIDA",
+        "CRITICO",
+        "SIN_TRIAGE",
+        "REVOCADO",
+        "REVOCADA",
+        "SIN_AUTORIZACION",
+    },
     "info": {"EN_PROCESO", "PREVISTA"},
 }
 _TONO_POR_ESTADO = {estado: tono for tono, estados in TONOS.items() for estado in estados}

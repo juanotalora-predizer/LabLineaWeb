@@ -115,8 +115,15 @@ def _sin_caracteres_de_control(valor: str) -> str:
     return valor
 
 
+def _sin_control_salvo_lineas(valor: str) -> str:
+    """Como el anterior, pero admite saltos de línea y tabulaciones (textos largos de varias líneas)."""
+    _sin_caracteres_de_control(valor.replace("\r", "").replace("\n", "").replace("\t", ""))
+    return valor
+
+
 # Texto de formulario apto para la base de datos; si no lo es, la petición termina en 400 genérico.
 TextoSeguro = Annotated[str, AfterValidator(_sin_caracteres_de_control)]
+TextoMultilinea = Annotated[str, AfterValidator(_sin_control_salvo_lineas)]
 LaboratorioActual = Annotated[Laboratorio, Depends(laboratorio_actual)]
 SitioActual = Annotated[Sitio, Depends(sitio_actual)]
 

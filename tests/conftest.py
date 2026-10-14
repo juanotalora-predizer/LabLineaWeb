@@ -98,6 +98,7 @@ SECRETOS_TOTP = {(lab, email): pyotp.random_base32() for lab, email, *_, totp in
 TABLAS_AUTH = (
     "lab.eventos_seguridad, lab.limites, lab.codigos_verificacion, lab.sesiones, lab.invitaciones, lab.sedes,"
     " lab.tickets_soporte, lab.accesos_soporte, lab.importaciones,"
+    " lab.solicitudes_titular, lab.autorizaciones_datos, lab.pacientes, lab.textos_autorizacion,"
     " lab.codigos_alternos, lab.tipos_codigo_alterno, lab.precios_examen, lab.tarifas, lab.requisitos_muestra,"
     " lab.rangos_referencia, lab.valores_lista, lab.parametros, lab.examenes, lab.tecnicas, lab.tipos_tubo,"
     " lab.tipos_muestra, lab.unidades, lab.secciones,"

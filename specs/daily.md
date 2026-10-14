@@ -20,6 +20,22 @@ Plantilla:
 -
 -->
 
+## 2026-10-14
+
+**Avances**
+- **Etapa 7 — compuerta local en verde** ([informe](etapas/etapa-07.md), [funcional/0010](funcional/0010-pacientes-ley-1581.md)); falta la CI.
+  - Pacientes por tipo y número de documento (expresión válida por país) y país de residencia.
+  - Autorización de tratamiento de datos versionada: la base no guarda un paciente sin ella, permite una sola vigente y solo deja revocarla.
+  - Representante legal obligatorio para menores.
+  - Solicitudes del titular con vencimiento en días hábiles (festivos de Colombia como configuración), informe *Datos del titular* auditado y supresión por anonimización.
+  - Búsqueda por POST, documento exacto, tope de 20 y límite de 60 por 5 minutos.
+  - La auditoría marca los datos personales como protegidos: tras una supresión no queda nada del paciente en ninguna tabla.
+  - 966 pruebas, cobertura 99%, ZAP sin hallazgos altos ni medios en los dos sitios, 15/15 pruebas manuales.
+- Hallazgo: el log de acceso guarda toda URL que mande un cliente; se suma al pendiente de la etapa 20 (logs sin cadena de consulta).
+
+**Decisiones**
+- Supresión = anonimización irreversible (no borrado) para no romper la auditoría ni las solicitudes; con historia clínica se rechaza por el deber de conservarla. Por validar con el asesor legal.
+
 ## 2026-10-13
 
 **Avances**

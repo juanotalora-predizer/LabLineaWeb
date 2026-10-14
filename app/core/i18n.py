@@ -69,7 +69,12 @@ def t(clave: str, idioma: str | None = None, **parametros: object) -> str:
 def fecha_local(
     valor: datetime, zona: str = ZONA_POR_DEFECTO, idioma: str | None = None, formato: str = "fecha_hora"
 ) -> str:
-    """Muestra un instante (con zona, normalmente UTC desde la base) en la zona local."""
+    """Muestra un instante (con zona, normalmente UTC desde la base) en la zona local.
+
+    Un día de calendario (`date`, p. ej. una fecha de nacimiento) no tiene zona: se muestra tal cual.
+    """
+    if not isinstance(valor, datetime):
+        return valor.strftime(t("formato.fecha", idioma))
     if valor.tzinfo is None:
         raise ValueError("fecha sin zona horaria: en la base todo instante es TIMESTAMPTZ")
     return valor.astimezone(ZoneInfo(zona)).strftime(t(f"formato.{formato}", idioma))
