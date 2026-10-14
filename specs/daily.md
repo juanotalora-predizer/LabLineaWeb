@@ -34,6 +34,10 @@ Plantilla:
 - Hallazgo: el log de acceso guarda toda URL que mande un cliente; se suma al pendiente de la etapa 20 (logs sin cadena de consulta).
 
 **Decisiones**
+- **Bodega de datos separada** aprobada ([infraestructura/0010](infraestructura/0010-analitica-bodega-datos.md) pasa a Aceptada).
+- **Inventarios y equipos entran al MVP** ([funcional/0011](funcional/0011-inventarios-equipos-proveedores.md), nueva etapa 14b): insumos (reactivos, jeringas, gasa, tapabocas…) con unidades de compra, costo total, fecha de adquisición y costo unitario calculado con ajuste manual; equipos con proveedor, fecha de compra, factura, valor y mantenimientos preventivos, correctivos y predictivos (entrega, devolución, fotos, razón y proveedor). Proveedores en una tabla propia por laboratorio, con contactos e histórico; convenios en tablas aparte.
+- El consumo de insumos se registra a mano; el descuento automático por examen y el costeo por actividad con nómina ligera quedan para después del MVP.
+- Los proveedores son de compra de ítems (reactivos, consumibles, equipos, otros) y de mantenimiento de equipos; el laboratorio no vende ítems.
 - Supresión = anonimización irreversible (no borrado) para no romper la auditoría ni las solicitudes; con historia clínica se rechaza por el deber de conservarla. Por validar con el asesor legal.
 
 ## 2026-10-13

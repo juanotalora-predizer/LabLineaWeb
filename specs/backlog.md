@@ -13,14 +13,11 @@ Formato: `- [ ] Descripción — prioridad (Alta/Media/Baja) — spec relacionad
 ### Decisiones por tomar
 
 - [ ] **Hosting de la aplicación y las bases** (Bluehost queda descartado para datos de salud: no firma BAA y lo prohíbe en sus términos; el dominio y el DNS pueden seguir en Bluehost) — Media, antes de la etapa 20 (publicación); se construye y prueba en local hasta entonces — [0003](infraestructura/0003-seguridad-hipaa.md), [0007](infraestructura/0007-base-de-datos.md), [0010](infraestructura/0010-analitica-bodega-datos.md)
-- [ ] Aprobar la arquitectura analítica propuesta (bodega separada con replicación lógica) — Alta — [0010](infraestructura/0010-analitica-bodega-datos.md)
-- [ ] ¿Inventarios, equipos y costeo en el MVP? (sin ellos el dashboard no puede mostrar rentabilidad por costo real) — Media — [funcional/0006](funcional/0006-gestion-inventarios-costos-dashboard.md)
 - [ ] Confirmar licencia de QZ Tray para impresión de etiquetas — Media — [funcional/0003](funcional/0003-muestras-impresion.md)
 - [ ] Mecanismo de firma electrónica del informe PDF (Ley 527 de 1999) — Media — [funcional/0004](funcional/0004-resultados-validacion-entrega.md)
 
 ### Fase 1 — Base multi-tenant
 
-- [ ] RLS en todas las tablas de `lab` con `USING` + `WITH CHECK` + `FORCE`, rol de aplicación sin privilegios, `SET LOCAL` por transacción, y prueba que verifique todas las tablas — Alta — [0007](infraestructura/0007-base-de-datos.md)
 - [ ] Estaciones de trabajo por sede (laboratorios y sedes ya están, etapa 4) — Alta — [funcional/0005](funcional/0005-plataforma-saas-suscripciones.md), [funcional/0003](funcional/0003-muestras-impresion.md)
 - [ ] Configuración por país: impuestos, medios de pago y textos legales (monedas, tipos de documento, idioma y zona horaria ya están, etapa 1) — Alta — [0004](infraestructura/0004-normativa-colombia-latam.md)
 - [ ] Asignación asistida de LOINC y UCUM al catálogo importado (Lablinea no los guarda), antes de la interoperabilidad FHIR — Media — [funcional/0009](funcional/0009-catalogo-e-importador.md)
@@ -45,6 +42,7 @@ Formato: `- [ ] Descripción — prioridad (Alta/Media/Baja) — spec relacionad
 
 ### Fase 3 — POS y caja
 
+- [ ] Convenios en tablas propias (separadas de proveedores): datos fiscales y de contacto, contrato, tarifa, cobertura total o parcial y tope de descuento — Alta — [funcional/0002](funcional/0002-pos-ordenes-caja.md), [funcional/0011](funcional/0011-inventarios-equipos-proveedores.md)
 - [ ] Órdenes con estados `BORRADOR` → `PRE_CERRADA` → `PAGADA` / `ANULADA`, congelamiento de precios y trigger de protección — Alta — [funcional/0002](funcional/0002-pos-ordenes-caja.md)
 - [ ] Convenios con tope de descuento, autorización superior y evidencia obligatoria — Alta — [funcional/0002](funcional/0002-pos-ordenes-caja.md)
 - [ ] Paquetes de exámenes con comparativo de ahorro y desglose al pre-cerrar — Media — [funcional/0002](funcional/0002-pos-ordenes-caja.md)
@@ -80,6 +78,15 @@ Formato: `- [ ] Descripción — prioridad (Alta/Media/Baja) — spec relacionad
 - [ ] Aviso por correo sin datos clínicos con enlace al portal — Alta — [funcional/0004](funcional/0004-resultados-validacion-entrega.md)
 - [ ] Mapeo del modelo a recursos FHIR R4 con pruebas de validación — Media — [0002](infraestructura/0002-interoperabilidad-hl7-fhir.md)
 
+### Inventarios, equipos y proveedores (etapa 14b)
+
+- [ ] Proveedores por laboratorio con contactos, roles e histórico de transacciones — Alta — [funcional/0011](funcional/0011-inventarios-equipos-proveedores.md)
+- [ ] Ítems de inventario (reactivos, consumibles, otros) con unidades de compra y factor de conversión, lote y vencimiento — Alta — [funcional/0011](funcional/0011-inventarios-equipos-proveedores.md)
+- [ ] Compras con costo total, fecha de adquisición, costo unitario calculado y ajuste manual auditado; costo promedio ponderado — Alta — [funcional/0011](funcional/0011-inventarios-equipos-proveedores.md)
+- [ ] Movimientos y existencias por lote (FEFO) con alertas de mínimo y vencimiento — Alta — [funcional/0011](funcional/0011-inventarios-equipos-proveedores.md)
+- [ ] Equipos: hoja de vida, compra y mantenimientos preventivos, correctivos y predictivos con entrega, devolución y fotos — Alta — [funcional/0011](funcional/0011-inventarios-equipos-proveedores.md)
+- [ ] Fotos y soportes en almacenamiento privado, validados por contenido y sin metadatos EXIF (Pillow) — Alta — [funcional/0011](funcional/0011-inventarios-equipos-proveedores.md)
+
 ### Analítica y dashboards (etapas 15 a 18)
 
 - [ ] Instancia analítica, replicación lógica con columnas sin datos personales, seudónimos de pacientes — Alta — [0010](infraestructura/0010-analitica-bodega-datos.md)
@@ -89,7 +96,7 @@ Formato: `- [ ] Descripción — prioridad (Alta/Media/Baja) — spec relacionad
 
 ### Después del MVP
 
-- [ ] Inventarios, equipos, costeo por actividad y nómina ligera (pendiente de decidir si entran al MVP) — [funcional/0006](funcional/0006-gestion-inventarios-costos-dashboard.md)
+- [ ] Descuento automático de insumos por examen procesado, costeo por actividad y nómina ligera (costo real por examen) — [funcional/0006](funcional/0006-gestion-inventarios-costos-dashboard.md)
 - [ ] Pasarela de pagos del SaaS con webhooks firmados e idempotentes — [funcional/0005](funcional/0005-plataforma-saas-suscripciones.md)
 - [ ] API FHIR bajo `/fhir` con OAuth 2.0 / SMART on FHIR — [0002](infraestructura/0002-interoperabilidad-hl7-fhir.md)
 - [ ] Perfiles FHIR de la IHCE (MinSalud, Res. 866 de 2021) y códigos LOINC del catálogo — [0004](infraestructura/0004-normativa-colombia-latam.md)
@@ -109,6 +116,9 @@ Formato: `- [ ] Descripción — prioridad (Alta/Media/Baja) — spec relacionad
 - [ ] Análisis de riesgos, políticas, oficial de seguridad, capacitación, notificación de brechas — Media — [0003](infraestructura/0003-seguridad-hipaa.md)
 
 ## Hecho
+
+- [x] Decisiones del usuario: bodega de datos separada (infraestructura/0010 aceptada); inventarios de insumos, equipos con mantenimientos, proveedores por laboratorio y convenios en tablas aparte entran al MVP — 2026-10-14 — [funcional/0011](funcional/0011-inventarios-equipos-proveedores.md)
+- [x] RLS en todas las tablas de `lab` (`USING` + `WITH CHECK` + `FORCE`), rol de aplicación sin privilegios, `SET LOCAL` por transacción y guardián que lo verifica (etapa 1) — 2026-10-12 — [0007](infraestructura/0007-base-de-datos.md)
 
 - [x] **Etapa 7 cerrada** (CI verde, commit `0beeb6c`): pacientes y Ley 1581; 966 pruebas, cobertura 99%, ZAP sin hallazgos altos ni medios en los dos sitios, 15/15 pruebas manuales — 2026-10-14 — [informe](etapas/etapa-07.md)
 

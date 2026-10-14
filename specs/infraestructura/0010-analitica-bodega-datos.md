@@ -1,6 +1,6 @@
 # 0010. Analítica: bodega de datos separada
 
-- **Estado:** Propuesta
+- **Estado:** Aceptada *(aprobada por el usuario el 2026-10-14: bodega de datos separada)*
 - **Fecha:** 2026-10-12
 - **Responsable:** Juan Otálora
 

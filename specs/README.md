@@ -33,7 +33,7 @@ Registro de decisiones del proyecto LabLineaWeb.
 | 0007 | [Base de datos: PostgreSQL con RLS](infraestructura/0007-base-de-datos.md) | Aceptada | 2026-10-12 |
 | 0008 | [Autenticación y autorización](infraestructura/0008-autenticacion-autorizacion.md) | Aceptada | 2026-10-12 |
 | 0009 | [Facturación electrónica por país](infraestructura/0009-facturacion-electronica.md) | Aceptada | 2026-10-12 |
-| 0010 | [Analítica: bodega de datos separada](infraestructura/0010-analitica-bodega-datos.md) | Propuesta | 2026-10-12 |
+| 0010 | [Analítica: bodega de datos separada](infraestructura/0010-analitica-bodega-datos.md) | Aceptada | 2026-10-14 |
 | 0011 | [Calidad, pruebas y entorno local](infraestructura/0011-calidad-pruebas-entorno-local.md) | Aceptada | 2026-10-12 |
 | 0012 | [Cola de tareas en segundo plano sobre PostgreSQL](infraestructura/0012-cola-de-tareas.md) | Aceptada | 2026-10-13 |
 | 0013 | [Textos externalizados (i18n) y fechas locales](infraestructura/0013-textos-externalizados-i18n.md) | Aceptada | 2026-10-13 |
@@ -47,8 +47,9 @@ Registro de decisiones del proyecto LabLineaWeb.
 | 0003 | [Muestras, códigos de barras e impresión](funcional/0003-muestras-impresion.md) | Aceptada | 2026-10-12 |
 | 0004 | [Resultados: referencias, validación y entrega](funcional/0004-resultados-validacion-entrega.md) | Aceptada | 2026-10-12 |
 | 0005 | [Plataforma SaaS: laboratorios, licencias y facturación](funcional/0005-plataforma-saas-suscripciones.md) | Aceptada | 2026-10-12 |
-| 0006 | [Gestión: inventarios, costeo y dashboard](funcional/0006-gestion-inventarios-costos-dashboard.md) | Aceptada (dashboard en el MVP) | 2026-10-12 |
+| 0006 | [Gestión: inventarios, costeo y dashboard](funcional/0006-gestion-inventarios-costos-dashboard.md) | Aceptada (dashboard en el MVP; secciones 1 y 2 reemplazadas por 0011) | 2026-10-12 |
 | 0007 | [Alcance del MVP](funcional/0007-alcance-mvp.md) | Aceptada | 2026-10-12 |
 | 0008 | [Sistema de diseño de la interfaz](funcional/0008-sistema-de-diseno.md) | Aceptada | 2026-10-13 |
 | 0009 | [Catálogo de exámenes e importador de Lablinea](funcional/0009-catalogo-e-importador.md) | Aceptada | 2026-10-13 |
 | 0010 | [Pacientes, autorización de datos y derechos del titular (Ley 1581)](funcional/0010-pacientes-ley-1581.md) | Aceptada | 2026-10-14 |
+| 0011 | [Inventarios de insumos, equipos de laboratorio, proveedores y convenios](funcional/0011-inventarios-equipos-proveedores.md) | Aceptada | 2026-10-14 |

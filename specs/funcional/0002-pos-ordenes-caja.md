@@ -27,7 +27,7 @@ La recepción del laboratorio funciona como un punto de venta: registra al pacie
 ### 2. Tarifas, convenios y descuentos
 
 - Cada examen tiene precio por **tipo de tarifa** y moneda. La tarifa vigente se toma según sus fechas de inicio y fin.
-- **Convenios** (empresas, aseguradoras) con tarifa propia, reglas de copago y un **porcentaje máximo de descuento** configurado por el área financiera.
+- **Convenios** (empresas, aseguradoras) con tarifa propia, reglas de copago y un **porcentaje máximo de descuento** configurado por el área financiera. Van en **tablas propias, separadas de los proveedores** del laboratorio, con datos de contacto, contrato y cobertura total o parcial ([0011](0011-inventarios-equipos-proveedores.md), sección 6).
 - Si el descuento supera el máximo del convenio, la orden no avanza hasta que:
   1. un usuario con rol superior lo autorice con sus credenciales, y
   2. se adjunte **evidencia obligatoria** (PDF o foto).

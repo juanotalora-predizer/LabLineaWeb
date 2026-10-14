@@ -1,6 +1,6 @@
 # 0006. Gestión: inventarios, costeo y dashboard
 
-- **Estado:** Aceptada. *(Modificado el 2026-10-12: el dashboard completo entra al MVP; inventarios, equipos y costeo siguen pendientes de decisión.)*
+- **Estado:** Aceptada. *(Modificado el 2026-10-12: el dashboard completo entra al MVP. Modificado el 2026-10-14: las secciones 1 y 2 quedan **reemplazadas por [0011](0011-inventarios-equipos-proveedores.md)**, inventarios y equipos entran al MVP; el consumo automático por examen y el costeo por actividad (sección 3) quedan para después del MVP.)*
 - **Fecha:** 2026-10-12
 - **Responsable:** Juan Otálora
 - **Fuentes:** [12 Costos de exámenes](../fuentes/), [13 Dashboard](../fuentes/), [24 Inventarios y costeo](../fuentes/)
@@ -13,12 +13,18 @@ Los laboratorios necesitan saber qué exámenes y convenios les dejan margen, de
 
 ### 1. Inventarios
 
+> Reemplazada por [0011](0011-inventarios-equipos-proveedores.md).
+
+
 - Proveedores; ítems de tipo `REACTIVO`, `CONSUMIBLE` o `EQUIPO`, con unidad, stock actual, stock mínimo y costo promedio.
 - Compras como entradas de almacén, que actualizan el costo promedio.
 - Consumo por examen: cada examen define los insumos que usa, y al procesarse se descuentan del inventario.
 - Alerta de stock mínimo.
 
 ### 2. Equipos biomédicos
+
+> Reemplazada por [0011](0011-inventarios-equipos-proveedores.md).
+
 
 Hoja de vida y mantenimiento: activo fijo, horas de actividad e inactividad por mes, costo por hora de operación (depreciación + mantenimiento), fechas del último y próximo mantenimiento.
 

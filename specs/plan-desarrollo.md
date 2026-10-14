@@ -692,6 +692,25 @@ Pruebas específicas:
 
 **Cierra cuando:** la compuerta completa está en verde y el informe `etapa-14.md` está escrito.
 
+#### Etapa 14b — Inventarios, equipos y proveedores ([funcional/0011](funcional/0011-inventarios-equipos-proveedores.md))
+
+Pasos:
+1. Proveedores por laboratorio con contactos, roles e histórico de transacciones.
+2. Ítems (reactivos, consumibles, otros) con unidad de consumo, presentaciones de compra con factor de conversión, stock mínimo, lote y vencimiento.
+3. Compras con fecha de adquisición, costo total, costo unitario calculado y ajuste manual con motivo; costo promedio ponderado.
+4. Movimientos (entradas, consumos, ajustes, bajas) y existencias por lote (FEFO), con alertas de mínimo y vencimiento.
+5. Equipos: hoja de vida, compra (proveedor, fecha, factura, valor) y mantenimientos preventivos, correctivos y predictivos con entrega, devolución, fotos, razón y proveedor.
+
+Pruebas específicas:
+- Costo unitario con `hypothesis`: total ÷ (cantidad × factor) sin pérdida de precisión, en `NUMERIC`; el ajuste manual exige motivo y queda auditado.
+- Una compra registrada no se modifica (trigger); anularla revierte la entrada y recalcula el promedio.
+- Existencias nunca negativas, también con consumos simultáneos.
+- Fotos y soportes: tipo validado por contenido, sin ejecutables, tamaño máximo, EXIF eliminado, URL firmada que vence.
+- Un equipo con mantenimiento abierto queda `EN_MANTENIMIENTO`; al devolverlo vuelve a `OPERATIVO`.
+- IDOR: proveedor, ítem, equipo o mantenimiento de `lab-b` desde `lab-a` → 404.
+
+**Cierra cuando:** la compuerta completa está en verde y el informe `etapa-14b.md` está escrito.
+
 ---
 
 ### Bloque D — Analítica y cierre del MVP

@@ -4,7 +4,7 @@ Guía para trabajar en LabLineaWeb. Las decisiones del proyecto viven en [specs/
 
 LabLineaWeb es un **LIS (sistema de información de laboratorio clínico) en modalidad SaaS**, multi-laboratorio, que inicia en Colombia con alcance Latinoamérica (ver [funcional/0001](specs/funcional/0001-producto-lis-saas.md)). Moderniza **Lablinea**, un sistema monousuario heredado en Access.
 
-El alcance actual es el **MVP** ([funcional/0007](specs/funcional/0007-alcance-mvp.md)): fases 1 a 5 (base multi-tenant, seguridad, POS y caja, muestras, resultados). No construir módulos fuera del MVP sin que el usuario lo pida.
+El alcance actual es el **MVP** ([funcional/0007](specs/funcional/0007-alcance-mvp.md)): fases 1 a 5 (base multi-tenant, seguridad, POS y caja, muestras, resultados), más facturación electrónica, inventarios y equipos ([funcional/0011](specs/funcional/0011-inventarios-equipos-proveedores.md)) y el dashboard con bodega de datos. No construir módulos fuera del MVP sin que el usuario lo pida.
 
 Los documentos originales de la descripción funcional están en [specs/fuentes/](specs/fuentes/). Son material de origen: **las specs prevalecen sobre las fuentes** cuando difieren (p. ej. las fuentes usan React, envían PDFs por correo y pasan `tenant_id` en las peticiones; nada de eso aplica).
 
@@ -49,7 +49,8 @@ Filtrar datos de un laboratorio a otro es el fallo más grave posible en este pr
 - **Resultados** ([funcional/0004](specs/funcional/0004-resultados-validacion-entrega.md)): solo inserción; las correcciones son versiones nuevas y exigen revalidar. Banderas y notas internas **nunca** llegan al paciente, al PDF ni al correo. Los valores críticos se comunican aunque haya saldo pendiente.
 - **Entrega:** el correo solo avisa y enlaza al portal; nunca adjunta el PDF ni lleva datos clínicos. En el PDF y el portal solo puede aparecer la marca `H`/`L` en valores numéricos, si el laboratorio la activó.
 - **Facturación electrónica** ([infraestructura/0009](specs/infraestructura/0009-facturacion-electronica.md)): siempre a través de la interfaz `FacturadorElectronico` del país; nunca llamar a la DIAN ni a un tercero desde las rutas. Certificados digitales solo en el gestor de secretos. Una factura validada no se modifica: se emiten notas.
-- **Analítica** ([infraestructura/0010](specs/infraestructura/0010-analitica-bodega-datos.md), propuesta): el dashboard histórico consulta la bodega, no la base transaccional. La bodega nunca recibe nombres, documentos, contactos ni valores de resultados.
+- **Analítica** ([infraestructura/0010](specs/infraestructura/0010-analitica-bodega-datos.md), aceptada): el dashboard histórico consulta la bodega, no la base transaccional. La bodega nunca recibe nombres, documentos, contactos ni valores de resultados.
+- **Inventarios** ([funcional/0011](specs/funcional/0011-inventarios-equipos-proveedores.md)): una compra registrada no se modifica (se anula y se registra de nuevo); el ajuste manual del costo unitario exige motivo y queda auditado. Proveedores y convenios son tablas separadas. Las fotos se guardan sin metadatos EXIF.
 - **Dinero** en `NUMERIC` con moneda y tasa de cambio; nunca `float`.
 
 ## Integración (ver [infraestructura/0006](specs/infraestructura/0006-integracion-his-equipos.md))
